@@ -73,14 +73,17 @@ namespace GoodbyeTray {
     key.SetValue("URLInfoAbout","https://github.com/trfurkan/GoodbyeDPI-Tray"); key.SetValue("URLUpdateInfo","https://github.com/trfurkan/GoodbyeDPI-Tray/releases"); key.SetValue("HelpLink","https://github.com/trfurkan/GoodbyeDPI-Tray/issues");
    }
   }
-  static void Install() {
+  static void Install(bool replaceForeign) {
    Report(5,"Kurulum dosyaları kontrol ediliyor…");
    ValidateDirectory();
    using(var net=Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full")) if(net==null || Convert.ToInt32(net.GetValue("Release",0))<528040) throw new InvalidOperationException(".NET Framework 4.8 gerekiyor. Windows Update'ten yükleyip tekrar dene.");
    string previousCommand=Program.ServicePath();
    bool existing=previousCommand!=null;
-   int previousProfile=existing?Program.Profile():0;
-   if(existing) Program.RequireOwned();
+   // With the user's consent, a foreign GoodbyeDPI service is taken over: repointed to this app, restored on failure.
+   bool foreign=existing && replaceForeign && Program.ForeignProfile()>=0;
+   int previousProfile=foreign?Program.ForeignProfile():existing?Program.Profile():0;
+   if(foreign) AppInfo.Log("Eski GoodbyeDPI hizmeti devralınıyor: "+previousCommand);
+   else if(existing) Program.RequireOwned();
    else if(Process.GetProcessesByName("goodbyedpi").Length>0) throw new InvalidOperationException("Açık GoodbyeDPI penceresini kapatıp tekrar dene.");
    // Check every embedded resource before stopping an existing installation.
    foreach(string file in Files) using(var input=Assembly.GetExecutingAssembly().GetManifestResourceStream("payload/"+file)) if(input==null) throw new IOException("Pakette eksik dosya: "+file);
@@ -108,7 +111,11 @@ namespace GoodbyeTray {
     foreach(string old in new[]{SetupName,LegacySetupName}) try { DeleteOrSchedule(Target(old)); } catch(Exception ex) { AppInfo.Log("Eski kurucu silinemedi: "+ex.Message); }
     Report(80,"Windows kaydı oluşturuluyor…"); RegisterUninstaller();
     Report(88,"GoodbyeDPI hizmeti hazırlanıyor…");
-    if(existing) { Program.Configure(previousProfile); if(running) Program.Start(); } else RunApp("--admin install --quiet");
+    if(existing) {
+     Program.Configure(previousProfile);
+     if(foreign) { Program.Sc("config GoodbyeDPI DisplayName= \"GoodbyeDPI Tray Engine\""); Program.Sc("description GoodbyeDPI \"GoodbyeDPI Tray tarafından yönetilen Türkiye profili\""); }
+     if(running) Program.Start();
+    } else RunApp("--admin install --quiet");
     AppInfo.Log("Kurulum tamamlandı "+AppInfo.Version);
     Report(95,"Kurulum tamamlanıyor…");
    } catch(Exception failure) {
@@ -117,6 +124,7 @@ namespace GoodbyeTray {
      if(Program.Profile()>=0) Program.Stop();
      if(!existing && Program.Profile()>=0) Program.Sc("delete GoodbyeDPI");
      if(existing) Program.Sc("config GoodbyeDPI binPath= \""+previousCommand.Replace("\"","\\\"")+"\"");
+     if(foreign) Program.Sc("config GoodbyeDPI DisplayName= \"GoodbyeDPI\"");
      foreach(var item in backup) { string path=Target(item.Key); if(item.Value==null) { if(File.Exists(path)) File.Delete(path); } else if(!String.Equals(path,Application.ExecutablePath,StringComparison.OrdinalIgnoreCase)) File.WriteAllBytes(path,item.Value); }
      if(!hadRegistration) Registry.LocalMachine.DeleteSubKeyTree(UninstallKey,false);
      else using(var registration=Registry.LocalMachine.CreateSubKey(UninstallKey)) { foreach(string name in registration.GetValueNames()) if(!registrationValues.ContainsKey(name)) registration.DeleteValue(name,false); foreach(var value in registrationValues) registration.SetValue(value.Key,value.Value,registrationKinds[value.Key]); }
@@ -203,12 +211,12 @@ namespace GoodbyeTray {
    if(!Path.GetFullPath(dir).StartsWith(Path.GetFullPath(Path.GetTempPath()),StringComparison.OrdinalIgnoreCase)) return;
    Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory,"cmd.exe"),"/d /c ping -n 3 127.0.0.1 >nul & del /f /q \""+exe+"\" \""+exe+".config\" & rmdir \""+dir+"\"") { UseShellExecute=false,CreateNoWindow=true,WorkingDirectory=Path.GetTempPath() }).Dispose();
   }
-  internal static int Elevate(bool remove,IProgress<Tuple<int,string>> progress) {
+  internal static int Elevate(bool remove,bool replaceForeign,IProgress<Tuple<int,string>> progress) {
    // UAC cannot always see a mapped/shared source drive. Use a local copy.
    string stageDir=Path.Combine(Path.GetTempPath(),"GoodbyeDPI-Setup-"+Guid.NewGuid().ToString("N")); Directory.CreateDirectory(stageDir);
    string executable=CopySelf(stageDir);
    string progressFile=Path.Combine(stageDir,"progress.txt");
-   try { using(var p=Process.Start(new ProcessStartInfo(executable,(remove?"--remove-elevated":"--install-elevated")+" --report-progress") { UseShellExecute=true,Verb="runas",WorkingDirectory=stageDir })) {
+   try { using(var p=Process.Start(new ProcessStartInfo(executable,(remove?"--remove-elevated":"--install-elevated")+(replaceForeign?" --replace-foreign":"")+" --report-progress") { UseShellExecute=true,Verb="runas",WorkingDirectory=stageDir })) {
     int last=-1;
     do { try { string[] lines=File.ReadAllLines(progressFile); int value; if(lines.Length==2 && Int32.TryParse(lines[0],out value) && value>last && value>=0 && value<=95) { last=value; progress.Report(Tuple.Create(value,lines[1])); } } catch(IOException) { } catch(UnauthorizedAccessException) { } } while(!p.WaitForExit(100));
     return p.ExitCode;
@@ -222,7 +230,7 @@ namespace GoodbyeTray {
     if(args.Length>=1 && (args[0]=="--install-elevated" || args[0]=="--remove-elevated")) {
      reportProgress=Array.IndexOf(args,"--report-progress")>=0;
      if(!new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)) throw new UnauthorizedAccessException("Yönetici izni gerekiyor.");
-     bool created; using(var mutex=new Mutex(true,@"Global\GoodbyeDPI.Tray.Setup",out created)) { if(!created) throw new InvalidOperationException("Başka bir kurulum işlemi devam ediyor."); if(args[0]=="--install-elevated") Install(); else Uninstall(); } return RebootRequired?3010:0;
+     bool created; using(var mutex=new Mutex(true,@"Global\GoodbyeDPI.Tray.Setup",out created)) { if(!created) throw new InvalidOperationException("Başka bir kurulum işlemi devam ediyor."); if(args[0]=="--install-elevated") Install(Array.IndexOf(args,"--replace-foreign")>=0); else Uninstall(); } return RebootRequired?3010:0;
     }
     if(args.Length==2 && args[0]=="--preview") { using(var form=new SetupForm(false)) { form.Show(); Application.DoEvents(); using(var bitmap=new Bitmap(form.Width,form.Height)) { form.DrawToBitmap(bitmap,new Rectangle(Point.Empty,bitmap.Size)); bitmap.Save(args[1]); } } return 0; }
     bool remove=args.Length>=1 && args[0]=="--uninstall";
@@ -295,12 +303,17 @@ namespace GoodbyeTray {
    FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(busy) e.Cancel=true; };
    start.Click+=async delegate {
     if(busy || completed || (!remove && !consent.Checked)) return;
+    bool replaceForeign=false;
+    if(!remove && Program.ForeignProfile()>=0) {
+     if(MessageBox.Show(this,"Bilgisayarda daha önce kurulmuş başka bir GoodbyeDPI hizmeti var:\n\n"+Program.ServicePath()+"\n\nBu hizmeti GoodbyeDPI Tray'e devredelim mi? Eski hizmet durdurulur ve artık bu uygulama yönetir. Eski klasörü sonra silebilirsin.","GoodbyeDPI Kurulum",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button1)!=DialogResult.Yes) { step.Text="Kurulum için eski hizmetin devredilmesi gerekiyor."; return; }
+     replaceForeign=true;
+    }
     busy=true; progressBar.Value=0; start.Enabled=false; cancel.Enabled=false; consent.Enabled=false;
     title.Text=remove?"GoodbyeDPI kaldırılıyor":"GoodbyeDPI kuruluyor";
     ShowProgress(0,"Windows izin isteyecek, onayla.");
     var progress=new Progress<Tuple<int,string>>(delegate(Tuple<int,string> update) { ShowProgress(update.Item1,update.Item2); });
     try {
-     int code=await Task.Run(delegate { return Setup.Elevate(remove,progress); });
+     int code=await Task.Run(delegate { return Setup.Elevate(remove,replaceForeign,progress); });
      if(code!=0 && code!=3010) throw new InvalidOperationException("Bir sorun çıktı, tekrar dene.\nAyrıntı: "+AppInfo.LogPath);
      ShowProgress(97,remove?"Kısayollar temizleniyor…":"Kısayollar hazırlanıyor…");
      Setup.UserSetup(remove,wasInstalled); if(!remove) using(var preferences=Registry.CurrentUser.CreateSubKey(@"Software\GoodbyeDPITray")) preferences.SetValue("UsageAcknowledged",1); if(remove) Setup.ClearUserSettings();

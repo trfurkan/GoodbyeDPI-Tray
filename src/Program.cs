@@ -21,9 +21,12 @@ namespace GoodbyeTray {
   internal static string Binary(int profile) { return "\""+Path.Combine(InstallDir,"GoodbyeDPI.Tray.exe")+"\" --engine-service "+profile; }
   internal static string LegacyBinary(int profile) { return "\""+Engine+"\" "+Args[profile]; }
   internal static void Configure(int profile) { Sc("config GoodbyeDPI binPath= \"\\\""+Path.Combine(InstallDir,"GoodbyeDPI.Tray.exe")+"\\\" --engine-service "+profile+"\""); }
-  internal static string ServicePath() { using(var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\GoodbyeDPI")) return key == null ? null : key.GetValue("ImagePath", "").ToString(); }
+  // A key without ImagePath is a leftover (e.g. a service deleted before reboot), not an installed service.
+  internal static string ServicePath() { using(var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\GoodbyeDPI")) { string path = key == null ? null : Convert.ToString(key.GetValue("ImagePath", null)); return String.IsNullOrWhiteSpace(path) ? null : path; } }
   internal static int Profile() { string path = ServicePath(); for(int i=0;i<Args.Length;i++) if(String.Equals(path,Binary(i),StringComparison.OrdinalIgnoreCase) || String.Equals(path,LegacyBinary(i),StringComparison.OrdinalIgnoreCase)) return i; return -1; }
-  internal static void RequireOwned() { if(Profile()<0) throw new InvalidOperationException("Bu uygulamanın hizmeti bulunamadı. GoodbyeDPI-Installer.exe ile kur ya da onar. Başka bir GoodbyeDPI hizmeti varsa ona dokunulmaz."); }
+  // Another GoodbyeDPI service (e.g. GoodbyeDPI-Turkey's service_install script). Returns the matching profile so a takeover keeps the user's choice.
+  internal static int ForeignProfile() { string path = ServicePath(); if(path == null || Profile() >= 0) return -1; for(int i=0;i<Args.Length;i++) if(path.EndsWith(" "+Args[i],StringComparison.OrdinalIgnoreCase)) return i; return 0; }
+  internal static void RequireOwned() { if(Profile()<0) { string path = ServicePath(); throw new InvalidOperationException(path == null ? "Bu uygulamanın hizmeti bulunamadı. GoodbyeDPI-Installer.exe ile kur ya da onar." : "Bilgisayarda başka bir GoodbyeDPI hizmeti var, ona dokunulmadı. Önce onu kaldır, sonra tekrar dene.\nHizmetin yolu: " + path); } }
   internal static void Sc(string args) {
    using(var p = Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory,"sc.exe"), args) { UseShellExecute=false, CreateNoWindow=true, RedirectStandardOutput=true, RedirectStandardError=true })) {
     string output=p.StandardOutput.ReadToEnd(); string error=p.StandardError.ReadToEnd(); p.WaitForExit();
