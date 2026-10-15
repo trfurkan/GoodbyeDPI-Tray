@@ -140,6 +140,8 @@ namespace GoodbyeTray {
   readonly ProfilePicker profiles=new ProfilePicker();
   readonly CheckBox startup=new CheckBox(), engineStartup=new CheckBox();
   readonly SoftButton toggle=new SoftButton(), apply=new SoftButton(), restart=new SoftButton();
+  readonly SoftButton trayButton;
+  readonly Label trayHelp=LabelOf("",9,false);
 
 
   readonly TableLayoutPanel dashboard=new BufferedLayout();
@@ -177,7 +179,7 @@ namespace GoodbyeTray {
    themeButton.Dock=DockStyle.Top; themeButton.AccessibleName="Görünüm teması";
    themeButton.Click+=delegate { foreach(ToolStripMenuItem item in themeMenu.Items) { item.Checked=Convert.ToString(item.Tag)==themePreference; item.BackColor=surface; item.ForeColor=foreground; } themeMenu.BackColor=surface; themeMenu.ForeColor=foreground; themeMenu.Renderer=new MenuRenderer(surface,foreground,border); if(!themeMenu.Visible) themeMenu.Show(themeButton,new Point(0,themeButton.Height)); };
    header.Controls.Add(themeButton,1,0);
-   var trayButton=ButtonOf("Tepsiye gizle",delegate { HideToTray(); }); trayButton.Dock=DockStyle.Top; header.Controls.Add(trayButton,2,0); trayButton.Visible=withTray; layout.Controls.Add(header);
+   trayButton=ButtonOf("Tepsiye gizle",delegate { HideToTray(); }); trayButton.Dock=DockStyle.Top; header.Controls.Add(trayButton,2,0); trayButton.Visible=withTray; layout.Controls.Add(header);
    var hero=new SoftPanel { Dock=DockStyle.Fill,Margin=new Padding(0,0,0,8),Padding=new Padding(20,12,20,12) }; layout.Controls.Add(hero);
    var heroLayout=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,BackColor=Color.Transparent };
    heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,154)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,34)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); hero.Controls.Add(heroLayout);
@@ -204,11 +206,13 @@ namespace GoodbyeTray {
     menu.Items.Add("Ayarlar",null,delegate { DispatchCommand("settings"); });
     menu.Items.Add(new ToolStripSeparator());
     menu.Items.Add("Arayüzden çık",null,delegate { DispatchCommand("exit"); });
-    tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=true }; tray.DoubleClick+=delegate { Reveal(); };
+    bool showTray=true; try { showTray=WindowsIntegration.TrayStartupEnabled(); } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
+    tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=showTray }; tray.DoubleClick+=delegate { Reveal(); };
+    trayButton.Visible=showTray; trayHelp.Text=TrayHelp(showTray);
    }
-   Shown+=delegate { if(withTray) WindowsIntegration.RegisterJumpList(); if(WindowState==FormWindowState.Minimized && tray!=null) { Hide(); ShowInTaskbar=false; } };
-   Resize+=delegate { if(WindowState==FormWindowState.Minimized && tray!=null) HideToTray(); };
-   FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(!quitting && e.CloseReason==CloseReason.UserClosing && tray!=null) { e.Cancel=true; HideToTray(); } };
+   Shown+=delegate { if(withTray) WindowsIntegration.RegisterJumpList(); if(WindowState==FormWindowState.Minimized && TrayShown) { Hide(); ShowInTaskbar=false; } };
+   Resize+=delegate { if(WindowState==FormWindowState.Minimized && TrayShown) HideToTray(); };
+   FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(!quitting && e.CloseReason==CloseReason.UserClosing && TrayShown) { e.Cancel=true; HideToTray(); } };
    SystemEvents.UserPreferenceChanged+=ThemeChanged;
    timer.Interval=250; timer.Tick+=delegate { if(reveal!=null && reveal.WaitOne(0)) Reveal(); string command=commands==null?null:commands.Poll(); if(command!=null) DispatchCommand(command); if(++refreshTicks>=8) { refreshTicks=0; if(!busy && !sizing) RefreshStateAsync(); if(!sizing && Visible) ApplyTheme(false); } }; if(withTray) timer.Start();
    SizeChanged+=delegate { if(WindowState!=FormWindowState.Minimized) FitDashboard(); }; ResizeBegin+=delegate { sizing=true; }; ResizeEnd+=delegate { sizing=false; FitDashboard(); };
@@ -235,14 +239,14 @@ namespace GoodbyeTray {
   void BuildSettings(TableLayoutPanel layout) {
    var content=Section(layout,"Otomatik başlangıç",new[]{28,28,26,28,26}); startupContent=content;
    engineStartup.Text="Windows açıldığında GoodbyeDPI'ı başlat"; engineStartup.AutoSize=true; content.Controls.Add(engineStartup,0,1); var serviceHelp=LabelOf("Bilgisayar açılınca GoodbyeDPI da çalışır.",9,false); serviceHelp.Tag="muted"; content.Controls.Add(serviceHelp,0,2);
-   startup.Text="Oturum açtığımda sistem tepsisinde göster"; startup.AutoSize=true; content.Controls.Add(startup,0,3); var trayHelp=LabelOf("Oturum açınca simge saatin yanında durur.",9,false); trayHelp.Tag="muted"; content.Controls.Add(trayHelp,0,4);
+   startup.Text="Oturum açtığımda sistem tepsisinde göster"; startup.AutoSize=true; content.Controls.Add(startup,0,3); trayHelp.Text=TrayHelp(true); trayHelp.Tag="muted"; content.Controls.Add(trayHelp,0,4);
    engineStartup.CheckedChanged+=delegate { if(!refreshing) Execute(engineStartup.Checked?"auto-on":"auto-off",0); };
    startup.CheckedChanged+=delegate {
     if(refreshing) return;
     try {
      if(startup.Checked) Program.RequireOwned();
      WindowsIntegration.SetTrayStartup(startup.Checked);
-     notice.Text=startup.Checked?"Oturum açınca tepsi simgesi gelecek.":"Tepsi simgesi artık oturum açınca gelmeyecek.";
+     notice.Text=startup.Checked?"Tepsi simgesi açıldı, oturum açınca da gelecek.":"Tepsi simgesi gizlendi.";
     } catch(Exception ex) { ReportError(ex); } RefreshState();
    };
   }
@@ -258,8 +262,18 @@ namespace GoodbyeTray {
     catch(Exception ex) { ReportError(ex); }
    }); uninstall.Glyph="trash"; uninstall.Dock=DockStyle.Top; uninstall.Margin=new Padding(4,4,0,4); tools.Controls.Add(uninstall); layout.Controls.Add(tools);
   }
-  void HideToTray() {
+  bool TrayShown { get { return tray!=null && tray.Visible; } }
+  // The tray setting also decides whether the icon shows now. Without it the window acts like a normal app: minimize goes to the taskbar, closing quits.
+  static string TrayHelp(bool shown) { return shown?"Pencereyi kapatsan da uygulama saatin yanındaki simgede açık kalır.":"Pencereyi kapatınca uygulama kapanır. GoodbyeDPI açık kalır, engelli sitelere girmeye devam edersin."; }
+  void SetTrayVisible(bool show) {
    if(tray==null) return;
+   trayHelp.Text=TrayHelp(show);
+   if(tray.Visible==show) return;
+   tray.Visible=show; trayButton.Visible=show;
+   if(!show && !Visible) Reveal();
+  }
+  void HideToTray() {
+   if(!TrayShown) return;
    Hide(); ShowInTaskbar=false;
    if(!hideNotified) { hideNotified=true; tray.ShowBalloonTip(3000,"GoodbyeDPI sistem tepsisinde","Açmak için saatin yanındaki simgeye çift tıkla.",ToolTipIcon.Info); }
   }
@@ -328,11 +342,12 @@ namespace GoodbyeTray {
   void FitDashboard() {
    if(dashboard.RowStyles.Count<8 || startupContent==null) return;
    bool compact=ClientSize.Height<860;
-   int[] heights=compact?new[]{64,96,24,144,116,48}:new[]{104,112,30,160,164,58};
+   // The tray help stays visible even when compact: it says what closing the window does.
+   int[] heights=compact?new[]{64,96,24,144,142,48}:new[]{104,112,30,160,164,58};
    dashboard.SuspendLayout(); startupContent.SuspendLayout(); footerPanel.SuspendLayout();
    try {
     for(int i=0;i<heights.Length;i++) if(dashboard.RowStyles[i].Height!=heights[i]) dashboard.RowStyles[i].Height=heights[i];
-    foreach(int row in new[]{2,4}) { startupContent.RowStyles[row].Height=compact?0:26; var help=startupContent.GetControlFromPosition(0,row); if(help!=null) help.Visible=!compact; }
+    startupContent.RowStyles[2].Height=compact?0:26; var serviceHelp=startupContent.GetControlFromPosition(0,2); if(serviceHelp!=null) serviceHelp.Visible=!compact;
    } finally { startupContent.ResumeLayout(); footerPanel.ResumeLayout(); dashboard.ResumeLayout(); }
   }
   int stateRevision;
@@ -350,7 +365,7 @@ namespace GoodbyeTray {
     refreshing=true;
     try {
      bool changed=startup.Checked!=snapshot.Item1 || engineStartup.Checked!=snapshot.Item2 || activeProfile!=snapshot.Item3 || running!=(snapshot.Item3>=0 && snapshot.Item4==ServiceControllerStatus.Running) || transition!=(snapshot.Item3>=0 && snapshot.Item4!=ServiceControllerStatus.Running && snapshot.Item4!=ServiceControllerStatus.Stopped);
-     startup.Checked=snapshot.Item1; engineStartup.Checked=snapshot.Item2;
+     startup.Checked=snapshot.Item1; engineStartup.Checked=snapshot.Item2; SetTrayVisible(snapshot.Item1);
      if(changed || String.IsNullOrEmpty(status.Text)) SetServiceState(snapshot.Item3,snapshot.Item4);
      if(snapshot.Item5) detail.Text="Farklı bir GoodbyeDPI kurulumu bulundu.";
     } finally { refreshing=false; }
@@ -360,7 +375,7 @@ namespace GoodbyeTray {
    stateRevision++;
    refreshing=true;
    try {
-    startup.Checked=WindowsIntegration.TrayStartupEnabled();
+    startup.Checked=WindowsIntegration.TrayStartupEnabled(); SetTrayVisible(startup.Checked);
     using(var key=Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\GoodbyeDPI")) engineStartup.Checked=key!=null && Convert.ToInt32(key.GetValue("Start",3))==2;
     int active=Program.Profile(); var state=ServiceControllerStatus.Stopped;
     if(active>=0) using(var svc=new ServiceController(Program.ServiceName)) state=svc.Status;

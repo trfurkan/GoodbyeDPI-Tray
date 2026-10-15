@@ -15,7 +15,7 @@ foreach($task in $list.JumpItems) {
  if(-not $commands.GetMethod('IsValid',$static).Invoke($null,[object[]]@([string]$command))) { throw "İşlemsiz Jump List girdisi: $command" }
 }
 $version=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $root 'dist\GoodbyeDPI-Installer.exe'))
-if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.5.1.0') { throw 'EXE metadatası yanlış' }
+if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.5.2.0') { throw 'EXE metadatası yanlış' }
 $type=$assembly.GetType('GoodbyeTray.MainForm')
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {
@@ -51,9 +51,28 @@ try {
  $profiles=$type.GetField('trayProfiles',$instance).GetValue($trayForm)
  if($profiles.DropDownItems.Count -ne 7) { throw 'Tepside profil eksik' }
  foreach($action in @('show','profiles','settings')) { $type.GetMethod('DispatchCommand',$instance).Invoke($trayForm,[object[]]@($action)) | Out-Null; if(-not $trayForm.Visible) { throw 'Pencere açılmadı' } }
+ $setTray=$type.GetMethod('SetTrayVisible',$instance); $tray=$type.GetField('tray',$instance).GetValue($trayForm); $trayButton=$type.GetField('trayButton',$instance).GetValue($trayForm)
+ $setTray.Invoke($trayForm,[object[]]@($true)) | Out-Null
  $type.GetMethod('HideToTray',$instance).Invoke($trayForm,$null) | Out-Null
  if($trayForm.Visible -or $trayForm.ShowInTaskbar) { throw 'Tepsiye gizlenmedi' }
+ $setTray.Invoke($trayForm,[object[]]@($false)) | Out-Null
+ if($tray.Visible -or $trayButton.Visible) { throw 'Ayar kapalıyken tepsi simgesi gizlenmedi' }
+ $trayHelp=$type.GetField('trayHelp',$instance).GetValue($trayForm)
+ if($trayHelp.Text -notlike '*uygulama kapanır*' -or -not $trayHelp.Visible) { throw 'Ayar kapalıyken kapatma açıklaması görünmüyor' }
+ if(-not $trayForm.Visible -or -not $trayForm.ShowInTaskbar) { throw 'Tepsideki gizli pencere simge kalkınca açılmadı' }
+ $type.GetMethod('HideToTray',$instance).Invoke($trayForm,$null) | Out-Null
+ if(-not $trayForm.Visible) { throw 'Simge yokken pencere gizlendi' }
+ $trayForm.Close()
+ if(-not $trayForm.IsDisposed) { throw 'Simge yokken kapatınca arayüz kapanmadı' }
+} finally { $trayForm.Dispose() }
+$trayForm=[Activator]::CreateInstance($type,[object[]]@($true))
+try {
+ $type.GetField('timer',$instance).GetValue($trayForm).Stop()
+ $type.GetMethod('SetTrayVisible',$instance).Invoke($trayForm,[object[]]@($true)) | Out-Null
+ $type.GetMethod('DispatchCommand',$instance).Invoke($trayForm,[object[]]@('show')) | Out-Null
+ $trayForm.Close()
+ if($trayForm.IsDisposed -or $trayForm.Visible) { throw 'Simge varken kapatınca tepsiye gizlenmedi' }
  $type.GetMethod('DispatchCommand',$instance).Invoke($trayForm,[object[]]@('exit')) | Out-Null
  if(-not $trayForm.IsDisposed) { throw 'Arayüz kapanmadı' }
 } finally { $trayForm.Dispose() }
-Write-Output 'PASS: 7 komutun IPC aktarımı, tepsi durumu ve profilleri, göster/ayarlar/profil/gizle/çık davranışları. Motor değiştirilmedi.'
+Write-Output 'PASS: 7 komutun IPC aktarımı, tepsi durumu ve profilleri, göster/ayarlar/profil/gizle/çık davranışları, tepsi ayarına göre simge ve kapatma. Motor değiştirilmedi.'

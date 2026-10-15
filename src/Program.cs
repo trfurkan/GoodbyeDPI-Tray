@@ -93,6 +93,8 @@ namespace GoodbyeTray {
     if(args.Length==2 && args[0]=="--shell-report") { WindowsIntegration.RegisterJumpList(); File.WriteAllText(args[1],WindowsIntegration.ShellStatus); return 0; }
     string command=args.Length==2 && args[0]=="--action"?args[1]:"show";
     if(!AppCommands.IsValid(command)) throw new ArgumentException("Bilinmeyen uygulama komutu.");
+    // A tray start with the tray turned off would leave a running app with nothing on screen.
+    if(Array.IndexOf(args,"--tray")>=0 && !WindowsIntegration.TrayStartupEnabled()) return 0;
     bool created; using(var mutex=new Mutex(true,@"Local\GoodbyeDPI.Tray.UI",out created)) {
      if(!created) { if(Array.IndexOf(args,"--tray")<0 && !AppCommands.Send(command)) { try { using(var signal=EventWaitHandle.OpenExisting(MainForm.RevealEvent)) signal.Set(); } catch(WaitHandleCannotBeOpenedException) { MessageBox.Show("Uygulama açılıyor, saatin yanındaki simgeden ulaşabilirsin.","GoodbyeDPI"); } } return 0; }
      if(command=="exit") return 0;

@@ -8,6 +8,8 @@
 
 Uygulama `C:\Program Files\GoodbyeDPI Tray` klasörüne kurulur ve Başlat menüsüne eklenir. Güncellerken seçtiğin profil ve başlangıç ayarların korunur.
 
+Daha önce GoodbyeDPI-Turkey'in hizmet kurulum betiğini kullandıysan kurucu o hizmeti bulur ve devralmak için onay ister. Onaylarsan seçtiğin profil korunur, eski klasörü sonra silebilirsin.
+
 ![Kurulum ekranı](images/setup.png)
 
 ## Ana pencere
@@ -22,7 +24,7 @@ Uygulama `C:\Program Files\GoodbyeDPI Tray` klasörüne kurulur ve Başlat menü
 - **Erişim testi:** GoodbyeDPI'ın işe yarayıp yaramadığını ölçer (ayrıntılar aşağıda).
 - **Uygulamayı kaldır:** Kaldırma ekranını açar. İstersen Windows Ayarlar > Uygulamalar'dan da kaldırabilirsin.
 
-Pencereyi kapatınca uygulama saatin yanındaki simgeye küçülür; çift tıklayınca geri gelir. Uygulamadan çıkmak GoodbyeDPI'ı kapatmaz, kapatmak için **Durdur**'a bas.
+Pencereyi kapatınca uygulama saatin yanındaki simgeye küçülür; çift tıklayınca geri gelir. **Oturum açtığımda sistem tepsisinde göster** seçeneğini kapatırsan simge gizlenir ve pencereyi kapatınca uygulama tamamen kapanır. İki durumda da GoodbyeDPI çalışmaya devam eder, kapatmak için **Durdur**'a bas.
 
 Sağ üstteki **Tema** düğmesinden Aydınlık, Karanlık ya da Sistem seçebilirsin. Klavyeyle de kullanılabilir: Tab ile gezin, Enter/Boşluk ile bas, profil kutusunda Aşağı ok ile listeyi aç.
 
