@@ -18,7 +18,6 @@ Türkiye’de erişimi engellenen Discord ve yasaklı sitelere VPN kullanmadan g
 
 - **VPN değildir:** Trafiğin başka bir sunucuya yönlendirilmez, IP adresin değişmez. Bu yüzden VPN'lerdeki gibi hız kaybı ya da ping artışı olmaz.
 - **Sadece engeli aşar:** İnternet sağlayıcının DPI ve DNS engellerini atlatır; diğer bağlantıların olduğu gibi çalışır.
-- **Tüm bilgisayarda çalışır:** Tarayıcının yanında Discord uygulaması ve oyunlar da etkilenir.
 
 Doğrudan IP adresiyle engellenen siteleri açamaz. Hangi sitelerin açıldığını uygulamadaki **Erişim testi** ile görebilirsin.
 
