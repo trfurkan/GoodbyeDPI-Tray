@@ -1,0 +1,15 @@
+# Generated installers and application builds
+/dist/
+/build/
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+*.log
+# Local credentials and editor state
+.env
+.env.*
+!.env.example
+.codex/
+.agents/

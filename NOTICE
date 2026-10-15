@@ -1,0 +1,14 @@
+GoodbyeDPI Tray
+Copyright 2026 Furkan (trfurkan)
+https://github.com/trfurkan
+
+The original Windows GUI, service host, console viewer, installer and build
+scripts in this repository are licensed under the Apache License, Version 2.0.
+
+This is an independent GUI project. It is not an official release of
+ValdikSS/GoodbyeDPI or cagritaskn/GoodbyeDPI-Turkey.
+
+Bundled third-party executables, drivers, scripts and license texts retain
+their original copyrights and licenses. The repository's root license does
+not replace those licenses. See THIRD_PARTY_NOTICES.md and
+vendor/goodbyedpi/licenses/.
