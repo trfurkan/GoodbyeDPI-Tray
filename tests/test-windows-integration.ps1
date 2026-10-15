@@ -15,7 +15,7 @@ foreach($task in $list.JumpItems) {
  if(-not $commands.GetMethod('IsValid',$static).Invoke($null,[object[]]@([string]$command))) { throw "İşlemsiz Jump List girdisi: $command" }
 }
 $version=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $root 'dist\GoodbyeDPI-Installer.exe'))
-if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.5.0.0') { throw 'EXE metadatası yanlış' }
+if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.5.1.0') { throw 'EXE metadatası yanlış' }
 $type=$assembly.GetType('GoodbyeTray.MainForm')
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {
