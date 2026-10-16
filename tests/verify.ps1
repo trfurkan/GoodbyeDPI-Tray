@@ -52,8 +52,10 @@ try {
  $lightColor = $form.BackColor
  $themeButton = $formType.GetField('themeButton',$instanceFlags).GetValue($form)
  if (-not $themeButton.Text.Contains('Aydınlık')) { throw 'Aydınlık tema düğmesi güncellenmedi.' }
- $setTheme.Invoke($form,[object[]]@('dark',$false)) | Out-Null
+ $setTheme.Invoke($form,[object[]]@('ocean',$false)) | Out-Null
  if (-not [Windows.Forms.SystemInformation]::HighContrast -and $form.BackColor.ToArgb() -eq $lightColor.ToArgb()) { throw 'Tema renkleri değişmedi.' }
+ if (-not $themeButton.Text.Contains('Okyanus')) { throw 'Okyanus tema düğmesi güncellenmedi.' }
+ $setTheme.Invoke($form,[object[]]@('black',$false)) | Out-Null
  if (-not $themeButton.Text.Contains('Karanlık')) { throw 'Karanlık tema düğmesi güncellenmedi.' }
  $setTheme.Invoke($form,[object[]]@('system',$false)) | Out-Null
  if (-not $themeButton.Text.Contains('Sistem')) { throw 'Sistem teması seçilemedi.' }

@@ -60,7 +60,7 @@ namespace GoodbyeTray {
   internal void Stop() {
    if(Child==null || Child.HasExited) return;
    GenerateConsoleCtrlEvent(0,0);
-   if(!Child.WaitForExit(5000)) { Child.Kill(); if(!Child.WaitForExit(5000)) throw new IOException("GoodbyeDPI motoru durdurulamadı."); }
+   if(!Child.WaitForExit(5000)) { Child.Kill(); if(!Child.WaitForExit(5000)) throw new IOException(L.T("GoodbyeDPI motoru durdurulamadı.")); }
   }
   public void Dispose() {
    if(disposed) return; disposed=true;
@@ -73,29 +73,107 @@ namespace GoodbyeTray {
   }
  }
  static class EngineConsole {
-  internal static string PathName { get { return Path.Combine(Program.InstallDir,"engine-console.txt"); } }
+  internal static string PathName { get { return Path.Combine(Program.InstallDir,"engine-console.log"); } }
   internal static string Encode(int profile,string state,int pid,string output) { return "GDC1|"+profile+"|"+state+"|"+pid+Environment.NewLine+output; }
   internal static void Write(string text) {
-   if(File.Exists(PathName) && (File.GetAttributes(PathName)&FileAttributes.ReparsePoint)!=0) throw new IOException("Konsol dosyası bağlantı noktası olamaz.");
+   if(File.Exists(PathName) && (File.GetAttributes(PathName)&FileAttributes.ReparsePoint)!=0) throw new IOException(L.T("Konsol dosyası bağlantı noktası olamaz."));
    using(var stream=new FileStream(PathName,FileMode.Create,FileAccess.Write,FileShare.Read)) using(var writer=new StreamWriter(stream,new UTF8Encoding(false))) writer.Write(text);
   }
  }
+ // Requests a signed-in user may send without admin rights (the installer grants start, stop and user-defined control).
+ // The service applies them itself, so users never get the right to change the service configuration.
+ static class EngineRequest {
+  internal const int ProfileBase=128, AutoOn=150, AutoOff=151;
+  internal const string SetProfile="--set-profile", SetStart="--set-start";
+  // Applies a configuration request as the service. Only these fixed changes are possible.
+  internal static void Apply(string name,string value) {
+   int profile;
+   if(name==SetProfile && Int32.TryParse(value,out profile) && profile>=0 && profile<Program.Args.Length) Program.Configure(profile);
+   else if(name==SetStart && (value=="auto" || value=="demand")) Program.Sc("config GoodbyeDPI start= "+value);
+   else throw new ArgumentException(L.T("Bilinmeyen hizmet isteği."));
+  }
+ }
+ // Runs start, stop, profile and startup requests as the signed-in user, without a UAC prompt.
+ static class UserServiceControl {
+  static readonly TimeSpan Wait=TimeSpan.FromSeconds(20);
+  // False when Windows refuses (a service installed before users were given these rights); the caller then asks for admin rights.
+  internal static bool TryRun(string action,int profile) {
+   try { Run(action,profile); return true; }
+   catch(InvalidOperationException ex) { var native=ex.InnerException as Win32Exception; if(native!=null && native.NativeErrorCode==5) return false; throw; }
+  }
+  static void Run(string action,int profile) {
+   using(var service=new ServiceController(Program.ServiceName)) {
+    if(action=="start") Program.Start();
+    else if(action=="stop") StopAndWait(service);
+    else if(action=="restart") { StopAndWait(service); Program.Start(); }
+    else if(action=="profile") {
+     if(profile<0 || profile>=Program.Args.Length) throw new ArgumentOutOfRangeException("profile");
+     Request(service,EngineRequest.ProfileBase+profile,new[]{EngineRequest.SetProfile,profile.ToString()},delegate { return Program.Profile()==profile; });
+    } else if(action=="auto-on" || action=="auto-off") {
+     bool auto=action=="auto-on";
+     Request(service,auto?EngineRequest.AutoOn:EngineRequest.AutoOff,new[]{EngineRequest.SetStart,auto?"auto":"demand"},delegate { return StartsWithWindows()==auto; });
+    } else throw new ArgumentException(L.T("Bilinmeyen işlem."));
+   }
+  }
+  static void StopAndWait(ServiceController service) {
+   service.Refresh();
+   if(service.Status==ServiceControllerStatus.Stopped) return;
+   if(service.Status!=ServiceControllerStatus.StopPending) service.Stop();
+   service.WaitForStatus(ServiceControllerStatus.Stopped,Wait);
+  }
+  // A running service applies the request itself; a stopped one is started only to apply it and stops again.
+  static void Request(ServiceController service,int command,string[] startArguments,Func<bool> applied) {
+   service.Refresh();
+   bool running=service.Status==ServiceControllerStatus.Running;
+   if(running) service.ExecuteCommand(command);
+   else { if(service.Status!=ServiceControllerStatus.Stopped) service.WaitForStatus(ServiceControllerStatus.Stopped,Wait); service.Start(startArguments); }
+   var deadline=DateTime.UtcNow+Wait;
+   while(!applied() && DateTime.UtcNow<deadline) Thread.Sleep(200);
+   if(!applied()) throw new InvalidOperationException(L.T("GoodbyeDPI hizmeti isteği uygulamadı. Kurulum dosyasıyla güncellemeyi dene."));
+   service.WaitForStatus(running?ServiceControllerStatus.Running:ServiceControllerStatus.Stopped,Wait);
+  }
+  static bool StartsWithWindows() { using(var key=Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\GoodbyeDPI")) return key!=null && Convert.ToInt32(key.GetValue("Start",3))==2; }
+ }
  sealed class EngineService : ServiceBase {
-  readonly int profile; readonly object sync=new object();
+  int profile; readonly object sync=new object();
   NativeConsoleSession session; System.Threading.Timer capture;
   string last=""; bool stopping; string output="";
   internal EngineService(int selected) { profile=selected; ServiceName=Program.ServiceName; CanStop=true; CanShutdown=true; AutoLog=false; }
   protected override void OnStart(string[] arguments) {
    if(profile<0 || profile>=Program.Args.Length) throw new ArgumentOutOfRangeException("profile");
-   if(!String.Equals(Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory).TrimEnd('\\'),Program.InstallDir,StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Hizmet kurulum klasöründen çalışmalıdır.");
-   if(Process.GetProcessesByName("goodbyedpi").Length>0) throw new InvalidOperationException("Başka bir GoodbyeDPI motoru çalışıyor.");
+   if(!String.Equals(Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory).TrimEnd('\\'),Program.InstallDir,StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException(L.T("Hizmet kurulum klasöründen çalışmalıdır."));
+   // A start with a request only changes the configuration while GoodbyeDPI stays off, then the service stops again.
+   if(arguments!=null && arguments.Length==2) {
+    EngineRequest.Apply(arguments[0],arguments[1]); stopping=true;
+    new Thread(delegate() { Thread.Sleep(200); Stop(); }) { IsBackground=true }.Start();
+    return;
+   }
+   if(Process.GetProcessesByName("goodbyedpi").Length>0) throw new InvalidOperationException(L.T("Başka bir GoodbyeDPI motoru çalışıyor."));
+   StartEngine();
+  }
+  void StartEngine() {
    try {
     EngineConsole.Write(EngineConsole.Encode(profile,"starting",0,""));
     session=new NativeConsoleSession(); session.Start(Program.Engine,Program.Args[profile]);
-    if(session.Child.WaitForExit(800)) throw new InvalidOperationException("GoodbyeDPI başlatılamadı: "+session.Read());
+    if(session.Child.WaitForExit(800)) throw new InvalidOperationException(L.T("GoodbyeDPI başlatılamadı: ")+session.Read());
     NativeConsoleSession.FlushDns();
     Capture(); capture=new System.Threading.Timer(delegate { Tick(); },null,500,500);
-   } catch { if(session!=null) session.Dispose(); throw; }
+   } catch { if(session!=null) session.Dispose(); session=null; throw; }
+  }
+  protected override void OnCustomCommand(int command) {
+   try {
+    if(command==EngineRequest.AutoOn || command==EngineRequest.AutoOff) { EngineRequest.Apply(EngineRequest.SetStart,command==EngineRequest.AutoOn?"auto":"demand"); return; }
+    int next=command-EngineRequest.ProfileBase; if(next<0 || next>=Program.Args.Length) return;
+    lock(sync) {
+     if(stopping) return;
+     EngineRequest.Apply(EngineRequest.SetProfile,next.ToString());
+     // Switch the engine in place: stop the old one, start it again with the new arguments.
+     if(capture!=null) capture.Dispose(); capture=null;
+     if(session!=null) { session.Dispose(); session=null; }
+     profile=next; last="";
+     try { StartEngine(); } catch(Exception ex) { AppInfo.Log("Profil değiştirilemedi: "+ex); ExitCode=1; new Thread(delegate() { Stop(); }) { IsBackground=true }.Start(); }
+    }
+   } catch(Exception ex) { AppInfo.Log("Hizmet isteği: "+ex); }
   }
   void Capture() {
    string current=session.Read(); if(!String.IsNullOrWhiteSpace(current)) output=current;

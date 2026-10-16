@@ -36,3 +36,16 @@ foreach($remove in @($false,$true)) {
  } finally {$form.Dispose()}
 }
 Write-Output 'PASS: Kurulum/kaldirma ilerlemesi, yuzdenin gerilememesi, %100 tamamlanma, geciken bildirim ve bitis ekraninin yerlesimi.'
+$check=$assembly.GetType('GoodbyeTray.Setup').GetMethod('CheckLocation',[Reflection.BindingFlags]'NonPublic,Static')
+$scratch=Join-Path ([IO.Path]::GetTempPath()) ('gdpi-location-'+[guid]::NewGuid().ToString('N')); New-Item -ItemType Directory $scratch | Out-Null
+try {
+ $busy=Join-Path $scratch 'dolu'; New-Item -ItemType Directory $busy | Out-Null; Set-Content (Join-Path $busy 'baska.txt') 'x'
+ $drive=[IO.Path]::GetPathRoot($env:SystemRoot)
+ foreach($bad in @('', 'goreli\yol', $drive, (Join-Path $env:SystemRoot 'GoodbyeDPI Tray'), '\\sunucu\paylasim\GoodbyeDPI Tray', '\kokten\klasor', $busy)) {
+  if($check.Invoke($null,[object[]]@([string]$bad)) -eq $null) { throw "Uygunsuz konum kabul edildi: '$bad'" }
+ }
+ foreach($good in @((Join-Path $scratch 'yeni\GoodbyeDPI Tray'), (Join-Path $env:ProgramFiles 'GoodbyeDPI Tray'))) {
+  $problem=$check.Invoke($null,[object[]]@([string]$good)); if($problem -ne $null) { throw "Uygun konum reddedildi: $good ($problem)" }
+ }
+} finally { Remove-Item -Recurse -Force $scratch }
+Write-Output 'PASS: Kurulum konumu kontrolu: goreli yol, surucu koku, Windows klasoru, ag yolu ve dolu klasor reddediliyor.'

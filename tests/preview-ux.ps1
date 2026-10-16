@@ -12,7 +12,7 @@ $flags = [Reflection.BindingFlags]'NonPublic,Instance'
 foreach ($dark in @($false,$true)) {
  $form = [Activator]::CreateInstance($formType,[object[]]@($false))
  try {
-  $formType.GetMethod('SetThemePreference',$flags).Invoke($form,[object[]]@($(if($dark){'dark'}else{'light'}),$false)) | Out-Null
+  $formType.GetMethod('SetThemePreference',$flags).Invoke($form,[object[]]@($(if($dark){'black'}else{'light'}),$false)) | Out-Null
   $form.Show()
   $formType.GetMethod('SetServiceState',$flags).Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
   [Windows.Forms.Application]::DoEvents()
@@ -28,7 +28,7 @@ foreach ($dark in @($false,$true)) {
   for ($cycle=0; $cycle -lt 5; $cycle++) {
    $themeButton.PerformClick()
    [Windows.Forms.Application]::DoEvents()
-   if (-not $themeMenu.Visible -or $themeMenu.Items.Count -ne 3) { throw 'Tema menüsü açılmadı.' }
+   if (-not $themeMenu.Visible -or $themeMenu.Items.Count -ne 9) { throw 'Tema menüsü açılmadı.' }
    if($cycle -eq 0) {
     $menuBitmap=[Drawing.Bitmap]::new($themeMenu.Width,$themeMenu.Height)
     try { $themeMenu.DrawToBitmap($menuBitmap,[Drawing.Rectangle]::new(0,0,$themeMenu.Width,$themeMenu.Height)); $menuBitmap.Save((Join-Path $previewDir "theme-menu-$mode.png")) } finally { $menuBitmap.Dispose() }

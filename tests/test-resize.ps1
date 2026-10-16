@@ -23,7 +23,7 @@ try {
  if(-not [ResizeDamage]::GetUpdateRect($panel.Handle,[ref]$damage,$false) -or $damage.Left -ne 0 -or $damage.Right -lt $panel.ClientSize.Width){throw 'Resize did not invalidate the entire card'}
 } finally {$hostForm.Dispose()}
 $type=$assembly.GetType('GoodbyeTray.MainForm')
-foreach($theme in @('light','dark')) {
+foreach($theme in @('light','black')) {
  $form=[Activator]::CreateInstance($type,[object[]]@($false))
  try {
   $type.GetMethod('SetThemePreference',$flags).Invoke($form,[object[]]@($theme,$false))|Out-Null

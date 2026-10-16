@@ -14,6 +14,8 @@ namespace GoodbyeTray {
  class SoftButton : Control, IButtonControl {
   internal Color Fill, Ink, Edge;
   internal string Glyph;
+  // Drawn in place of a line glyph when set, e.g. the selected theme's color swatch.
+  internal Image GlyphImage;
   bool hovered,pressed;
   public DialogResult DialogResult { get; set; }
   public void NotifyDefault(bool value) { Invalidate(); }
@@ -49,6 +51,7 @@ namespace GoodbyeTray {
      if(Glyph=="restart") { e.Graphics.DrawArc(pen,2,2,14,14,-60,300); e.Graphics.DrawLines(pen,new[]{new Point(10,0),new Point(14,2),new Point(11,5)}); }
      else if(Glyph=="trash") { e.Graphics.DrawLine(pen,2,4,16,4); e.Graphics.DrawRectangle(pen,6,1,6,3); e.Graphics.DrawLines(pen,new[]{new Point(4,5),new Point(5,17),new Point(13,17),new Point(14,5)}); e.Graphics.DrawLine(pen,8,7,8,14); e.Graphics.DrawLine(pen,11,7,11,14); }
      else if(Glyph=="console") { e.Graphics.DrawLines(pen,new[]{new Point(2,3),new Point(8,9),new Point(2,15)}); e.Graphics.DrawLine(pen,10,15,17,15); }
+     else if(GlyphImage!=null) e.Graphics.DrawImage(GlyphImage,-1,-1,20,20);
      else if(Glyph=="globe") { e.Graphics.DrawEllipse(pen,1,1,16,16); e.Graphics.DrawEllipse(pen,5.5f,1,7,16); e.Graphics.DrawLine(pen,1,9,17,9); }
      else { e.Graphics.DrawLines(pen,new[]{new Point(12,1),new Point(9,4),new Point(12,7),new Point(16,4),new Point(16,9),new Point(12,11),new Point(9,10),new Point(3,17),new Point(0,14),new Point(7,7),new Point(7,3),new Point(12,1)}); }
     }
@@ -79,9 +82,9 @@ namespace GoodbyeTray {
   internal event EventHandler SelectedIndexChanged;
   public int SelectedIndex {
    get { return selected; }
-   set { if(value < -1 || value>=Items.Count) throw new ArgumentOutOfRangeException("value"); if(selected==value) return; selected=value; Text=value<0?"Profil seç  ▾":Items[value]+"  ▾"; if(SelectedIndexChanged!=null) SelectedIndexChanged(this,EventArgs.Empty); Invalidate(); }
+   set { if(value < -1 || value>=Items.Count) throw new ArgumentOutOfRangeException("value"); if(selected==value) return; selected=value; Text=value<0?L.T("Profil seç  ▾"):Items[value]+"  ▾"; if(SelectedIndexChanged!=null) SelectedIndexChanged(this,EventArgs.Empty); Invalidate(); }
   }
-  public ProfilePicker() { Click+=delegate { OpenMenu(); }; AccessibleName="Bağlantı profili"; }
+  public ProfilePicker() { Click+=delegate { OpenMenu(); }; AccessibleName=L.T("Bağlantı profili"); }
   void OpenMenu() {
    if(IsDisposed || Disposing || !Enabled || menu.Visible) return;
    // The owner keeps the menu alive until disposal. Closed runs before all
@@ -105,6 +108,8 @@ namespace GoodbyeTray {
   void Measure() { contentHeight=TextRenderer.MeasureText(Text,Font,new Size(Math.Max(1,Width-44),Int32.MaxValue),Flags).Height; offset=Math.Min(offset,Limit); }
   Rectangle Thumb { get { int track=Math.Max(1,Height-16),h=Math.Min(track,Math.Max(28,track*ViewHeight/Math.Max(1,contentHeight))); return new Rectangle(Width-13,8+(track-h)*offset/Math.Max(1,Limit),5,h); } }
   void ScrollTo(int value) { offset=Math.Max(0,Math.Min(Limit,value)); Invalidate(); }
+  internal void ScrollToEnd() { ScrollTo(Limit); }
+  internal void ScrollToTop() { ScrollTo(0); }
   protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); Measure(); Invalidate(); }
   protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); Measure(); Invalidate(); }
   protected override void OnSizeChanged(EventArgs e) { base.OnSizeChanged(e); Measure(); }
@@ -113,8 +118,10 @@ namespace GoodbyeTray {
    var saved=e.Graphics.Save(); e.Graphics.SetClip(new Rectangle(12,12,Math.Max(1,Width-44),ViewHeight));
    TextRenderer.DrawText(e.Graphics,Text,Font,new Rectangle(12,12-offset,Math.Max(1,Width-44),Math.Max(contentHeight,ViewHeight)),ForeColor,Flags|TextFormatFlags.PreserveGraphicsClipping); e.Graphics.Restore(saved);
    if(Limit>0) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; using(var path=SoftButton.Round(Thumb,5)) using(var brush=new SolidBrush(ThumbColor)) e.Graphics.FillPath(brush,path); }
-   if(Focused) ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(3,3,Width-6,Height-6),ForeColor,BackColor);
+   if(Focused && FocusFrame) ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(3,3,Width-6,Height-6),ForeColor,BackColor);
   }
+  // The installer's notice keeps the keyboard focus frame; read-only viewers like the console do not need it.
+  internal bool FocusFrame=true;
   protected override void OnMouseWheel(MouseEventArgs e) { ScrollTo(offset-e.Delta/120*Font.Height*3); base.OnMouseWheel(e); }
   protected override void OnMouseDown(MouseEventArgs e) { base.OnMouseDown(e); Focus(); if(e.Button!=MouseButtons.Left || Limit==0 || e.X<Width-22) return; if(Thumb.Contains(e.Location)) { dragging=true; dragY=e.Y; dragOffset=offset; Capture=true; } else ScrollTo(offset+(e.Y<Thumb.Top?-ViewHeight:ViewHeight)); }
   protected override void OnMouseMove(MouseEventArgs e) { base.OnMouseMove(e); if(dragging) ScrollTo(dragOffset+(e.Y-dragY)*Limit/Math.Max(1,Height-16-Thumb.Height)); }
@@ -140,7 +147,6 @@ namespace GoodbyeTray {
   readonly ProfilePicker profiles=new ProfilePicker();
   readonly CheckBox startup=new CheckBox(), engineStartup=new CheckBox();
   readonly SoftButton toggle=new SoftButton(), apply=new SoftButton(), restart=new SoftButton();
-  readonly SoftButton trayButton;
   readonly Label trayHelp=LabelOf("",9,false);
   readonly LinkLabel updateLink=new LinkLabel { AutoSize=true,Anchor=AnchorStyles.Right,Margin=new Padding(0,0,16,0),LinkBehavior=LinkBehavior.HoverUnderline,Visible=false };
   readonly ToolStripMenuItem trayUpdate;
@@ -158,9 +164,34 @@ namespace GoodbyeTray {
   TableLayoutPanel startupContent;
   bool sizing,stateReadPending;
   Form diagnosticsWindow,accessWindow;
-  readonly SoftButton themeButton=new SoftButton();
-  readonly ContextMenuStrip themeMenu=new ContextMenuStrip { ShowImageMargin=false,ShowCheckMargin=true,MinimumSize=new Size(240,0),Padding=new Padding(5),Font=new Font("Segoe UI",10) };
-  string themePreference="system";
+  readonly SoftButton themeButton=new SoftButton(), languageButton=new SoftButton();
+  readonly ContextMenuStrip languageMenu=new ContextMenuStrip { ShowImageMargin=true,ShowCheckMargin=true,ImageScalingSize=new Size(20,20),MinimumSize=new Size(200,0),Padding=new Padding(5),Font=new Font("Segoe UI",10) };
+  // Every text is read once when windows are built, so a new language takes effect by reopening the app.
+  internal void ChangeLanguage(string code) {
+   if(code==L.Current) return;
+   try { L.Save(code); } catch(Exception ex) { ReportError(ex); return; }
+   if(commands==null) return;
+   try { Process.Start(new ProcessStartInfo(Application.ExecutablePath,"--relaunch "+Process.GetCurrentProcess().Id) { UseShellExecute=false }).Dispose(); }
+   catch(Exception ex) { ReportError(ex); return; }
+   quitting=true; Close();
+  }
+  readonly ContextMenuStrip themeMenu=new ContextMenuStrip { ShowImageMargin=true,ShowCheckMargin=true,ImageScalingSize=new Size(20,20),MinimumSize=new Size(300,0),Padding=new Padding(5),Font=new Font("Segoe UI",10) };
+  string themePreference="black";
+  static readonly string[] ThemeModes=AppPalette.Modes, ThemeNames={L.T("Aydınlık"),L.T("Karanlık"),L.T("Okyanus"),"Sakura",L.T("Güneş Batımı"),"Android",L.T("Şampanya"),L.T("Sistem")}, ThemeLabels={L.T("Aydınlık"),L.T("Karanlık"),L.T("Okyanus"),"Sakura",L.T("Güneş Batımı"),"Android",L.T("Şampanya"),L.T("Windows'a uy")};
+  static string ThemeName(string mode) { int i=Array.IndexOf(ThemeModes,mode); return i<0?ThemeNames[0]:ThemeNames[i]; }
+  // A small preview of each theme for the menu: its background with the accent color; "system" is half light, half dark.
+  static Bitmap ThemeSwatch(string mode) {
+   var bitmap=new Bitmap(20,20); string was=AppPalette.Variant;
+   using(var g=Graphics.FromImage(bitmap)) {
+    g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+    AppPalette.Variant=AppPalette.VariantOf(mode); Color fill=AppPalette.Background(AppPalette.IsDark(mode) || mode=="system"), dot=AppPalette.Accent; AppPalette.Variant="black";
+    using(var brush=new SolidBrush(fill)) g.FillEllipse(brush,1,1,17,17);
+    if(mode=="system") using(var light=new SolidBrush(AppPalette.Background(false))) g.FillPie(light,1,1,17,17,90,180);
+    using(var accent=new SolidBrush(dot)) g.FillEllipse(accent,6.5f,6.5f,6,6);
+    using(var edge=new Pen(Color.FromArgb(120,128,128,140))) g.DrawEllipse(edge,1,1,17,17);
+   }
+   AppPalette.Variant=was; return bitmap;
+  }
   const string PreferencesKey=@"Software\GoodbyeDPITray";
   bool quitting,refreshing,busy,running,available,transition,hideNotified,dark;
   int activeProfile=-1;
@@ -170,55 +201,63 @@ namespace GoodbyeTray {
   public MainForm(bool withTray) : this(withTray,null) {}
   public MainForm(bool withTray,bool? previewDark) {
    themeOverride=previewDark; Text="GoodbyeDPI"; FormBorderStyle=FormBorderStyle.Sizable; ControlBox=true; MinimizeBox=true; MaximizeBox=true; Font=new Font("Segoe UI",10); AutoScaleMode=AutoScaleMode.Dpi; DoubleBuffered=true; SetStyle(ControlStyles.ResizeRedraw,true);
-   try { using(var key=Registry.CurrentUser.OpenSubKey(PreferencesKey)) { string saved=key==null?"system":Convert.ToString(key.GetValue("Theme","system")); if(saved=="light" || saved=="dark") themePreference=saved; } } catch { }
+   themePreference=AppPalette.SavedTheme();
    ClientSize=new Size(900,Math.Min(840,Screen.PrimaryScreen.WorkingArea.Height-70)); MinimumSize=new Size(760,740); StartPosition=FormStartPosition.CenterScreen; Icon=Program.AppIcon;
    var scroll=new Panel { Dock=DockStyle.Fill,AutoScroll=false }; Controls.Add(scroll);
    var layout=dashboard; layout.Dock=DockStyle.Fill; layout.AutoSize=false; layout.Padding=new Padding(20,10,20,10); layout.ColumnCount=1; layout.RowCount=8;
-   foreach(int height in new[]{104,112,30,160,164,58}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
+   foreach(int height in new[]{104,112,0,160,164,58}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
    layout.RowStyles.Add(new RowStyle(SizeType.Absolute,0)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); scroll.Controls.Add(layout);
    var header=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=3,RowCount=1 };
-   header.RowStyles.Add(new RowStyle(SizeType.Percent,100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,140)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,126));
+   header.RowStyles.Add(new RowStyle(SizeType.Percent,100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,148)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,172));
       var brand=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1 };
    brand.RowStyles.Add(new RowStyle(SizeType.Percent,100)); brand.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,90)); brand.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
    var logo=new Panel { Dock=DockStyle.Fill }; logo.Paint+=delegate(object sender,PaintEventArgs e) { e.Graphics.DrawIcon(Program.AppIcon,new Rectangle(8,2,Math.Min(72,logo.Height-4),Math.Min(80,logo.Height-4))); }; brand.Controls.Add(logo);
    var brandTitle=LabelOf("GoodbyeDPI",27,true); brandTitle.TextAlign=ContentAlignment.MiddleLeft; brand.Controls.Add(brandTitle); header.Controls.Add(brand,0,0);
-   string[] modes={"system","light","dark"}; string[] labels={"Sistem teması","Aydınlık","Karanlık"};
-   for(int i=0;i<modes.Length;i++) { string choice=modes[i]; var item=new ToolStripMenuItem(labels[i]) { Tag=choice,AutoSize=false,Size=new Size(220,40),Padding=new Padding(8,6,12,6) }; item.Click+=delegate { try { SetThemePreference(choice,true); notice.Text="Tema kaydedildi."; } catch(Exception ex) { ReportError(ex); } }; themeMenu.Items.Add(item); }
-   themeButton.Dock=DockStyle.Top; themeButton.AccessibleName="Görünüm teması";
-   themeButton.Click+=delegate { foreach(ToolStripMenuItem item in themeMenu.Items) { item.Checked=Convert.ToString(item.Tag)==themePreference; item.BackColor=surface; item.ForeColor=foreground; } themeMenu.BackColor=surface; themeMenu.ForeColor=foreground; themeMenu.Renderer=new MenuRenderer(surface,foreground,border); if(!themeMenu.Visible) themeMenu.Show(themeButton,new Point(0,themeButton.Height)); };
-   header.Controls.Add(themeButton,1,0);
-   trayButton=ButtonOf("Tepsiye gizle",delegate { HideToTray(); }); trayButton.Dock=DockStyle.Top; header.Controls.Add(trayButton,2,0); trayButton.Visible=withTray; layout.Controls.Add(header);
+   for(int i=0;i<ThemeModes.Length;i++) { string choice=ThemeModes[i]; var item=new ToolStripMenuItem(ThemeLabels[i]) { Tag=choice,Image=ThemeSwatch(choice),AutoSize=false,Size=new Size(300,choice=="system"?72:40),Padding=new Padding(8,6,12,6) };
+    if(choice=="system") { item.AccessibleDescription=L.T("Temayı (Karanlık/Aydınlık) sistem tercihlerine göre otomatik ayarlar."); item.ImageAlign=ContentAlignment.TopCenter; } item.Click+=delegate { try { SetThemePreference(choice,true); notice.Text="Tema kaydedildi."; } catch(Exception ex) { ReportError(ex); } }; if(choice=="system") themeMenu.Items.Add(new ToolStripSeparator()); themeMenu.Items.Add(item); }
+   themeButton.Dock=DockStyle.Top; themeButton.AccessibleName=L.T("Görünüm teması"); themeButton.Glyph="swatch";
+   themeButton.Click+=delegate { foreach(ToolStripItem entry in themeMenu.Items) { var item=entry as ToolStripMenuItem; if(item==null) continue; item.Checked=Convert.ToString(item.Tag)==themePreference; item.BackColor=surface; item.ForeColor=foreground; } themeMenu.BackColor=surface; themeMenu.ForeColor=foreground; themeMenu.Renderer=new MenuRenderer(surface,foreground,border); if(!themeMenu.Visible) themeMenu.Show(themeButton,new Point(0,themeButton.Height)); };
+   // Language picker left of the theme button: round flag, language name, a menu of the three languages.
+   int current=Array.IndexOf(L.Codes,L.Current);
+   languageButton.Dock=DockStyle.Top; languageButton.Margin=new Padding(0,3,8,3); languageButton.AccessibleName=L.T("Dil"); languageButton.Glyph="swatch"; languageButton.GlyphImage=L.Flag(L.Current); languageButton.Text=L.Names[current]+"  ▾";
+   for(int i=0;i<L.Codes.Length;i++) { string code=L.Codes[i]; var item=new ToolStripMenuItem(L.Names[i]) { Tag=code,Image=L.Flag(code),AutoSize=false,Size=new Size(200,40),Padding=new Padding(8,6,12,6) }; item.Click+=delegate { ChangeLanguage(code); }; languageMenu.Items.Add(item); }
+   languageButton.Click+=delegate { foreach(ToolStripItem entry in languageMenu.Items) { var item=(ToolStripMenuItem)entry; item.Checked=Convert.ToString(item.Tag)==L.Current; item.BackColor=surface; item.ForeColor=foreground; } languageMenu.BackColor=surface; languageMenu.ForeColor=foreground; languageMenu.Renderer=new MenuRenderer(surface,foreground,border); if(!languageMenu.Visible) languageMenu.Show(languageButton,new Point(0,languageButton.Height)); };
+   header.Controls.Add(languageButton,1,0);
+   header.Controls.Add(themeButton,2,0);
+   layout.Controls.Add(header);
    var hero=new SoftPanel { Dock=DockStyle.Fill,Margin=new Padding(0,0,0,8),Padding=new Padding(20,12,20,12) }; layout.Controls.Add(hero);
    var heroLayout=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,BackColor=Color.Transparent };
    heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,154)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,34)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); hero.Controls.Add(heroLayout);
    status.Dock=DockStyle.Fill; status.Font=new Font(Font.FontFamily,16,FontStyle.Bold); status.TextAlign=ContentAlignment.MiddleLeft; heroLayout.Controls.Add(status,0,0);
    detail.Dock=DockStyle.Fill; detail.Tag="muted"; heroLayout.Controls.Add(detail,0,1);
    toggle.Dock=DockStyle.Top; toggle.Margin=new Padding(8,10,0,0); toggle.Click+=delegate { Execute(running?"stop":"start",0); }; heroLayout.Controls.Add(toggle,1,0); heroLayout.SetRowSpan(toggle,2);
-   notice.Dock=DockStyle.Fill; notice.Text="Profilini seç, gerisini uygulama halleder."; notice.Tag="muted"; notice.Padding=new Padding(2,4,2,0); layout.Controls.Add(notice);
-   BuildGeneral(layout); BuildSettings(layout); BuildTools(layout);
+   // The status line under the hero has no height (its row is 0); errors still show in a message box.
+   // It stays visible so the layout keeps its row order.
+   notice.Dock=DockStyle.Fill; layout.Controls.Add(notice);
+   BuildGeneral(layout); BuildSettings(layout); BuildTools(layout); ConfirmTrayOff=AskTrayOff;
    footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=40; footerPanel.ColumnCount=3; footerPanel.RowCount=1; footerPanel.Margin=Padding.Empty;
    footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,100));
    footerPanel.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-   var developer=ProjectLinks.Create("Geliştirici: trfurkan",AppInfo.DeveloperUrl,AppPalette.Accent,true); developer.Dock=DockStyle.Fill; footerPanel.Controls.Add(developer,0,0);
+   var developer=ProjectLinks.Create(L.T("Geliştirici: trfurkan"),AppInfo.DeveloperUrl,AppPalette.Accent,true); developer.Dock=DockStyle.Fill; footerPanel.Controls.Add(developer,0,0);
    updateLink.LinkClicked+=delegate { DownloadUpdate(); }; footerPanel.Controls.Add(updateLink,1,0);
-   var about=new LinkLabel { Text="Hakkında",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline }; about.LinkClicked+=delegate { ShowAbout(); }; footerPanel.Controls.Add(about,2,0);
+   var about=new LinkLabel { Text=L.T("Hakkında"),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline }; about.LinkClicked+=delegate { ShowAbout(); }; footerPanel.Controls.Add(about,2,0);
    layout.Controls.Add(footerPanel,0,7);
    if(withTray) {
     commands=new AppCommands();
     reveal=new EventWaitHandle(false,EventResetMode.AutoReset,RevealEvent);
-    var menu=new ContextMenuStrip(); menu.Items.Add("GoodbyeDPI'ı aç",null,delegate { Reveal(); });
-    trayToggle=new ToolStripMenuItem("Başlat",null,delegate { Execute("start",0); }); menu.Items.Add(trayToggle);
-    trayStop=new ToolStripMenuItem("Durdur",null,delegate { Execute("stop",0); }); menu.Items.Add(trayStop);
-    trayRestart=new ToolStripMenuItem("Yeniden başlat",null,delegate { Execute("restart",0); }); menu.Items.Add(trayRestart);
-    trayProfiles=new ToolStripMenuItem("Profil seçimi");
+    var menu=new ContextMenuStrip(); menu.Items.Add(L.T("GoodbyeDPI'ı aç"),null,delegate { Reveal(); });
+    trayToggle=new ToolStripMenuItem(L.T("Başlat"),null,delegate { Execute("start",0); }); menu.Items.Add(trayToggle);
+    trayStop=new ToolStripMenuItem(L.T("Durdur"),null,delegate { Execute("stop",0); }); menu.Items.Add(trayStop);
+    trayRestart=new ToolStripMenuItem(L.T("Yeniden başlat"),null,delegate { Execute("restart",0); }); menu.Items.Add(trayRestart);
+    trayProfiles=new ToolStripMenuItem(L.T("Profil seçimi"));
     for(int i=0;i<Program.Names.Length;i++) { int index=i; trayProfiles.DropDownItems.Add(new ToolStripMenuItem(Program.Names[i],null,delegate { Execute("profile",index); })); } menu.Items.Add(trayProfiles);
-    menu.Items.Add("Ayarlar",null,delegate { DispatchCommand("settings"); });
-    trayUpdate=new ToolStripMenuItem("Yeni sürümü indir",null,delegate { DownloadUpdate(); }) { Visible=false }; menu.Items.Add(trayUpdate);
+    menu.Items.Add(L.T("Ayarlar"),null,delegate { DispatchCommand("settings"); });
+    trayUpdate=new ToolStripMenuItem(L.T("Yeni sürümü indir"),null,delegate { DownloadUpdate(); }) { Visible=false }; menu.Items.Add(trayUpdate);
     menu.Items.Add(new ToolStripSeparator());
-    menu.Items.Add("Arayüzden çık",null,delegate { DispatchCommand("exit"); });
+    menu.Items.Add(L.T("Arayüzden çık"),null,delegate { DispatchCommand("exit"); });
     bool showTray=true; try { showTray=WindowsIntegration.TrayStartupEnabled(); } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
     tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=showTray }; tray.DoubleClick+=delegate { Reveal(); };
-    trayButton.Visible=showTray; trayHelp.Text=TrayHelp(showTray);
+    trayHelp.Text=TrayHelp(showTray);
    }
    Shown+=delegate { if(withTray) WindowsIntegration.RegisterJumpList(); if(WindowState==FormWindowState.Minimized && TrayShown) { Hide(); ShowInTaskbar=false; } };
    Resize+=delegate { if(WindowState==FormWindowState.Minimized && TrayShown) HideToTray(); };
@@ -237,36 +276,46 @@ namespace GoodbyeTray {
    content.Controls.Add(LabelOf(title,11,true),0,0); box.Controls.Add(content); return content;
   }
   void BuildGeneral(TableLayoutPanel layout) {
-   var content=Section(layout,"Bağlantı profili",new[]{24,44,24,20});
+   var content=Section(layout,L.T("Bağlantı profili"),new[]{24,44,24,20});
    var selection=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty };
    selection.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); selection.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,142));
    profiles.Dock=DockStyle.Top; profiles.Items.AddRange(Program.Names); profiles.SelectedIndex=0;
    profiles.SelectedIndexChanged+=delegate { UpdateSelection(); }; selection.Controls.Add(profiles);
-   apply.Text="Profili uygula"; apply.Dock=DockStyle.Top; apply.Margin=new Padding(10,3,0,3); apply.Click+=delegate { Execute("profile",profiles.SelectedIndex); }; selection.Controls.Add(apply); content.Controls.Add(selection);
+   apply.Text=L.T("Profili uygula"); apply.Dock=DockStyle.Top; apply.Margin=new Padding(10,3,0,3); apply.Click+=delegate { Execute("profile",profiles.SelectedIndex); }; selection.Controls.Add(apply); content.Controls.Add(selection);
    hint.Dock=DockStyle.Fill; hint.Tag="muted"; content.Controls.Add(hint);
    pending.Dock=DockStyle.Fill; pending.Tag="muted"; content.Controls.Add(pending);
   }
   void BuildSettings(TableLayoutPanel layout) {
-   var content=Section(layout,"Otomatik başlangıç",new[]{28,28,26,28,26}); startupContent=content;
-   engineStartup.Text="Windows açıldığında GoodbyeDPI'ı başlat"; engineStartup.AutoSize=true; content.Controls.Add(engineStartup,0,1); var serviceHelp=LabelOf("Bilgisayar açılınca GoodbyeDPI da çalışır.",9,false); serviceHelp.Tag="muted"; content.Controls.Add(serviceHelp,0,2);
-   startup.Text="Oturum açtığımda sistem tepsisinde göster"; startup.AutoSize=true; content.Controls.Add(startup,0,3); trayHelp.Text=TrayHelp(true); trayHelp.Tag="muted"; content.Controls.Add(trayHelp,0,4);
-   engineStartup.CheckedChanged+=delegate { if(!refreshing) Execute(engineStartup.Checked?"auto-on":"auto-off",0); };
+   var content=Section(layout,L.T("Otomatik başlangıç"),new[]{28,28,26,28,26}); startupContent=content;
+   engineStartup.Text=L.T("Windows açıldığında GoodbyeDPI'ı başlat"); engineStartup.AutoSize=true; content.Controls.Add(engineStartup,0,1); var serviceHelp=LabelOf(L.T("Bilgisayar açılınca GoodbyeDPI ve tepsi simgesi de başlar."),9,false); serviceHelp.Tag="muted"; content.Controls.Add(serviceHelp,0,2);
+   startup.Text=L.T("Sistem tepsisinde göster"); startup.AutoSize=true; content.Controls.Add(startup,0,3); trayHelp.Text=TrayHelp(true); trayHelp.Tag="muted"; content.Controls.Add(trayHelp,0,4);
+   // Starting with Windows covers both parts: the service and the tray entry in Task Manager follow this box together.
+   // Execute changes the tray entry only after the service change worked, so the two never drift apart.
+   engineStartup.CheckedChanged+=delegate {
+    if(refreshing) return;
+    Execute(engineStartup.Checked?"auto-on":"auto-off",0);
+   };
    startup.CheckedChanged+=delegate {
     if(refreshing) return;
+    // GoodbyeDPI starting with Windows but no icon means nothing on screen tells the user it runs; ask first.
+    if(!startup.Checked && engineStartup.Checked && !ConfirmTrayOff()) { refreshing=true; startup.Checked=true; refreshing=false; return; }
     try {
      if(startup.Checked) Program.RequireOwned();
      WindowsIntegration.SetTrayStartup(startup.Checked);
-     notice.Text=startup.Checked?"Tepsi simgesi açıldı, oturum açınca da gelecek.":"Tepsi simgesi gizlendi.";
+     notice.Text=startup.Checked?L.T("Tepsi simgesi açıldı, oturum açınca da gelecek."):"Tepsi simgesi gizlendi.";
     } catch(Exception ex) { ReportError(ex); } RefreshState();
    };
   }
+  // Replaceable so tests can answer without a dialog.
+  internal Func<bool> ConfirmTrayOff;
+  bool AskTrayOff() { return MessageBox.Show(this,L.T("GoodbyeDPI bilgisayar açılınca arka planda çalışmaya devam edecek, ama simge olmadan çalıştığını göremezsin. Durumunu görmek için uygulamayı Başlat menüsünden açman gerekir.\n\nSimge yine de gizlensin mi?"),"Simgeyi gizle",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)==DialogResult.Yes; }
   void BuildTools(TableLayoutPanel layout) {
    var tools=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=4,RowCount=1,Margin=Padding.Empty };
    for(int i=0;i<4;i++) tools.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,25f));
-   restart.Glyph="restart"; restart.Text="Yeniden başlat"; restart.Dock=DockStyle.Top; restart.Margin=new Padding(0,4,8,4); restart.Click+=delegate { Execute("restart",0); }; tools.Controls.Add(restart);
-   var diagnostics=ButtonOf("Konsol",delegate { ShowDiagnostics(); }); diagnostics.Glyph="console"; diagnostics.Dock=DockStyle.Top; diagnostics.Margin=new Padding(4,4,8,4); tools.Controls.Add(diagnostics);
-   var access=ButtonOf("Erişim testi",delegate { ShowAccessTest(); }); access.Glyph="globe"; access.Dock=DockStyle.Top; access.Margin=new Padding(4,4,8,4); tools.Controls.Add(access);
-   var uninstall=ButtonOf("Uygulamayı kaldır",delegate {
+   restart.Glyph="restart"; restart.Text=L.T("Yeniden başlat"); restart.Dock=DockStyle.Top; restart.Margin=new Padding(0,4,8,4); restart.Click+=delegate { Execute("restart",0); }; tools.Controls.Add(restart);
+   var diagnostics=ButtonOf(L.T("Konsol"),delegate { ShowDiagnostics(); }); diagnostics.Glyph="console"; diagnostics.Dock=DockStyle.Top; diagnostics.Margin=new Padding(4,4,8,4); tools.Controls.Add(diagnostics);
+   var access=ButtonOf(L.T("Erişim testi"),delegate { ShowAccessTest(); }); access.Glyph="globe"; access.Dock=DockStyle.Top; access.Margin=new Padding(4,4,8,4); tools.Controls.Add(access);
+   var uninstall=ButtonOf(L.T("Uygulamayı kaldır"),delegate {
     if(busy) return;
     try { Process.Start(new ProcessStartInfo(Path.Combine(Program.InstallDir,"GoodbyeDPI.Tray.exe"),"--uninstall") { UseShellExecute=true }); }
     catch(Exception ex) { ReportError(ex); }
@@ -274,18 +323,18 @@ namespace GoodbyeTray {
   }
   bool TrayShown { get { return tray!=null && tray.Visible; } }
   // The tray setting also decides whether the icon shows now. Without it the window acts like a normal app: minimize goes to the taskbar, closing quits.
-  static string TrayHelp(bool shown) { return shown?"Pencereyi kapatsan da uygulama saatin yanındaki simgede açık kalır.":"Pencereyi kapatınca uygulama kapanır. GoodbyeDPI açık kalır, engelli sitelere girmeye devam edersin."; }
+  static string TrayHelp(bool shown) { return shown?L.T("Simge saatin yanında durur, oturum açınca da kendiliğinden gelir. Pencereyi kapatınca simgeye küçülür."):L.T("Simge gizli. Pencereyi kapatınca uygulama kapanır; GoodbyeDPI çalışıyorsa çalışmaya devam eder."); }
   void SetTrayVisible(bool show) {
    if(tray==null) return;
    trayHelp.Text=TrayHelp(show);
    if(tray.Visible==show) return;
-   tray.Visible=show; trayButton.Visible=show;
+   tray.Visible=show;
    if(!show && !Visible) Reveal();
   }
   void HideToTray() {
    if(!TrayShown) return;
    Hide(); ShowInTaskbar=false;
-   if(!hideNotified) { hideNotified=true; tray.ShowBalloonTip(3000,"GoodbyeDPI sistem tepsisinde","Açmak için saatin yanındaki simgeye çift tıkla.",ToolTipIcon.Info); }
+   if(!hideNotified) { hideNotified=true; tray.ShowBalloonTip(3000,L.T("GoodbyeDPI sistem tepsisinde"),L.T("Açmak için saatin yanındaki simgeye çift tıkla."),ToolTipIcon.Info); }
   }
   // A manual check (from About) runs even when automatic checks are turned off.
   async void CheckForUpdateAsync(bool manual=false) {
@@ -303,17 +352,17 @@ namespace GoodbyeTray {
   void SetUpdateState(UpdateState state) { updateState=state; var changed=UpdateStateChanged; if(changed!=null) changed(); }
   internal void ShowUpdate(string version) {
    availableUpdate=version; SetUpdateState(UpdateState.Available);
-   updateLink.Text="Yeni sürüm var: "+version+" · İndir"; updateLink.Visible=true;
-   if(trayUpdate!=null) { trayUpdate.Text="Yeni sürümü indir ("+version+")"; trayUpdate.Visible=true; }
+   updateLink.Text=L.T("Yeni sürüm var: ")+version+L.T(" · İndir"); updateLink.Visible=true;
+   if(trayUpdate!=null) { trayUpdate.Text=L.T("Yeni sürümü indir (")+version+")"; trayUpdate.Visible=true; }
    // Each release is announced once, and only when there is a tray icon to show it.
    if(TrayShown && UpdateCheck.NotifiedVersion!=version) {
-    tray.ShowBalloonTip(5000,"GoodbyeDPI Tray "+version+" çıktı","İndirmek için simgeye sağ tıkla ya da pencerenin altındaki bağlantıyı kullan.",ToolTipIcon.Info);
+    tray.ShowBalloonTip(5000,"GoodbyeDPI Tray "+version+L.T(" çıktı"),L.T("İndirmek için simgeye sağ tıkla ya da pencerenin altındaki bağlantıyı kullan."),ToolTipIcon.Info);
     try { UpdateCheck.NotifiedVersion=version; } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
    }
   }
   void DownloadUpdate() {
    string url=UpdateCheck.DownloadUrl;
-   try { Process.Start(new ProcessStartInfo(url) { UseShellExecute=true }); notice.Text=url==UpdateCheck.ReleaseUrl?"Sürüm sayfası açıldı, kurucuyu oradan indirebilirsin.":"Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur."; }
+   try { Process.Start(new ProcessStartInfo(url) { UseShellExecute=true }); notice.Text=url==UpdateCheck.ReleaseUrl?L.T("Sürüm sayfası açıldı, kurucuyu oradan indirebilirsin."):L.T("Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur."); }
    catch(Exception ex) { ReportError(ex); }
   }
   void Reveal() { Show(); ShowInTaskbar=true; WindowState=FormWindowState.Normal; Activate(); }
@@ -321,17 +370,17 @@ namespace GoodbyeTray {
    if(command=="show") Reveal();
    else if(command=="profiles") { Reveal(); profiles.Focus(); }
    else if(command=="settings") { Reveal(); engineStartup.Focus(); }
-   else if(command=="exit") { if(busy) { notice.Text="İşlem sürüyor; tamamlandıktan sonra çıkabilirsin."; return; } quitting=true; Close(); }
-   else if(command=="start" || command=="stop" || command=="restart") { if(!available) { Reveal(); notice.Text="Önce kurulumu tamamla."; } else if(!busy && !transition) Execute(command,0); }
+   else if(command=="exit") { if(busy) { notice.Text=L.T("İşlem sürüyor; tamamlandıktan sonra çıkabilirsin."); return; } quitting=true; Close(); }
+   else if(command=="start" || command=="stop" || command=="restart") { if(!available) { Reveal(); notice.Text=L.T("Önce kurulumu tamamla."); } else if(!busy && !transition) Execute(command,0); }
   }
   internal void SetServiceState(int profile,ServiceControllerStatus state) {
    int previous=activeProfile; activeProfile=profile; available=profile>=0;
    running=available && state==ServiceControllerStatus.Running;
    transition=available && state!=ServiceControllerStatus.Running && state!=ServiceControllerStatus.Stopped;
    if(available && (previous<0 || profiles.SelectedIndex==previous)) profiles.SelectedIndex=profile;
-   status.Text=!available?"Kurulum gerekiyor":running?"GoodbyeDPI çalışıyor":transition?"Durum değişiyor…":"GoodbyeDPI durduruldu";
-   detail.Text=available?"Etkin profil: "+Program.Names[profile]:"GoodbyeDPI-Installer.exe'yi açıp kurman gerekiyor.";
-   toggle.Text=busy?"İşlem sürüyor…":running?"Durdur":"Başlat";
+   status.Text=!available?L.T("Kurulum gerekiyor"):running?L.T("GoodbyeDPI çalışıyor"):transition?L.T("Durum değişiyor…"):"GoodbyeDPI durduruldu";
+   detail.Text=available?L.T("Etkin profil: ")+Program.Names[profile]:L.T("GoodbyeDPI-Installer.exe'yi açıp kurman gerekiyor.");
+   toggle.Text=busy?L.T("İşlem sürüyor…"):running?L.T("Durdur"):L.T("Başlat");
    toggle.Enabled=available && !busy && !transition;
    restart.Enabled=available && running && !busy && !transition;
    profiles.Enabled=available && !busy && !transition;
@@ -339,57 +388,66 @@ namespace GoodbyeTray {
    UpdateSelection();
    PaintButton(toggle,true);
    if(tray!=null) {
-    tray.Text=available?(running?"GoodbyeDPI • Çalışıyor":"GoodbyeDPI • Durduruldu"):"GoodbyeDPI • Kurulum gerekiyor";
+    tray.Text=available?(running?L.T("GoodbyeDPI • Çalışıyor"):L.T("GoodbyeDPI • Durduruldu")):L.T("GoodbyeDPI • Kurulum gerekiyor");
     trayToggle.Enabled=available && !running && !busy && !transition; trayStop.Enabled=running && !busy && !transition; trayRestart.Enabled=restart.Enabled; trayProfiles.Enabled=available && !busy && !transition;
     for(int i=0;i<trayProfiles.DropDownItems.Count;i++) { var item=(ToolStripMenuItem)trayProfiles.DropDownItems[i]; item.Checked=i==activeProfile; item.Enabled=i!=activeProfile; }
    }
   }
   void UpdateSelection() {
    int i=profiles.SelectedIndex;
-   hint.Text=(i==1||i==2||i==6)?"Bu profil DNS'e dokunmaz; gerekirse Windows'tan DNS ayarla.":"DNS'i kendisi yönlendirir, Windows ayarların değişmez.";
+   hint.Text=(i==1||i==2||i==6)?L.T("Bu profil DNS'e dokunmaz; gerekirse Windows'tan DNS ayarla."):L.T("DNS'i kendisi yönlendirir, Windows ayarların değişmez.");
    bool dirty=available && i!=activeProfile;
-   pending.Text=dirty?"Seçtiğin profil henüz uygulanmadı.":available?"Bu profil şu an kullanılıyor.":"Kurulumdan sonra profil seçebilirsin.";
+   pending.Text=dirty?L.T("Seçtiğin profil henüz uygulanmadı."):available?L.T("Bu profil şu an kullanılıyor."):L.T("Kurulumdan sonra profil seçebilirsin.");
    apply.Enabled=dirty && !busy && !transition;
   }
   async void Execute(string action,int profile) {
    if(busy) return;
-   stateRevision++; busy=true; notice.Text="Windows izin isteyebilir, bekle…"; SetServiceState(activeProfile,running?ServiceControllerStatus.Running:ServiceControllerStatus.Stopped);
+   stateRevision++; busy=true; notice.Text=L.T("Bir saniye…"); SetServiceState(activeProfile,running?ServiceControllerStatus.Running:ServiceControllerStatus.Stopped);
+   string done=action=="profile"?L.T("Profil uygulandı."):action=="stop"?L.T("GoodbyeDPI durduruldu."):action=="auto-on"||action=="auto-off"?L.T("Başlangıç tercihin kaydedildi."):L.T("GoodbyeDPI başlatıldı.");
    try {
     Program.RequireOwned();
-    using(var process=Process.Start(new ProcessStartInfo(Path.Combine(Program.InstallDir,"GoodbyeDPI.Tray.exe"),"--admin "+action+" "+profile) { UseShellExecute=true,Verb="runas",WorkingDirectory=Program.InstallDir })) {
-     await Task.Run(delegate { process.WaitForExit(); });
-     if(process.ExitCode!=0) notice.Text="Olmadı. Hata penceresinde nedenini görebilirsin.";
-     else notice.Text=action=="profile"?"Profil uygulandı.":action=="stop"?"GoodbyeDPI durduruldu.":action=="auto-on"||action=="auto-off"?"Başlangıç tercihin kaydedildi.":"GoodbyeDPI başlatıldı.";
+    bool applied=await Task.Run(delegate { return UserServiceControl.TryRun(action,profile); });
+    if(applied) notice.Text=done;
+    else {
+     // Installs from before 1.5.4 do not let users control the service yet; the next update fixes that.
+     notice.Text=L.T("Windows izin isteyebilir, bekle…");
+     using(var process=Process.Start(new ProcessStartInfo(Path.Combine(Program.InstallDir,"GoodbyeDPI.Tray.exe"),"--admin "+action+" "+profile) { UseShellExecute=true,Verb="runas",WorkingDirectory=Program.InstallDir })) {
+      await Task.Run(delegate { process.WaitForExit(); });
+      applied=process.ExitCode==0; notice.Text=applied?done:L.T("Olmadı. Hata penceresinde nedenini görebilirsin.");
+     }
     }
-   } catch(System.ComponentModel.Win32Exception ex) { if(ex.NativeErrorCode==1223) notice.Text="İzin verilmedi, hiçbir şey değişmedi."; else ReportError(ex); }
+    if(applied && (action=="auto-on" || action=="auto-off")) WindowsIntegration.SetTrayStartup(action=="auto-on");
+   } catch(System.ComponentModel.Win32Exception ex) { if(ex.NativeErrorCode==1223) notice.Text=L.T("İzin verilmedi, hiçbir şey değişmedi."); else ReportError(ex); }
    catch(Exception ex) { ReportError(ex); }
    finally { busy=false; if(!IsDisposed) RefreshState(); }
   }
   void ReportError(Exception ex) { AppInfo.Log(ex.ToString()); notice.Text="İşlem tamamlanamadı: "+ex.Message; MessageBox.Show(this,ex.Message,"İşlem tamamlanamadı",MessageBoxButtons.OK,MessageBoxIcon.Warning); }
   void ShowAbout() { using(var dialog=CreateAboutDialog()) dialog.ShowDialog(this); }
   internal Form CreateAboutDialog() {
-   var dialog=new Form { Text="GoodbyeDPI — Hakkında",ClientSize=new Size(540,486),Font=Font,BackColor=background,ForeColor=foreground,Icon=Program.AppIcon,StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false };
+   var dialog=new Form { Text=L.T("GoodbyeDPI — Hakkında"),ClientSize=new Size(540,444),Font=Font,BackColor=background,ForeColor=foreground,Icon=Program.AppIcon,StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false };
    var heading=new Label { Text="GoodbyeDPI Tray",Font=new Font(Font.FontFamily,20,FontStyle.Bold),Location=new Point(24,20),Size=new Size(490,40) }; dialog.Controls.Add(heading);
-   dialog.Controls.Add(new Label { Text="Sürüm "+AppInfo.Version+"  ·  Geliştirici: Furkan",Location=new Point(26,66),Size=new Size(488,26),ForeColor=secondary });
+   dialog.Controls.Add(new Label { Text=L.T("Sürüm ")+AppInfo.Version+L.T("  ·  Geliştirici: Furkan"),Location=new Point(26,66),Size=new Size(488,26),ForeColor=secondary });
    dialog.Controls.Add(new Label { Text=AppInfo.Purpose,Location=new Point(26,108),Size=new Size(488,82) });
    Color linkColor=SystemInformation.HighContrast?SystemColors.HotTrack:dark?AppPalette.Mint:AppPalette.Accent;
-   var source=ProjectLinks.Create("Kaynak proje · GoodbyeDPI-Turkey",AppInfo.SourceUrl,linkColor); source.SetBounds(26,204,488,34); dialog.Controls.Add(source);
-   var developer=ProjectLinks.Create("Geliştirici · Furkan / trfurkan",AppInfo.DeveloperUrl,linkColor); developer.SetBounds(26,246,488,34); dialog.Controls.Add(developer);
-   dialog.Controls.Add(new Label { Text="Motor: GoodbyeDPI-Turkey 0.2.3rc3\nLisans: Lisans detayları kurulum klasöründeki licenses dizininde yer almaktadır.",Location=new Point(26,302),Size=new Size(488,76),ForeColor=secondary });
-   var statusIcon=new UpdateStatusIcon { Location=new Point(26,392),Size=new Size(22,22),BackColor=background };
-   var statusText=new Label { Location=new Point(56,388),Size=new Size(300,30),TextAlign=ContentAlignment.MiddleLeft };
-   var checkNow=new LinkLabel { Location=new Point(356,388),Size=new Size(158,30),TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor,DisabledLinkColor=secondary };
+   var developer=ProjectLinks.Create(L.T("Geliştirici · Furkan / trfurkan"),AppInfo.DeveloperUrl,linkColor); developer.SetBounds(26,204,488,34); dialog.Controls.Add(developer);
+   dialog.Controls.Add(new Label { Text=L.T("Motor: GoodbyeDPI-Turkey 0.2.3rc3"),Location=new Point(26,260),Size=new Size(488,26),ForeColor=secondary });
+   var licenses=new LinkLabel { Text=L.T("Lisanslar"),Location=new Point(26,290),Size=new Size(488,28),LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor };
+   licenses.LinkClicked+=delegate { using(var window=new LicenseForm(Path.Combine(Program.InstallDir,"licenses"),dark,background,surface,foreground,secondary,border)) window.ShowDialog(dialog); };
+   dialog.Controls.Add(licenses);
+   var statusIcon=new UpdateStatusIcon { Location=new Point(26,350),Size=new Size(22,22),BackColor=background };
+   var statusText=new Label { Location=new Point(56,346),Size=new Size(300,30),TextAlign=ContentAlignment.MiddleLeft };
+   var checkNow=new LinkLabel { Location=new Point(356,346),Size=new Size(158,30),TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor,DisabledLinkColor=secondary };
    checkNow.LinkClicked+=delegate { if(updateState==UpdateState.Available) DownloadUpdate(); else CheckForUpdateAsync(true); };
    Action showState=delegate {
     if(dialog.IsDisposed) return;
     statusIcon.State=updateState;
-    statusText.Text=updateState==UpdateState.Current?"Güncel sürümü kullanıyorsun.":updateState==UpdateState.Available?"Yeni sürüm var: "+availableUpdate:updateState==UpdateState.Checking?"Kontrol ediliyor…":updateState==UpdateState.Failed?"Kontrol edilemedi, internetini kontrol et.":"Güncellemeler henüz kontrol edilmedi.";
-    checkNow.Text=updateState==UpdateState.Available?"İndir":updateState==UpdateState.Failed?"Tekrar dene":"Şimdi kontrol et";
+    statusText.Text=updateState==UpdateState.Current?L.T("Güncel sürümü kullanıyorsun."):updateState==UpdateState.Available?L.T("Yeni sürüm var: ")+availableUpdate:updateState==UpdateState.Checking?"Kontrol ediliyor…":updateState==UpdateState.Failed?"Kontrol edilemedi, internetini kontrol et.":L.T("Güncellemeler henüz kontrol edilmedi.");
+    checkNow.Text=updateState==UpdateState.Available?L.T("İndir"):updateState==UpdateState.Failed?L.T("Tekrar dene"):L.T("Şimdi kontrol et");
     checkNow.Enabled=updateState!=UpdateState.Checking;
    };
    showState(); UpdateStateChanged+=showState; dialog.Disposed+=delegate { UpdateStateChanged-=showState; };
    dialog.Controls.Add(statusIcon); dialog.Controls.Add(statusText); dialog.Controls.Add(checkNow);
-   var updates=new CheckBox { Text="Yeni sürüm çıkınca haber ver",Location=new Point(26,432),Size=new Size(488,30),Checked=UpdateCheck.Enabled };
+   var updates=new CheckBox { Text=L.T("Yeni sürüm çıkınca haber ver"),Location=new Point(26,390),Size=new Size(488,30),Checked=UpdateCheck.Enabled };
    updates.CheckedChanged+=delegate { try { UpdateCheck.Enabled=updates.Checked; if(updates.Checked) nextUpdateCheck=DateTime.UtcNow; } catch(Exception ex) { ReportError(ex); } };
    dialog.Controls.Add(updates);
    // Opening About in the running app checks right away if nothing is known yet.
@@ -400,7 +458,7 @@ namespace GoodbyeTray {
    if(dashboard.RowStyles.Count<8 || startupContent==null) return;
    bool compact=ClientSize.Height<860;
    // The tray help stays visible even when compact: it says what closing the window does.
-   int[] heights=compact?new[]{64,96,24,144,142,48}:new[]{104,112,30,160,164,58};
+   int[] heights=compact?new[]{64,96,0,144,142,48}:new[]{104,112,0,160,164,58};
    dashboard.SuspendLayout(); startupContent.SuspendLayout(); footerPanel.SuspendLayout();
    try {
     for(int i=0;i<heights.Length;i++) if(dashboard.RowStyles[i].Height!=heights[i]) dashboard.RowStyles[i].Height=heights[i];
@@ -424,9 +482,9 @@ namespace GoodbyeTray {
      bool changed=startup.Checked!=snapshot.Item1 || engineStartup.Checked!=snapshot.Item2 || activeProfile!=snapshot.Item3 || running!=(snapshot.Item3>=0 && snapshot.Item4==ServiceControllerStatus.Running) || transition!=(snapshot.Item3>=0 && snapshot.Item4!=ServiceControllerStatus.Running && snapshot.Item4!=ServiceControllerStatus.Stopped);
      startup.Checked=snapshot.Item1; engineStartup.Checked=snapshot.Item2; SetTrayVisible(snapshot.Item1);
      if(changed || String.IsNullOrEmpty(status.Text)) SetServiceState(snapshot.Item3,snapshot.Item4);
-     if(snapshot.Item5) detail.Text="Farklı bir GoodbyeDPI kurulumu bulundu.";
+     if(snapshot.Item5) detail.Text=L.T("Farklı bir GoodbyeDPI kurulumu bulundu.");
     } finally { refreshing=false; }
-   } catch(Exception ex) { if(!IsDisposed && !Disposing && !busy) { SetServiceState(-1,ServiceControllerStatus.Stopped); status.Text="Durum okunamadı"; detail.Text=ex.Message; } }
+   } catch(Exception ex) { if(!IsDisposed && !Disposing && !busy) { SetServiceState(-1,ServiceControllerStatus.Stopped); status.Text=L.T("Durum okunamadı"); detail.Text=ex.Message; } }
    finally { stateReadPending=false; }
   }  void RefreshState() {
    stateRevision++;
@@ -437,8 +495,8 @@ namespace GoodbyeTray {
     int active=Program.Profile(); var state=ServiceControllerStatus.Stopped;
     if(active>=0) using(var svc=new ServiceController(Program.ServiceName)) state=svc.Status;
     SetServiceState(active,state);
-    if(active<0 && Program.ServicePath()!=null) detail.Text="Farklı bir GoodbyeDPI kurulumu bulundu.";
-   } catch(Exception ex) { SetServiceState(-1,ServiceControllerStatus.Stopped); status.Text="Durum okunamadı"; detail.Text=ex.Message; }
+    if(active<0 && Program.ServicePath()!=null) detail.Text=L.T("Farklı bir GoodbyeDPI kurulumu bulundu.");
+   } catch(Exception ex) { SetServiceState(-1,ServiceControllerStatus.Stopped); status.Text=L.T("Durum okunamadı"); detail.Text=ex.Message; }
    finally { refreshing=false; }
   }
   void ShowDiagnostics() {
@@ -456,13 +514,15 @@ namespace GoodbyeTray {
   void ThemeChanged(object sender,UserPreferenceChangedEventArgs e) { if(IsHandleCreated && !IsDisposed) { try { BeginInvoke((MethodInvoker)delegate { if(!IsDisposed) ApplyTheme(true); }); } catch(InvalidOperationException) {} } }
   bool WindowsDark() { try { using(var key=Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")) return key!=null && Convert.ToInt32(key.GetValue("AppsUseLightTheme",1))==0; } catch { return false; } }
   internal void SetThemePreference(string value,bool persist) {
-   if(value!="system" && value!="light" && value!="dark") throw new ArgumentException("Geçersiz tema.");
+   if(Array.IndexOf(ThemeModes,value)<0) throw new ArgumentException(L.T("Geçersiz tema."));
    if(persist) using(var key=Registry.CurrentUser.CreateSubKey(PreferencesKey)) key.SetValue("Theme",value);
    themePreference=value; ApplyTheme(true);
   }
   void ApplyTheme(bool force) {
-   bool next=themeOverride??(themePreference=="system"?WindowsDark():themePreference=="dark"); if(!force && next==dark && !SystemInformation.HighContrast) return; dark=next;
-   themeButton.Text="Tema: "+(themePreference=="light"?"Aydınlık":themePreference=="dark"?"Karanlık":"Sistem")+" ▾";
+   bool next=themeOverride??(themePreference=="system"?WindowsDark():AppPalette.IsDark(themePreference)); if(!force && next==dark && !SystemInformation.HighContrast) return; dark=next;
+   AppPalette.Variant=themeOverride==null?AppPalette.VariantOf(themePreference):"black";
+   themeButton.Text=ThemeName(themePreference)+"  ▾";
+   var oldSwatch=themeButton.GlyphImage; themeButton.GlyphImage=ThemeSwatch(themePreference); if(oldSwatch!=null) oldSwatch.Dispose(); themeButton.Invalidate();
    background=AppPalette.Background(dark); surface=AppPalette.Surface(dark); foreground=AppPalette.Text(dark); secondary=AppPalette.Muted(dark); border=AppPalette.Border(dark);
    if(SystemInformation.HighContrast) { background=SystemColors.Window; surface=SystemColors.Window; foreground=SystemColors.WindowText; secondary=SystemColors.WindowText; border=SystemColors.WindowText; }
    BackColor=background; PaintControls(this); PaintButton(toggle,true); WindowsIntegration.ThemeCaption(this,dark,background,foreground);
@@ -471,7 +531,7 @@ namespace GoodbyeTray {
    if(tray!=null) { tray.ContextMenuStrip.Renderer=new MenuRenderer(surface,foreground,border); tray.ContextMenuStrip.BackColor=surface; tray.ContextMenuStrip.ForeColor=foreground; trayProfiles.DropDown.Renderer=tray.ContextMenuStrip.Renderer; }
    Invalidate(true);
   }
-  void PaintButton(SoftButton button,bool primary) { button.Fill=primary?AppPalette.Accent:surface; button.Ink=primary?Color.White:foreground; button.Edge=primary?button.Fill:border; if(SystemInformation.HighContrast) { button.Fill=primary?foreground:background; button.Ink=primary?background:foreground; } Color host=background; for(Control parent=button.Parent;parent!=null;parent=parent.Parent) { if(parent is SoftPanel) { host=surface; break; } } button.BackColor=host; button.ForeColor=button.Ink; button.Invalidate(); }
+  void PaintButton(SoftButton button,bool primary) { button.Fill=primary?AppPalette.Accent:surface; button.Ink=primary?AppPalette.AccentInk:foreground; button.Edge=primary?button.Fill:border; if(SystemInformation.HighContrast) { button.Fill=primary?foreground:background; button.Ink=primary?background:foreground; } Color host=background; for(Control parent=button.Parent;parent!=null;parent=parent.Parent) { if(parent is SoftPanel) { host=surface; break; } } button.BackColor=host; button.ForeColor=button.Ink; button.Invalidate(); }
   protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); ApplyTheme(true); }
   void PaintControls(Control parent) {
    foreach(Control control in parent.Controls) {

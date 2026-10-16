@@ -24,18 +24,51 @@ namespace GoodbyeTray {
  static class ProjectLinks {
   internal static LinkLabel Create(string text,string url,Color color,bool githubIcon=false) {
    LinkLabel link=githubIcon?(LinkLabel)new GitHubProfileLink():new LinkLabel();
-   link.Text=(githubIcon?"":"↗  ")+text; link.AutoSize=false; link.Height=32; link.LinkColor=link.ActiveLinkColor=link.VisitedLinkColor=color; link.LinkBehavior=LinkBehavior.HoverUnderline; link.AccessibleName=text+" — tarayıcıda aç"; link.Tag=url; link.TextAlign=ContentAlignment.MiddleLeft;
-   link.LinkClicked+=delegate { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute=true }); } catch(Exception ex) { AppInfo.Log(ex.ToString()); MessageBox.Show(link.FindForm(),"Bağlantı açılamadı. Adresi tarayıcına yazabilirsin:\n"+url,"Bağlantı",MessageBoxButtons.OK,MessageBoxIcon.Information); } }; return link;
+   link.Text=(githubIcon?"":"↗  ")+text; link.AutoSize=false; link.Height=32; link.LinkColor=link.ActiveLinkColor=link.VisitedLinkColor=color; link.LinkBehavior=LinkBehavior.HoverUnderline; link.AccessibleName=text+L.T(" — tarayıcıda aç"); link.Tag=url; link.TextAlign=ContentAlignment.MiddleLeft;
+   link.LinkClicked+=delegate { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute=true }); } catch(Exception ex) { AppInfo.Log(ex.ToString()); MessageBox.Show(link.FindForm(),L.T("Bağlantı açılamadı. Adresi tarayıcına yazabilirsin:\n")+url,L.T("Bağlantı"),MessageBoxButtons.OK,MessageBoxIcon.Information); } }; return link;
   }
  }
  static class AppPalette {
-  internal static readonly Color Accent=Color.FromArgb(20,78,224), Mint=Color.FromArgb(127,174,255), Danger=Color.FromArgb(159,57,65);
-  internal static Color Background(bool dark) { return dark?Color.FromArgb(19,27,45):Color.FromArgb(239,244,252); }
-  internal static Color Surface(bool dark) { return dark?Color.FromArgb(29,40,62):Color.FromArgb(248,250,255); }
-  internal static Color Text(bool dark) { return dark?Color.FromArgb(237,243,255):Color.FromArgb(13,31,69); }
-  internal static Color Muted(bool dark) { return dark?Color.FromArgb(165,183,214):Color.FromArgb(80,99,132); }
-  internal static Color Border(bool dark) { return dark?Color.FromArgb(54,72,103):Color.FromArgb(206,218,238); }
-  internal static Color Selection(bool dark) { return dark?Color.FromArgb(37,62,109):Color.FromArgb(226,237,255); }
+  internal static readonly Color Danger=Color.FromArgb(159,57,65);
+  // Each theme picks its tones and accent here; every window reads them through these helpers.
+  internal static string Variant="black";
+  internal static readonly string[] Modes={"light","black","ocean","sakura","sunset","android","champagne","system"};
+  internal static bool IsDark(string mode) { return mode!="light" && mode!="champagne" && mode!="system"; }
+  // Background, surface, text, muted, border, selection, console; then accent and the text color on it.
+  static readonly int[] Light={0xEFF4FC,0xF8FAFF,0x0D1F45,0x506384,0xCEDAEE,0xE2EDFF,0xF7F9FD,0x144EE0,0xFFFFFF},   // Aydınlık
+   Black={0x060608,0x141418,0xF0F0F4,0x9EA0AA,0x2A2A30,0x1E263C,0x000000,0x144EE0,0xFFFFFF},                       // Karanlık
+   Ocean={0x0B1219,0x14222D,0xE0F2FE,0x94B4C8,0x25394A,0x123A4A,0x070D13,0x06B6D4,0x04131A},                       // Okyanus
+   Sakura={0x130F14,0x221A24,0xFCE7F3,0xC9A9BC,0x3E2E41,0x4A2033,0x0B080C,0xF43F5E,0xFFFFFF},                      // Sakura
+   Sunset={0x16120F,0x261E19,0xFFEDD5,0xC9AE96,0x433429,0x4A2A12,0x0D0A08,0xF97316,0x1A0E05},                      // Güneş Batımı
+   Android={0x0D1610,0x16261D,0xECFDF5,0x9CC7B0,0x2A4535,0x123D2C,0x070D09,0x10B981,0x04140C},                     // Android
+   Champagne={0xF7F5F0,0xFFFFFF,0x292524,0x78716C,0xE7E2D8,0xFDF0DC,0xFBFAF7,0xD97706,0x1C1917};                   // Şampanya (light)
+  static int[] Set(bool dark) { if(!dark) return Variant=="champagne"?Champagne:Light; switch(Variant) { case "ocean": return Ocean; case "sakura": return Sakura; case "sunset": return Sunset; case "android": return Android; default: return Black; } }
+  static Color Pick(bool dark,int slot) { return Color.FromArgb(unchecked((int)0xFF000000)|Set(dark)[slot]); }
+  internal static Color Background(bool dark) { return Pick(dark,0); }
+  internal static Color Surface(bool dark) { return Pick(dark,1); }
+  internal static Color Text(bool dark) { return Pick(dark,2); }
+  internal static Color Muted(bool dark) { return Pick(dark,3); }
+  internal static Color Border(bool dark) { return Pick(dark,4); }
+  internal static Color Selection(bool dark) { return Pick(dark,5); }
+  internal static Color Console(bool dark) { return Pick(dark,6); }
+  // Light accents (cyan, orange, green, amber) carry dark text instead of white.
+  internal static Color Accent { get { return Pick(IsDark(Variant),7); } }
+  internal static Color AccentInk { get { return Pick(IsDark(Variant),8); } }
+  // Links on dark backgrounds: the theme's own accent, a lighter blue on the two blue themes.
+  internal static Color Mint { get { return Variant=="black" || Variant=="light"?Color.FromArgb(127,174,255):Accent; } }
+  // Karanlık unless the user picked something else; read here too for windows that open before the main one.
+  // Themes that were removed (Lacivert, Mor, Titanyum, Saf Bulut, Gümüş Buz, Siber Grafit) also fall back to Karanlık.
+  internal static string SavedTheme() { return StoredTheme() ?? "black"; }
+  // The saved theme, or null when the user never had one (a first install).
+  internal static string StoredTheme() {
+   try { using(var key=Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\GoodbyeDPITray")) { string saved=key==null?null:key.GetValue("Theme") as string; if(saved==null) return null; return Array.IndexOf(Modes,saved)>=0?saved:"black"; } }
+   catch { return null; }
+  }
+  internal static bool WindowsDark() {
+   try { using(var key=Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")) return key!=null && Convert.ToInt32(key.GetValue("AppsUseLightTheme",1))==0; }
+   catch { return false; }
+  }
+  internal static string VariantOf(string mode) { return mode=="system"?"black":mode; }
  }
  static class WindowsIntegration {
   const string RunKey=@"Software\Microsoft\Windows\CurrentVersion\Run", ApprovedKey=@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", TrayValue="GoodbyeDPITray";
@@ -59,7 +92,7 @@ namespace GoodbyeTray {
   [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd,int attribute,ref int value,int size);
   [DllImport("dwmapi.dll")] internal static extern int DwmGetWindowAttribute(IntPtr hwnd,int attribute,out int value,int size);
   internal static int LastCaptionResult;
-  internal static string ShellStatus="Henüz oluşturulmadı";
+  internal static string ShellStatus=L.T("Henüz oluşturulmadı");
   internal static void ThemeCaption(Form form,bool dark,Color background,Color foreground) {
    if(!form.IsHandleCreated) return;
    try {
@@ -77,7 +110,7 @@ namespace GoodbyeTray {
    } catch(DllNotFoundException) { LastCaptionResult=-1; } catch(EntryPointNotFoundException) { LastCaptionResult=-1; }
   }
   internal static readonly string[] Actions={"show","start","stop","restart","profiles","settings","exit"};
-  internal static readonly string[] Titles={"Uygulamayı aç","GoodbyeDPI'ı başlat","GoodbyeDPI'ı durdur","GoodbyeDPI'ı yeniden başlat","Profil seçimi","Ayarlar","Arayüzden çık"};
+  internal static readonly string[] Titles={L.T("Uygulamayı aç"),L.T("GoodbyeDPI'ı başlat"),L.T("GoodbyeDPI'ı durdur"),L.T("GoodbyeDPI'ı yeniden başlat"),L.T("Profil seçimi"),L.T("Ayarlar"),L.T("Arayüzden çık")};
   internal static JumpList BuildJumpList(string executable) {
    var list=new JumpList(); list.ShowRecentCategory=false; list.ShowFrequentCategory=false;
    for(int i=0;i<Actions.Length;i++) list.JumpItems.Add(new JumpTask { Title=Titles[i],Description=Titles[i],ApplicationPath=executable,Arguments="--action "+Actions[i],WorkingDirectory=System.IO.Path.GetDirectoryName(executable),IconResourcePath=executable,IconResourceIndex=0 });
@@ -87,8 +120,8 @@ namespace GoodbyeTray {
    try {
     var list=BuildJumpList(Application.ExecutablePath);
     int rejected=0; list.JumpItemsRejected+=delegate(object sender,JumpItemsRejectedEventArgs e) { rejected+=e.RejectedItems.Count; };
-    list.Apply(); ShellStatus=rejected==0?"7 görev kaydedildi":rejected+" görev Windows tarafından reddedildi";
-   } catch(Exception ex) { ShellStatus="Kullanılamıyor: "+ex.Message; AppInfo.Log("Jump List: "+ex.Message); }
+    list.Apply(); ShellStatus=rejected==0?L.T("7 görev kaydedildi"):rejected+L.T(" görev Windows tarafından reddedildi");
+   } catch(Exception ex) { ShellStatus=L.T("Kullanılamıyor: ")+ex.Message; AppInfo.Log("Jump List: "+ex.Message); }
   }
  }
  // One shared renderer keeps profile, theme and tray menus consistent.
@@ -102,6 +135,14 @@ namespace GoodbyeTray {
   protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; var r=e.ImageRectangle; using(var pen=new Pen(accent,2)) e.Graphics.DrawLines(pen,new[]{new Point(r.Left+3,r.Top+r.Height/2),new Point(r.Left+7,r.Top+r.Height/2+4),new Point(r.Right-2,r.Top+3)}); }
   protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e) { e.ArrowColor=foreground; base.OnRenderArrow(e); }
   protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,12,e.Item.Height/2,e.Item.Width-12,e.Item.Height/2); }
-  protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; e.TextColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:item!=null && item.Checked?accent:foreground; base.OnRenderItemText(e); }
+  protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; e.TextColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:item!=null && item.Checked?accent:foreground;
+   // An item with a description (AccessibleDescription) shows it as a smaller, muted second line under its name.
+   string hint=e.Item.AccessibleDescription;
+   if(String.IsNullOrEmpty(hint) || e.Item.Height<52) { base.OnRenderItemText(e); return; }
+   int x=e.TextRectangle.X, width=Math.Min(e.Item.Width,e.ToolStrip.ClientSize.Width)-x-14;
+   TextRenderer.DrawText(e.Graphics,e.Text,e.TextFont,new Rectangle(x,8,width,22),e.TextColor,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
+   using(var small=new Font(e.TextFont.FontFamily,8.5f)) TextRenderer.DrawText(e.Graphics,hint,small,new Rectangle(x,30,width,e.Item.Height-34),Blend(foreground,background,0.62f),TextFormatFlags.Left|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix);
+  }
+  static Color Blend(Color a,Color b,float share) { return Color.FromArgb((int)(a.R*share+b.R*(1-share)),(int)(a.G*share+b.G*(1-share)),(int)(a.B*share+b.B*(1-share))); }
  }
 }

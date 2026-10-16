@@ -12,7 +12,7 @@ foreach($profile in 0..6){
  if(-not $parser.Invoke($null,$parameters) -or $parameters[1] -ne $profile -or $parameters[3] -ne 'real output'){throw 'Console frame parsing changed output or profile'}
 }
 foreach($frame in @('GDC1|7|running|1',"GDC1|8|running|1`nwrong","GDC1|0|bogus|1`nwrong")){$parameters=[object[]]@($frame,0,'',''); if($parser.Invoke($null,$parameters)){throw 'Malformed frame accepted'}}
-$logPath=Join-Path $env:ProgramFiles 'GoodbyeDPI Tray\engine-console.txt'
+$logPath=$asm.GetType('GoodbyeTray.EngineConsole').GetProperty('PathName',$static).GetValue($null)
 $frame=[IO.File]::ReadAllText($logPath)
 $expected=$frame.Substring($frame.IndexOf("`n")+1)
 foreach($dark in @($false,$true)){
@@ -20,7 +20,7 @@ foreach($dark in @($false,$true)){
  try{
   $form.Show()
   $terminal=$type.GetField('terminal',$flags).GetValue($form)
-  for($i=0;$i -lt 80 -and $terminal.TextLength -eq 0;$i++){[Windows.Forms.Application]::DoEvents(); Start-Sleep -Milliseconds 25}
+  for($i=0;$i -lt 80 -and $terminal.Text.Length -eq 0;$i++){[Windows.Forms.Application]::DoEvents(); Start-Sleep -Milliseconds 25}
   if($terminal.Text -ne $expected){throw 'Viewer does not show the exact real motor output'}
   if($form.Text -notlike '*Konsol'){throw 'Console title missing'}
   $follow=$type.GetField('follow',$flags).GetValue($form); $follow.Checked=$false; if($follow.Checked){throw 'Live follow did not pause'}

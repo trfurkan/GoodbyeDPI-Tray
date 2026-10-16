@@ -34,7 +34,7 @@ try {
   Run-Checked $app ("--admin profile $profile --quiet")
   $frame=''
   for($attempt=0;$attempt -lt 40;$attempt++){
-   try{$frame=[IO.File]::ReadAllText((Join-Path $install 'engine-console.txt'))}catch [IO.IOException]{}
+   try{$frame=[IO.File]::ReadAllText((Join-Path $install 'engine-console.log'))}catch [IO.IOException]{}
    if($frame.StartsWith("GDC1|$profile|running|") -and $frame.Contains('Filter activated')){break}
    Start-Sleep -Milliseconds 250
   }
@@ -47,7 +47,7 @@ try {
  }
  Run-Checked $app '--admin stop --quiet'
  Check (@(Get-Process goodbyedpi -ErrorAction SilentlyContinue).Count -eq 0) 'Stop removed child engine'
- Check ([IO.File]::ReadAllText((Join-Path $install 'engine-console.txt')).Contains('|stopped|')) 'Stopped console state recorded'
+ Check ([IO.File]::ReadAllText((Join-Path $install 'engine-console.log')).Contains('|stopped|')) 'Stopped console state recorded'
  Run-Checked $app '--admin start --quiet'
  $before=(Get-Process goodbyedpi).Id
  Add-Type -AssemblyName System.Windows.Forms

@@ -17,7 +17,7 @@ try {
  try {
   $dialog.Show(); [Windows.Forms.Application]::DoEvents()
   $links=@($dialog.Controls | Where-Object {$_ -is [Windows.Forms.LinkLabel] -and $_.Tag})
-  if($links.Count -ne 2 -or $links.Tag -notcontains 'https://github.com/trfurkan' -or $links.Tag -notcontains 'https://github.com/cagritaskn/GoodbyeDPI-Turkey'){throw 'Wrong project URLs'}
+  if($links.Count -ne 1 -or $links.Tag -notcontains 'https://github.com/trfurkan'){throw 'Wrong project URLs'}
   $bitmap=[Drawing.Bitmap]::new($dialog.Width,$dialog.Height)
   try{$dialog.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$dialog.Width,$dialog.Height)); $bitmap.Save((Join-Path $root 'build\previews\about-links.png'))}finally{$bitmap.Dispose()}
  }finally{$dialog.Dispose()}
