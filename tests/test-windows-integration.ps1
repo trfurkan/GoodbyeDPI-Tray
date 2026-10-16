@@ -80,6 +80,12 @@ $update=$assembly.GetType('GoodbyeTray.UpdateCheck'); $isNewer=$update.GetMethod
 foreach($case in @(@('1.5.3','1.5.2',$true),@('1.10.0','1.9.9',$true),@('2.0','1.5.2',$true),@('1.5.2','1.5.2',$false),@('1.5.1','1.5.2',$false),@('bozuk','1.5.2',$false))) {
  if($isNewer.Invoke($null,[object[]]@($case[0],$case[1])) -ne $case[2]) { throw "Sürüm karşılaştırması yanlış: $($case[0]) / $($case[1])" }
 }
+$installerUrl=$update.GetMethod('InstallerUrl',$static)
+$own='https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.5.3/GoodbyeDPI-Installer-1.5.3.exe'
+if($installerUrl.Invoke($null,[object[]]@("{`"assets`":[{`"browser_download_url`": `"$own`"}]}")) -ne $own) { throw 'Kurucu bağlantısı okunmadı' }
+foreach($bad in @('https://example.com/GoodbyeDPI-Installer.exe','https://github.com/baska/GoodbyeDPI-Tray/releases/download/v1/GoodbyeDPI-Installer.exe','https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.5.3/baska.exe')) {
+ if($installerUrl.Invoke($null,[object[]]@("{`"browser_download_url`":`"$bad`"}")) -ne $null) { throw "Yabancı bağlantı kabul edildi: $bad" }
+}
 $trayForm=[Activator]::CreateInstance($type,[object[]]@($true))
 try {
  $type.GetField('timer',$instance).GetValue($trayForm).Stop()

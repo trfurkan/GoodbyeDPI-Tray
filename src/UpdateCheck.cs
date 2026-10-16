@@ -12,7 +12,8 @@ namespace GoodbyeTray {
  // Asks GitHub which release is the latest. Only that request is sent; nothing about the user or the computer.
  static class UpdateCheck {
   internal const string ReleaseUrl="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest";
-  internal const string DownloadUrl=ReleaseUrl+"/download/GoodbyeDPI-Installer.exe";
+  // Installer file names carry the version (GoodbyeDPI-Installer-1.5.3.exe), so the link comes from the release itself.
+  internal static string DownloadUrl=ReleaseUrl;
   const string ApiUrl="https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases/latest";
   const string PreferencesKey=@"Software\GoodbyeDPITray";
   internal static bool Enabled {
@@ -31,9 +32,17 @@ namespace GoodbyeTray {
    var request=(HttpWebRequest)WebRequest.Create(ApiUrl);
    request.UserAgent="GoodbyeDPI-Tray/"+AppInfo.Version; request.Accept="application/vnd.github+json"; request.Timeout=15000; request.ReadWriteTimeout=15000;
    using(var response=request.GetResponse()) using(var reader=new StreamReader(response.GetResponseStream(),Encoding.UTF8)) {
-    var match=Regex.Match(reader.ReadToEnd(),"\"tag_name\"\\s*:\\s*\"v?([0-9]+(?:\\.[0-9]+){1,3})\"");
-    return match.Success && IsNewer(match.Groups[1].Value,AppInfo.Version)?match.Groups[1].Value:null;
+    string json=reader.ReadToEnd();
+    var match=Regex.Match(json,"\"tag_name\"\\s*:\\s*\"v?([0-9]+(?:\\.[0-9]+){1,3})\"");
+    if(!match.Success || !IsNewer(match.Groups[1].Value,AppInfo.Version)) return null;
+    DownloadUrl=InstallerUrl(json) ?? ReleaseUrl;
+    return match.Groups[1].Value;
    }
+  }
+  // Only an .exe from this repository's releases is accepted; anything else falls back to the release page.
+  internal static string InstallerUrl(string json) {
+   var match=Regex.Match(json,"\"browser_download_url\"\\s*:\\s*\"(https://github\\.com/trfurkan/GoodbyeDPI-Tray/releases/download/[^\"/]+/GoodbyeDPI-Installer[^\"/]*\\.exe)\"");
+   return match.Success?match.Groups[1].Value:null;
   }
   internal static bool IsNewer(string candidate,string current) { Version latest,installed; return Version.TryParse(candidate,out latest) && Version.TryParse(current,out installed) && latest>installed; }
  }

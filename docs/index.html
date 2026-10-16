@@ -27,7 +27,7 @@
  "operatingSystem": "Windows 10, Windows 11",
  "inLanguage": "tr",
  "url": "https://trfurkan.github.io/GoodbyeDPI-Tray/",
- "downloadUrl": "https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest/download/GoodbyeDPI-Installer.exe",
+ "downloadUrl": "https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest",
  "screenshot": "https://trfurkan.github.io/GoodbyeDPI-Tray/images/main-dark.png",
  "license": "https://www.apache.org/licenses/LICENSE-2.0",
  "isAccessibleForFree": true,
@@ -133,7 +133,7 @@ footer p { margin: 4px 0; }
     <h1>GoodbyeDPI'ı tek tıkla kullan</h1>
     <p class="lead">GoodbyeDPI Tray, Discord ve erişimi engellenen sitelere VPN kullanmadan girmeni sağlayan Türkçe bir Windows uygulaması. Komut satırı yok, CMD dosyası yok; Windows açılınca kendiliğinden çalışır.</p>
     <div class="actions">
-     <a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest/download/GoodbyeDPI-Installer.exe">Ücretsiz indir</a>
+     <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Ücretsiz indir</a>
      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">Kaynak kodu</a>
     </div>
     <p class="meta">Windows 10 / 11 · Ücretsiz ve açık kaynak · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Sürüm notları</a></p>
@@ -189,7 +189,7 @@ footer p { margin: 4px 0; }
     <div>
      <h2 id="kurulum-baslik">Kurulum</h2>
      <p class="section-lead">Tek dosya, bir dakika sürer. Windows 10/11 ve .NET Framework 4.8 gerekir; Windows'ta genelde zaten yüklüdür.</p>
-     <a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest/download/GoodbyeDPI-Installer.exe">GoodbyeDPI-Installer.exe'yi indir</a>
+     <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Kurucuyu indir</a>
     </div>
     <ol class="steps">
      <li><strong>Kurucuyu aç</strong><span>Windows SmartScreen uyarı verirse <b>Ek bilgi → Yine de çalıştır</b>'a bas.</span></li>
@@ -222,5 +222,18 @@ footer p { margin: 4px 0; }
   <p>Arayüz: <a href="https://github.com/trfurkan">Furkan (trfurkan)</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/LICENSE">Apache 2.0 lisansı</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/THIRD_PARTY_NOTICES.md">Üçüncü taraf bildirimleri</a></p>
  </footer>
 </div>
+<script>
+// Installer names carry the version, so the download buttons ask GitHub for the latest file.
+// Without JavaScript or when GitHub cannot be reached they keep pointing at the release page.
+fetch("https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases/latest")
+ .then(function (r) { return r.ok ? r.json() : null; })
+ .then(function (release) {
+  if (!release) return;
+  var asset = (release.assets || []).filter(function (a) { return /^GoodbyeDPI-Installer.*\.exe$/.test(a.name); })[0];
+  if (!asset) return;
+  document.querySelectorAll("a[data-installer]").forEach(function (a) { a.href = asset.browser_download_url; });
+ })
+ .catch(function () {});
+</script>
 </body>
 </html>

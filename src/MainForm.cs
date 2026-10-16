@@ -312,7 +312,8 @@ namespace GoodbyeTray {
    }
   }
   void DownloadUpdate() {
-   try { Process.Start(new ProcessStartInfo(UpdateCheck.DownloadUrl) { UseShellExecute=true }); notice.Text="Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur."; }
+   string url=UpdateCheck.DownloadUrl;
+   try { Process.Start(new ProcessStartInfo(url) { UseShellExecute=true }); notice.Text=url==UpdateCheck.ReleaseUrl?"Sürüm sayfası açıldı, kurucuyu oradan indirebilirsin.":"Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur."; }
    catch(Exception ex) { ReportError(ex); }
   }
   void Reveal() { Show(); ShowInTaskbar=true; WindowState=FormWindowState.Normal; Activate(); }
