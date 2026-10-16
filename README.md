@@ -35,8 +35,7 @@ Windows 10/11 ve .NET Framework 4.8 gerekir.
 - **Erişim testi:** Engelli ve normal birkaç siteyi deneyip GoodbyeDPI'ın işe yarayıp yaramadığını gösterir.
 - Türkçe, İngilizce ve Rusça arayüz.
 - Yedi tema: Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android ve Şampanya. İstersen Windows'a uyar.
-- Yeni sürüm çıkınca haber verir.
-- Kurulum konumunu kendin seçebilirsin.
+
 
 ![Erişim testi](docs/images/access-dark.png)
 
