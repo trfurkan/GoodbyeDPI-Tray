@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
  <url>
   <loc>https://trfurkan.github.io/GoodbyeDPI-Tray/</loc>
   <lastmod>2026-10-16</lastmod>
+  <xhtml:link rel="alternate" hreflang="tr" href="https://trfurkan.github.io/GoodbyeDPI-Tray/"/>
+  <xhtml:link rel="alternate" hreflang="en" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/"/>
+  <xhtml:link rel="alternate" hreflang="ru" href="https://trfurkan.github.io/GoodbyeDPI-Tray/ru/"/>
+ </url>
+ <url>
+  <loc>https://trfurkan.github.io/GoodbyeDPI-Tray/en/</loc>
+  <lastmod>2026-10-16</lastmod>
+  <xhtml:link rel="alternate" hreflang="tr" href="https://trfurkan.github.io/GoodbyeDPI-Tray/"/>
+  <xhtml:link rel="alternate" hreflang="en" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/"/>
+  <xhtml:link rel="alternate" hreflang="ru" href="https://trfurkan.github.io/GoodbyeDPI-Tray/ru/"/>
+ </url>
+ <url>
+  <loc>https://trfurkan.github.io/GoodbyeDPI-Tray/ru/</loc>
+  <lastmod>2026-10-16</lastmod>
+  <xhtml:link rel="alternate" hreflang="tr" href="https://trfurkan.github.io/GoodbyeDPI-Tray/"/>
+  <xhtml:link rel="alternate" hreflang="en" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/"/>
+  <xhtml:link rel="alternate" hreflang="ru" href="https://trfurkan.github.io/GoodbyeDPI-Tray/ru/"/>
  </url>
 </urlset>

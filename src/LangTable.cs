@@ -28,7 +28,7 @@ namespace GoodbyeTray {
    {"Bu siteyi yeniden test et",new[]{"Test this site again","Проверить этот сайт снова"}},
    {"Durum: Testi başlatmak için Tümünü Test Et'e ya da bir sitenin yanındaki yenile simgesine bas.",new[]{"Status: Press Test all, or the refresh icon next to a site, to start.","Статус: нажми «Проверить все» или значок обновления рядом с сайтом."}},
    {"Ağ Tanılama & Erişim Testi",new[]{"Network check & access test","Диагностика сети и проверка доступа"}},
-   {"Siteler sadece sen test edince denenir; sonuçlar hiçbir yere gönderilmez.",new[]{"Sites are only tried when you test them; results are never sent anywhere.","Сайты проверяются только по твоей команде; результаты никуда не отправляются."}},
+   {"Siteler sadece sen test edince denenir; sonuçlar hiçbir yere gönderilmez.",new[]{"Sites are only tried when you test them; results are never sent anywhere.","Проверка только по твоей команде; результаты никуда не уходят."}},
    {"Test ediliyor…",new[]{"Testing…","Проверка…"}},
    {"Durum: Siteler test ediliyor…",new[]{"Status: Testing sites…","Статус: проверка сайтов…"}},
    {"Durum: ",new[]{"Status: ","Статус: "}},

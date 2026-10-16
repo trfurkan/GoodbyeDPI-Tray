@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GoodbyeDPI Tray – GoodbyeDPI app for Windows</title>
+<meta name="description" content="GoodbyeDPI Tray is a free, open-source Windows app that lets you use GoodbyeDPI without the command line. Reach Discord and blocked sites without a VPN, in one click.">
+<link rel="canonical" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/">
+<link rel="icon" href="../favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" href="../favicon-96.png" sizes="96x96">
+<meta name="theme-color" content="#131b2d">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="GoodbyeDPI Tray">
+<meta property="og:title" content="GoodbyeDPI Tray – GoodbyeDPI app for Windows">
+<meta property="og:description" content="Reach Discord and blocked sites without a VPN, in one click. A free, open-source Windows app.">
+<meta property="og:url" content="https://trfurkan.github.io/GoodbyeDPI-Tray/en/">
+<meta property="og:image" content="https://trfurkan.github.io/GoodbyeDPI-Tray/images/en/main-dark.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "SoftwareApplication",
+ "name": "GoodbyeDPI Tray",
+ "description": "A Windows app that runs from the system tray and lets you use GoodbyeDPI without the command line.",
+ "applicationCategory": "UtilitiesApplication",
+ "operatingSystem": "Windows 10, Windows 11",
+ "inLanguage": "en",
+ "url": "https://trfurkan.github.io/GoodbyeDPI-Tray/en/",
+ "downloadUrl": "https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest",
+ "screenshot": "https://trfurkan.github.io/GoodbyeDPI-Tray/images/en/main-dark.png",
+ "license": "https://www.apache.org/licenses/LICENSE-2.0",
+ "isAccessibleForFree": true,
+ "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+ "author": { "@type": "Person", "name": "Furkan", "url": "https://github.com/trfurkan" }
+}
+</script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  { "@type": "Question", "name": "Is GoodbyeDPI Tray a VPN?", "acceptedAnswer": { "@type": "Answer", "text": "No. Your traffic doesn't go through another server and your IP address stays the same. The app only gets around your provider's DPI and DNS blocks, so there's no speed loss or extra ping like with a VPN." } },
+  { "@type": "Question", "name": "Does it work for Discord?", "acceptedAnswer": { "@type": "Answer", "text": "Discord is blocked through DPI and DNS, so it works with most providers in Turkey. Which profile works depends on your provider; the app's Access test makes that easy to see." } },
+  { "@type": "Question", "name": "Which profile should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Start with Turkey · Standard. If some sites don't open or are slow, try the alternatives. Alternatives 2 and 4 usually fix slowness." } },
+  { "@type": "Question", "name": "Why does Windows show a warning?", "acceptedAnswer": { "@type": "Answer", "text": "The installer isn't digitally signed, so Windows SmartScreen may warn you. Choose More info, then Run anyway. All of the app's source code is open on GitHub." } },
+  { "@type": "Question", "name": "Why do Chrome, Edge or Firefox warn me when downloading?", "acceptedAnswer": { "@type": "Answer", "text": "Browsers warn about unsigned files that few people have downloaded yet. That means they don't recognise the file yet, not that they found a problem. In Chrome and Edge choose Keep from the downloads list; in Firefox choose Allow download. Only download the installer from this page or the GitHub Releases page." } },
+  { "@type": "Question", "name": "Can I trust the app?", "acceptedAnswer": { "@type": "Answer", "text": "All of its source code is open on GitHub. It collects no personal data and only connects to GitHub once a day to check for a new version. Some antivirus programs may flag WinDivert, the network driver GoodbyeDPI uses; this is a common false alarm. The app is experimental and using it is your call." } },
+  { "@type": "Question", "name": "What if I already installed GoodbyeDPI-Turkey?", "acceptedAnswer": { "@type": "Answer", "text": "The installer finds the old GoodbyeDPI service and asks before taking it over. If you agree, your profile is kept and you can delete the old folder afterwards." } },
+  { "@type": "Question", "name": "How do I uninstall it?", "acceptedAnswer": { "@type": "Answer", "text": "Press Uninstall in the app or remove it from Windows Settings > Apps. The app is removed completely, including its settings and logs." } }
+ ]
+}
+</script>
+<link rel="alternate" hreflang="tr" href="https://trfurkan.github.io/GoodbyeDPI-Tray/">
+<link rel="alternate" hreflang="en" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/">
+<link rel="alternate" hreflang="ru" href="https://trfurkan.github.io/GoodbyeDPI-Tray/ru/">
+<link rel="alternate" hreflang="x-default" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/">
+<link rel="stylesheet" href="../site.css">
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+</head>
+<body>
+<div class="wrap">
+ <header class="top">
+  <a class="brand" href="./"><img src="../images/icon-128.png" alt="" width="34" height="34"><span>GoodbyeDPI Tray</span></a>
+  <nav aria-label="On this page">
+   <a href="#features">Features</a>
+   <a href="#install">Install</a>
+   <a href="#faq">FAQ</a>
+   <a href="https://github.com/trfurkan/GoodbyeDPI-Tray">GitHub</a>
+  </nav>
+  <div class="controls">
+   <div class="langs" aria-label="Language">
+    <a href="../" hreflang="tr" lang="tr"><img src="../images/flag-tr.png" alt="" width="18" height="18">TR</a>
+    <a href="./" hreflang="en" lang="en" aria-current="page"><img src="../images/flag-en.png" alt="" width="18" height="18">EN</a>
+    <a href="../ru/" hreflang="ru" lang="ru"><img src="../images/flag-ru.png" alt="" width="18" height="18">RU</a>
+   </div>
+   <button class="theme-toggle" type="button" aria-label="Light / dark theme" title="Light / dark theme">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+   </button>
+  </div>
+ </header>
+
+ <main>
+  <div class="hero">
+   <div>
+    <h1>Use GoodbyeDPI in one click</h1>
+    <p class="lead">GoodbyeDPI Tray is a Windows app that lets you reach Discord and blocked sites without a VPN.</p>
+    <div class="actions">
+     <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Download for free</a>
+     <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">Source code</a>
+    </div>
+    <p class="meta">Windows 10 / 11 · Free and open source · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Release notes</a></p>
+   </div>
+   <div class="shot">
+    <img src="../images/en/main-dark.png" data-dark="../images/en/main-dark.png" data-light="../images/en/main-light.png" width="900" height="840" alt="GoodbyeDPI Tray main window: GoodbyeDPI is running with the Turkey · Standard profile">
+   </div>
+  </div>
+
+  <section aria-labelledby="what">
+   <h2 id="what">What does it do?</h2>
+   <p class="section-lead">Internet providers in Turkey block some sites through DPI and DNS. GoodbyeDPI gets around these blocks right on your computer, and GoodbyeDPI Tray makes it easy to manage.</p>
+   <div class="cards">
+    <div class="card"><h3>Not a VPN</h3><p>Your traffic doesn't go through another server and your IP address stays the same. No speed loss, no extra ping.</p></div>
+    <div class="card"><h3>Only gets past the block</h3><p>Your other connections work as usual. Games and apps use the unblocked connection too.</p></div>
+    <div class="card"><h3>It has limits</h3><p>It can't open sites blocked directly by IP address. The Access test shows you this.</p></div>
+   </div>
+  </section>
+
+  <section id="features" aria-labelledby="features-title">
+   <h2 id="features-title">Features</h2>
+   <p class="section-lead">It uses the settings from GoodbyeDPI-Turkey and adds an interface you'll actually enjoy using every day.</p>
+   <div class="cards">
+    <div class="card"><h3>One-click start</h3><p>Start, stop, switch profiles; no administrator prompt. You can do it from the icon next to the clock too.</p></div>
+    <div class="card"><h3>Starts with Windows</h3><p>GoodbyeDPI runs as soon as your computer starts. You can turn this off.</p></div>
+    <div class="card"><h3>Seven Turkey profiles</h3><p>If one doesn't work, switch to another in one click. Your profile is kept across updates.</p></div>
+    <div class="card"><h3>Access test</h3><p>Tries blocked and regular sites with real connections and shows which ones open.</p></div>
+    <div class="card"><h3>Seven themes</h3><p>Light, Dark, Ocean, Sakura, Sunset, Android and Champagne. It can follow Windows too.</p></div>
+    <div class="card"><h3>Three languages</h3><p>Turkish, English and Russian. Change the language from the flag next to the theme button.</p></div>
+   </div>
+  </section>
+
+  <section aria-labelledby="themes">
+   <h2 id="themes">Themes and languages</h2>
+   <p class="section-lead">Besides Light and Dark there are five colour themes. You can switch the language to Turkish, English or Russian from the flag next to the theme button.</p>
+   <img class="gallery" src="../images/en/themes.png" width="932" height="576" alt="GoodbyeDPI Tray in six themes: Ocean, Sakura, Sunset, Android, Champagne and Light" loading="lazy">
+   <div class="menus">
+    <img src="../images/en/menu-theme.png" width="316" height="422" alt="Theme menu: Light, Dark, Ocean, Sakura, Sunset, Android, Champagne and Follow Windows" loading="lazy">
+    <img src="../images/en/menu-language.png" width="216" height="184" alt="Language menu with round flags: Türkçe, English, Русский" loading="lazy">
+   </div>
+  </section>
+
+  <section aria-labelledby="access-test">
+   <div class="split">
+    <div>
+     <h2 id="access-test">Does it work? See for yourself</h2>
+     <p class="section-lead">The Access test opens a real HTTPS connection to blocked sites like Discord, Roblox and Wattpad and to regular sites like Google. If the blocked ones don't open, it suggests another profile; if none open, it tells you to check your connection.</p>
+    </div>
+    <div class="shot">
+     <img src="../images/en/access-dark.png" data-dark="../images/en/access-dark.png" data-light="../images/en/access-light.png" width="720" height="548" alt="Access test window: connection results for blocked and regular sites" loading="lazy">
+    </div>
+   </div>
+  </section>
+
+  <section id="install" aria-labelledby="install-title">
+   <div class="split">
+    <div>
+     <h2 id="install-title">Install</h2>
+     <p class="section-lead">One file, takes about a minute. Needs Windows 10/11 and .NET Framework 4.8, which Windows usually already has.</p>
+     <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Download the installer</a>
+    </div>
+    <ol class="steps">
+     <li><strong>Open the installer</strong><span>If Windows SmartScreen warns you, choose <b>More info → Run anyway</b>.</span></li>
+     <li><strong>Press Install</strong><span>Read the note, tick the box and approve Windows' permission prompt.</span></li>
+     <li><strong>Start</strong><span>Open the app and press <b>Start</b>. The app takes care of the rest.</span></li>
+     <li><strong>Run the Access test</strong><span>If sites don't open, pick another profile.</span></li>
+    </ol>
+   </div>
+  </section>
+
+  <section id="faq" aria-labelledby="faq-title">
+   <h2 id="faq-title">FAQ</h2>
+   <details><summary>Is GoodbyeDPI Tray a VPN?</summary><p>No. Your traffic doesn't go through another server and your IP address stays the same. The app only gets around your provider's DPI and DNS blocks, so there's no speed loss or extra ping like with a VPN.</p></details>
+   <details><summary>Does it work for Discord?</summary><p>Discord is blocked through DPI and DNS, so it works with most providers in Turkey. Which profile works depends on your provider; the app's Access test makes that easy to see.</p></details>
+   <details><summary>Which profile should I pick?</summary><p>Start with <b>Turkey · Standard</b>. If some sites don't open or are slow, try the alternatives. Alternatives 2 and 4 usually fix slowness.</p></details>
+   <details><summary>Why does Windows show a warning?</summary><p>The installer isn't digitally signed, so Windows SmartScreen may warn you. Choose <b>More info → Run anyway</b> to continue. All of the app's source code is open on <a href="https://github.com/trfurkan/GoodbyeDPI-Tray">GitHub</a>.</p></details>
+   <details><summary>Why do Chrome, Edge or Firefox warn me when downloading?</summary><p>Browsers show warnings like "not commonly downloaded" or "may be harmful" for unsigned files that few people have downloaded yet. That means they don't recognise the file yet, not that they found a problem. In Chrome and Edge choose <b>Keep</b> from the menu next to the file in the downloads list; in Firefox choose <b>Allow download</b>. Always download the installer only from this page or the GitHub Releases page.</p></details>
+   <details><summary>Can I trust the app?</summary><p>All of the app's source code is open on GitHub; anyone can read it or build it themselves. It collects no personal data and only connects to GitHub once a day to check for a new version, which you can turn off in the About window. Some antivirus programs may flag WinDivert, the network driver GoodbyeDPI uses; because the driver can change network traffic, this is a common false alarm for tools like this. The app is experimental and using it is your call.</p></details>
+   <details><summary>What if I already installed GoodbyeDPI-Turkey?</summary><p>The installer finds the old GoodbyeDPI service and asks before taking it over. If you agree, your profile is kept and you can delete the old folder afterwards.</p></details>
+   <details><summary>How do I uninstall it?</summary><p>Press <b>Uninstall</b> in the app or remove it from Windows Settings &gt; Apps. The app is removed completely, including its settings and logs.</p></details>
+   <p>For more, see the <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/docs/KULLANIM.md">user guide</a> (in Turkish).</p>
+  </section>
+
+  <section aria-labelledby="about-me">
+   <h2 id="about-me">About me</h2>
+   <div class="about">
+    <a class="about-links" href="https://github.com/trfurkan" aria-label="My GitHub profile: trfurkan">
+     <svg class="github-mark" viewBox="0 0 16 16" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+     <img class="avatar" src="https://avatars.githubusercontent.com/u/47176772?s=128&amp;v=4" width="64" height="64" alt="Furkan's GitHub profile picture">
+    </a>
+    <div class="about-text">
+     <p>Hi, I'm Furkan. In my free time I build simple, user-friendly projects that make life a little easier, purely as a hobby. I make no professional claims; if something I made turned out useful for you, that makes me happy. Thanks for your interest and support!</p>
+     <div class="about-actions">
+      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new">🐞 Report a bug or suggest an idea</a>
+      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">⭐ Support it with a star on GitHub</a>
+     </div>
+    </div>
+   </div>
+  </section>
+
+  <section aria-labelledby="disclaimer">
+   <h2 id="disclaimer">Good to know</h2>
+   <p class="note">This app is entirely experimental and comes with no warranty. It may not work on every network and may affect your connection. The decision to use it, and any responsibility that follows, is yours alone. GoodbyeDPI Tray is an independent project, not an official release of ValdikSS/GoodbyeDPI or cagritaskn/GoodbyeDPI-Turkey.</p>
+  </section>
+ </main>
+
+ <footer>
+  <p>Engine: <a href="https://github.com/ValdikSS/GoodbyeDPI">GoodbyeDPI</a> (ValdikSS) · Turkey profiles: <a href="https://github.com/cagritaskn/GoodbyeDPI-Turkey">GoodbyeDPI-Turkey</a> (cagritaskn)</p>
+  <p><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/LICENSE">Apache 2.0 license</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/THIRD_PARTY_NOTICES.md">Third-party notices</a></p>
+ </footer>
+</div>
+<script src="../site.js"></script>
+</body>
+</html>

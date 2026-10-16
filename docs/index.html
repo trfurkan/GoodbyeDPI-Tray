@@ -51,95 +51,39 @@
  ]
 }
 </script>
-<style>
-:root {
- --bg: #eff4fc; --surface: #f8faff; --text: #0d1f45; --muted: #506384; --border: #cedaee;
- --accent: #144ee0; --accent-text: #fff; --link: #144ee0; --shadow: 0 10px 40px rgba(13,31,69,.10);
- color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
- :root {
-  --bg: #131b2d; --surface: #1d283e; --text: #edf3ff; --muted: #a5b7d6; --border: #364867;
-  --link: #7faeff; --shadow: 0 10px 40px rgba(0,0,0,.35);
-  color-scheme: dark;
- }
-}
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
-a { color: var(--link); }
-img { max-width: 100%; height: auto; display: block; }
-.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
-header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; color: var(--text); text-decoration: none; }
-.brand img { width: 34px; height: 34px; }
-nav { display: flex; gap: 20px; flex-wrap: wrap; }
-nav a { color: var(--muted); text-decoration: none; font-size: 15px; }
-nav a:hover { color: var(--text); }
-.hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding: 40px 0 64px; }
-h1 { font-size: clamp(34px, 5vw, 50px); line-height: 1.12; margin: 0 0 18px; letter-spacing: -.5px; }
-.lead { font-size: 19px; color: var(--muted); margin: 0 0 28px; }
-.actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; font-size: 16px; border: 1px solid var(--border); color: var(--text); background: var(--surface); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-.btn:hover { filter: brightness(1.08); }
-.meta { margin-top: 14px; font-size: 14px; color: var(--muted); }
-.shot { border-radius: 14px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--surface); }
-.gallery { margin: 0 auto; }
-.menus { display: flex; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap; margin-top: 24px; }
-.menus img { border-radius: 12px; box-shadow: var(--shadow); }
-.about { display: flex; align-items: center; gap: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; }.about p { margin: 0; color: var(--muted); }
-.about-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-.about-actions .btn { padding: 9px 16px; font-size: 15px; }.about-links { display: flex; align-items: center; gap: 14px; flex: none; color: var(--text); text-decoration: none; }.avatar { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--border); }@media (max-width: 560px) { .about { flex-direction: column; align-items: flex-start; } }
-section { padding: 56px 0; border-top: 1px solid var(--border); }
-h2 { font-size: 30px; margin: 0 0 12px; letter-spacing: -.3px; }
-.section-lead { color: var(--muted); margin: 0 0 32px; max-width: 680px; }
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-.card h3 { margin: 0 0 6px; font-size: 18px; }
-.card p { margin: 0; color: var(--muted); font-size: 15.5px; }
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
-ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
-ol.steps li { counter-increment: step; position: relative; padding: 0 0 18px 48px; }
-ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: grid; place-items: center; font-weight: 700; font-size: 15px; }
-ol.steps strong { display: block; }
-ol.steps span { color: var(--muted); font-size: 15.5px; }
-details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px 20px; margin-bottom: 10px; }
-summary { cursor: pointer; font-weight: 600; padding: 14px 0; }
-details p { margin: 0 0 16px; color: var(--muted); }
-.note { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; color: var(--muted); font-size: 15px; }
-footer { padding: 32px 0 48px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14.5px; }
-footer p { margin: 4px 0; }
-@media (max-width: 860px) {
- .hero, .split { grid-template-columns: 1fr; gap: 32px; }
- .cards { grid-template-columns: 1fr 1fr; }
- nav { display: none; }
-}
-@media (max-width: 560px) {
- body { font-size: 16px; }
- .cards { grid-template-columns: 1fr; }
- .hero { padding-top: 16px; }
- .btn { flex: 1 1 100%; }
-}
-</style>
-</head>
+<link rel="alternate" hreflang="tr" href="https://trfurkan.github.io/GoodbyeDPI-Tray/">
+<link rel="alternate" hreflang="en" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/">
+<link rel="alternate" hreflang="ru" href="https://trfurkan.github.io/GoodbyeDPI-Tray/ru/">
+<link rel="alternate" hreflang="x-default" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/">
+<link rel="stylesheet" href="site.css">
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script></head>
 <body>
 <div class="wrap">
  <header class="top">
-  <a class="brand" href="./"><img src="images/icon-128.png" alt="" width="34" height="34">GoodbyeDPI Tray</a>
+  <a class="brand" href="./"><img src="images/icon-128.png" alt="" width="34" height="34"><span>GoodbyeDPI Tray</span></a>
   <nav aria-label="Sayfa içi">
    <a href="#ozellikler">Özellikler</a>
    <a href="#kurulum">Kurulum</a>
    <a href="#sss">Sık sorulanlar</a>
    <a href="https://github.com/trfurkan/GoodbyeDPI-Tray">GitHub</a>
   </nav>
+  <div class="controls">
+   <div class="langs" aria-label="Dil">
+    <a href="./" hreflang="tr" lang="tr" aria-current="page"><img src="images/flag-tr.png" alt="" width="18" height="18">TR</a>
+    <a href="en/" hreflang="en" lang="en"><img src="images/flag-en.png" alt="" width="18" height="18">EN</a>
+    <a href="ru/" hreflang="ru" lang="ru"><img src="images/flag-ru.png" alt="" width="18" height="18">RU</a>
+   </div>
+   <button class="theme-toggle" type="button" aria-label="Aydınlık / karanlık tema" title="Aydınlık / karanlık tema">
+    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+   </button>
+  </div>
  </header>
-
  <main>
   <div class="hero">
    <div>
     <h1>GoodbyeDPI'ı tek tıkla kullan</h1>
-    <p class="lead">GoodbyeDPI Tray, Discord ve erişimi engellenen sitelere VPN kullanmadan girmeni sağlayan bir Windows uygulaması. Türkçe, İngilizce ve Rusça kullanabilirsin. Komut satırı yok, CMD dosyası yok; Windows açılınca kendiliğinden çalışır.</p>
+    <p class="lead">GoodbyeDPI Tray, Discord ve erişimi engellenen sitelere VPN kullanmadan girmeni sağlayan bir Windows uygulaması.</p>
     <div class="actions">
      <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Ücretsiz indir</a>
      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">Kaynak kodu</a>
@@ -147,10 +91,7 @@ footer p { margin: 4px 0; }
     <p class="meta">Windows 10 / 11 · Ücretsiz ve açık kaynak · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Sürüm notları</a></p>
    </div>
    <div class="shot">
-    <picture>
-     <source srcset="images/main-light.png" media="(prefers-color-scheme: light)">
-     <img src="images/main-dark.png" width="900" height="840" alt="GoodbyeDPI Tray ana penceresi: GoodbyeDPI çalışıyor, Türkiye · Standart profili etkin">
-    </picture>
+    <img src="images/main-dark.png" data-dark="images/main-dark.png" data-light="images/main-light.png" width="900" height="840" alt="GoodbyeDPI Tray ana penceresi: GoodbyeDPI çalışıyor, Türkiye · Standart profili etkin">
    </div>
   </div>
 
@@ -194,10 +135,7 @@ footer p { margin: 4px 0; }
      <p class="section-lead">Erişim testi Discord, Roblox, Wattpad gibi engelli sitelere ve Google gibi normal sitelere gerçek bir HTTPS bağlantısı açar. Engelliler açılmıyorsa başka bir profil denemeni, hiçbiri açılmıyorsa bağlantını kontrol etmeni söyler.</p>
     </div>
     <div class="shot">
-     <picture>
-      <source srcset="images/access-light.png" media="(prefers-color-scheme: light)">
-      <img src="images/access-dark.png" width="720" height="548" alt="Erişim testi penceresi: engelli ve normal sitelerin bağlantı sonuçları" loading="lazy">
-     </picture>
+     <img src="images/access-dark.png" data-dark="images/access-dark.png" data-light="images/access-light.png" width="720" height="548" alt="Erişim testi penceresi: engelli ve normal sitelerin bağlantı sonuçları" loading="lazy">
     </div>
    </div>
   </section>
@@ -228,7 +166,7 @@ footer p { margin: 4px 0; }
    <details><summary>Uygulama güvenilir mi?</summary><p>Uygulamanın tüm kaynak kodu GitHub'da açık; isteyen inceleyebilir ya da kendisi derleyebilir. Hiçbir kişisel bilgi toplamaz, internete yalnızca günde bir kez GitHub'a son sürümü sormak için bağlanır, bunu da Hakkında penceresinden kapatabilirsin. Bazı antivirüs programları, GoodbyeDPI'ın kullandığı ağ sürücüsü WinDivert yüzünden uyarı verebilir; bu sürücü ağ trafiğini değiştirebildiği için bu tür programlarda sık görülen bir yanlış alarmdır. Uygulama deneyseldir, kullanma kararı sana aittir.</p></details>
    <details><summary>Daha önce GoodbyeDPI-Turkey kurduysam ne olur?</summary><p>Kurucu eski GoodbyeDPI hizmetini bulur ve devralmak için onay ister. Onaylarsan seçtiğin profil korunur, eski klasörü sonra silebilirsin.</p></details>
    <details><summary>Nasıl kaldırırım?</summary><p>Uygulamadaki <b>Uygulamayı kaldır</b> düğmesine bas ya da Windows Ayarlar &gt; Uygulamalar'dan kaldır. Uygulama ayarları ve günlükleriyle birlikte tamamen silinir.</p></details>
-   <p>Daha fazlası için <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/docs/KULLANIM.md">kullanım rehberine</a> bakabilirsin. Bir sorun görürsen <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/issues">GitHub'da bildir</a>.</p>
+   <p>Daha fazlası için <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/docs/KULLANIM.md">kullanım rehberine</a> bakabilirsin.</p>
   </section>
 
   <section aria-labelledby="hakkimda">
@@ -259,18 +197,6 @@ footer p { margin: 4px 0; }
   <p><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/LICENSE">Apache 2.0 lisansı</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/THIRD_PARTY_NOTICES.md">Üçüncü taraf bildirimleri</a></p>
  </footer>
 </div>
-<script>
-// Installer names carry the version, so the download buttons ask GitHub for the latest file.
-// Without JavaScript or when GitHub cannot be reached they keep pointing at the release page.
-fetch("https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases/latest")
- .then(function (r) { return r.ok ? r.json() : null; })
- .then(function (release) {
-  if (!release) return;
-  var asset = (release.assets || []).filter(function (a) { return /^GoodbyeDPI-Installer.*\.exe$/.test(a.name); })[0];
-  if (!asset) return;
-  document.querySelectorAll("a[data-installer]").forEach(function (a) { a.href = asset.browser_download_url; });
- })
- .catch(function () {});
-</script>
+<script src="site.js"></script>
 </body>
 </html>

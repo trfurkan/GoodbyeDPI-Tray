@@ -6,8 +6,7 @@
 
 <p align="center">
   <b>GoodbyeDPI'ı tek tıkla kullan.</b><br>
-  Discord ve erişimi engellenen sitelere VPN kullanmadan girmeni sağlayan Windows uygulaması.<br>
-  Komut satırı yok, CMD dosyası yok; Windows açılınca kendiliğinden çalışır.
+  GoodbyeDPI Tray, Discord ve erişimi engellenen sitelere VPN kullanmadan girmeni sağlayan bir Windows uygulaması.
 </p>
 
 <p align="center">
@@ -132,7 +131,7 @@ Kurucu eski GoodbyeDPI hizmetini bulur ve devralmak için onay ister. Onaylarsan
 Uygulamadaki **Uygulamayı kaldır** düğmesine bas ya da Windows Ayarlar > Uygulamalar'dan kaldır. Uygulama ayarları ve günlükleriyle birlikte tamamen silinir.
 </details>
 
-Daha fazlası için [kullanım rehberine](docs/KULLANIM.md) bakabilirsin. Bir sorun görürsen [GitHub'da bildir](https://github.com/trfurkan/GoodbyeDPI-Tray/issues).
+Daha fazlası için [kullanım rehberine](docs/KULLANIM.md) bakabilirsin.
 
 ## Hakkımda
 
