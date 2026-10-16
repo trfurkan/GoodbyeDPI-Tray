@@ -86,6 +86,9 @@ h1 { font-size: clamp(34px, 5vw, 50px); line-height: 1.12; margin: 0 0 18px; let
 .gallery { margin: 0 auto; }
 .menus { display: flex; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap; margin-top: 24px; }
 .menus img { border-radius: 12px; box-shadow: var(--shadow); }
+.about { display: flex; align-items: center; gap: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; }.about p { margin: 0; color: var(--muted); }
+.about-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.about-actions .btn { padding: 9px 16px; font-size: 15px; }.about-links { display: flex; align-items: center; gap: 14px; flex: none; color: var(--text); text-decoration: none; }.avatar { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--border); }@media (max-width: 560px) { .about { flex-direction: column; align-items: flex-start; } }
 section { padding: 56px 0; border-top: 1px solid var(--border); }
 h2 { font-size: 30px; margin: 0 0 12px; letter-spacing: -.3px; }
 .section-lead { color: var(--muted); margin: 0 0 32px; max-width: 680px; }
@@ -167,11 +170,8 @@ footer p { margin: 4px 0; }
     <div class="card"><h3>Windows'la açılır</h3><p>Bilgisayar açılınca GoodbyeDPI da çalışır. İstersen kapatabilirsin.</p></div>
     <div class="card"><h3>Yedi Türkiye profili</h3><p>Biri çalışmazsa diğerine tek tıkla geç. Seçtiğin profil güncellemelerde korunur.</p></div>
     <div class="card"><h3>Erişim testi</h3><p>Engelli ve normal siteleri gerçek bağlantıyla dener, hangisinin açıldığını gösterir.</p></div>
-    <div class="card"><h3>Konsol</h3><p>Motorun canlı çıktısını görürsün. Bir şey ters giderse nedeni orada.</p></div>
     <div class="card"><h3>Yedi tema</h3><p>Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android ve Şampanya. İstersen Windows'a uyar.</p></div>
     <div class="card"><h3>Üç dil</h3><p>Türkçe, İngilizce ve Rusça. Dili tema düğmesinin yanındaki bayraktan değiştirirsin.</p></div>
-    <div class="card"><h3>Güncellemeyi haber verir</h3><p>Yeni sürüm çıkınca bildirim gelir, tek tıkla indirirsin.</p></div>
-    <div class="card"><h3>Kurulum yerini sen seç</h3><p>İstersen Program Files yerine başka bir klasöre kurabilirsin.</p></div>
    </div>
   </section>
 
@@ -209,7 +209,7 @@ footer p { margin: 4px 0; }
     </div>
     <ol class="steps">
      <li><strong>Kurucuyu aç</strong><span>Windows SmartScreen uyarı verirse <b>Ek bilgi → Yine de çalıştır</b>'a bas.</span></li>
-     <li><strong>Kur'a bas</strong><span>Notu okuyup onay kutusunu işaretle. İstersen kurulum konumunu değiştir, sonra Windows'un izin penceresini onayla.</span></li>
+     <li><strong>Kur'a bas</strong><span>Notu okuyup onay kutusunu işaretle, Windows'un izin penceresini onayla.</span></li>
      <li><strong>Başlat</strong><span>Uygulamayı aç ve <b>Başlat</b>'a bas. Gerisini uygulama halleder.</span></li>
      <li><strong>Erişim testini çalıştır</strong><span>Siteler açılmıyorsa başka bir profil seç.</span></li>
     </ol>
@@ -227,6 +227,23 @@ footer p { margin: 4px 0; }
    <p>Daha fazlası için <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/docs/KULLANIM.md">kullanım rehberine</a> bakabilirsin. Bir sorun görürsen <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/issues">GitHub'da bildir</a>.</p>
   </section>
 
+  <section aria-labelledby="hakkimda">
+   <h2 id="hakkimda">Hakkımda</h2>
+   <div class="about">
+    <a class="about-links" href="https://github.com/trfurkan" aria-label="GitHub profilim: trfurkan">
+     <svg class="github-mark" viewBox="0 0 16 16" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+     <img class="avatar" src="https://avatars.githubusercontent.com/u/47176772?s=128&amp;v=4" width="64" height="64" alt="Furkan'ın GitHub profil fotoğrafı">
+    </a>
+    <div class="about-text">
+     <p>Merhaba, ben Furkan. Boş vakitlerimde hobi olarak hayatı kolaylaştıran, sade ve kullanıcı dostu projeler geliştiriyorum. Profesyonel bir iddiam yok; ürettiğim çözümler işinize yaradıysa ne mutlu bana. İlginiz ve desteğiniz için teşekkürler!</p>
+     <div class="about-actions">
+      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new">🐞 Hata bildir ya da öneride bulun</a>
+      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">⭐ GitHub'da yıldız vererek destek ol</a>
+     </div>
+    </div>
+   </div>
+  </section>
+
   <section aria-labelledby="sorumluluk">
    <h2 id="sorumluluk">Bilmen gerekenler</h2>
    <p class="note">Uygulama tamamen deneyseldir ve herhangi bir garanti sunmaz. Her internet ağında çalışmayabilir veya bağlantını etkileyebilir. Uygulamayı kullanma kararı ve doğabilecek tüm sorumluluk kullanıcının kendisine aittir. GoodbyeDPI Tray bağımsız bir projedir; ValdikSS/GoodbyeDPI ya da cagritaskn/GoodbyeDPI-Turkey'in resmî sürümü değildir.</p>
@@ -235,7 +252,7 @@ footer p { margin: 4px 0; }
 
  <footer>
   <p>Motor: <a href="https://github.com/ValdikSS/GoodbyeDPI">GoodbyeDPI</a> (ValdikSS) · Türkiye profilleri: <a href="https://github.com/cagritaskn/GoodbyeDPI-Turkey">GoodbyeDPI-Turkey</a> (cagritaskn)</p>
-  <p>Arayüz: <a href="https://github.com/trfurkan">Furkan (trfurkan)</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/LICENSE">Apache 2.0 lisansı</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/THIRD_PARTY_NOTICES.md">Üçüncü taraf bildirimleri</a></p>
+  <p><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/LICENSE">Apache 2.0 lisansı</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/THIRD_PARTY_NOTICES.md">Üçüncü taraf bildirimleri</a></p>
  </footer>
 </div>
 <script>

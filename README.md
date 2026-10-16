@@ -46,7 +46,6 @@ Türkiye'de internet sağlayıcıları bazı siteleri DPI ve DNS üzerinden enge
 | **Windows'la açılır** | Bilgisayar açılınca GoodbyeDPI da çalışır. İstersen kapatabilirsin. |
 | **Yedi Türkiye profili** | GoodbyeDPI-Turkey'deki profillerin hepsi. Biri çalışmazsa diğerine tek tıkla geç. |
 | **Erişim testi** | Engelli ve normal siteleri gerçek bağlantıyla dener, hangisinin açıldığını gösterir. |
-| **Konsol** | Motorun canlı çıktısını görürsün. Bir şey ters giderse nedeni orada. |
 | **Yedi tema** | Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android ve Şampanya. İstersen Windows'a uyar. |
 | **Üç dil** | Türkçe, İngilizce ve Rusça. Dili tema düğmesinin yanındaki bayraktan değiştirirsin. |
 
@@ -123,6 +122,27 @@ Uygulamadaki **Uygulamayı kaldır** düğmesine bas ya da Windows Ayarlar > Uyg
 
 Daha fazlası için [kullanım rehberine](docs/KULLANIM.md) bakabilirsin. Bir sorun görürsen [GitHub'da bildir](https://github.com/trfurkan/GoodbyeDPI-Tray/issues).
 
+## Hakkımda
+
+<p>
+  <a href="https://github.com/trfurkan">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/github-mark-white.svg">
+      <img src="docs/images/github-mark.svg" width="44" height="44" alt="GitHub">
+    </picture>
+  </a>
+  &nbsp;
+  <a href="https://github.com/trfurkan"><img src="https://avatars.githubusercontent.com/u/47176772?s=128&v=4" width="56" height="56" alt="Furkan'ın GitHub profil fotoğrafı"></a>
+</p>
+
+Merhaba, ben Furkan. Boş vakitlerimde hobi olarak hayatı kolaylaştıran, sade ve kullanıcı dostu projeler geliştiriyorum. Profesyonel bir iddiam yok; ürettiğim çözümler işinize yaradıysa ne mutlu bana. İlginiz ve desteğiniz için teşekkürler!
+
+<p>
+  <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new"><b>🐞 Hata bildir ya da öneride bulun</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/trfurkan/GoodbyeDPI-Tray"><b>⭐ GitHub'da yıldız vererek destek ol</b></a>
+</p>
+
 ## Bilmen gerekenler
 
 > Uygulama tamamen deneyseldir ve herhangi bir garanti sunmaz. Her internet ağında çalışmayabilir veya bağlantını etkileyebilir. Uygulamayı kullanma kararı ve doğabilecek tüm sorumluluk kullanıcının kendisine aittir. GoodbyeDPI Tray bağımsız bir projedir; ValdikSS/GoodbyeDPI ya da cagritaskn/GoodbyeDPI-Turkey'in resmî sürümü değildir.
@@ -131,4 +151,4 @@ Daha fazlası için [kullanım rehberine](docs/KULLANIM.md) bakabilirsin. Bir so
 
 Çalışmanın ana kaynak kodu: [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) (cagritaskn) · [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) (ValdikSS)
 
-Arayüz: [Furkan (trfurkan)](https://github.com/trfurkan) · [Apache 2.0 lisansı](LICENSE) · [Üçüncü taraf bildirimleri](THIRD_PARTY_NOTICES.md)
+Lisans: [Apache 2.0 lisansı](LICENSE) · [Üçüncü taraf bildirimleri](THIRD_PARTY_NOTICES.md)
