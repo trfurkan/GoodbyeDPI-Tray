@@ -109,6 +109,18 @@ Kurulum dosyası dijital olarak imzalı olmadığı için Windows SmartScreen uy
 </details>
 
 <details>
+<summary><b>Chrome, Edge ya da Firefox indirirken neden uyarıyor?</b></summary>
+
+Tarayıcılar imzasız ve az indirilmiş dosyalar için "yaygın olarak indirilmiyor" ya da "zararlı olabilir" gibi uyarılar gösterir. Bu, dosyada bir sorun bulduklarını değil, dosyayı henüz tanımadıklarını gösterir. Chrome ve Edge'de indirilenler listesinde dosyanın yanındaki menüden **Sakla**'yı, Firefox'ta **İzin ver ve indir**'i seçebilirsin. Kurucuyu her zaman yalnızca bu depodaki Releases sayfasından ya da tanıtım sayfasından indir.
+</details>
+
+<details>
+<summary><b>Uygulama güvenilir mi?</b></summary>
+
+Uygulamanın tüm kaynak kodu bu depoda açık; isteyen inceleyebilir ya da kendisi derleyebilir. Hiçbir kişisel bilgi toplamaz, internete yalnızca günde bir kez GitHub'a son sürümü sormak için bağlanır, bunu da Hakkında penceresinden kapatabilirsin. Bazı antivirüs programları, GoodbyeDPI'ın kullandığı ağ sürücüsü WinDivert yüzünden uyarı verebilir; bu sürücü ağ trafiğini değiştirebildiği için bu tür programlarda sık görülen bir yanlış alarmdır. Uygulama deneyseldir, kullanma kararı sana aittir.
+</details>
+
+<details>
 <summary><b>Daha önce GoodbyeDPI-Turkey kurduysam ne olur?</b></summary>
 
 Kurucu eski GoodbyeDPI hizmetini bulur ve devralmak için onay ister. Onaylarsan seçtiğin profil korunur, eski klasörü sonra silebilirsin.
