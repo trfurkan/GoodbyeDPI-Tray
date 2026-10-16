@@ -23,17 +23,20 @@ Doğrudan IP adresiyle engellenen siteleri açamaz..
 
 ## İndir ve kur
 
-[Releases](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest) sayfasından **GoodbyeDPI-Installer.exe**'yi indirip kurabilirsiniz. 
+[Releases](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest) sayfasından **GoodbyeDPI-Installer**'ı indirip kurabilirsiniz. Kurulumdan sonra yeni sürüm çıkınca uygulama sana haber verir.
 
 Windows 10/11 ve .NET Framework 4.8 gerekir.
 
 ## Özellikler
 
-- Tek pencereden başlat, durdur, yeniden başlat.
+- Tek pencereden başlat, durdur, yeniden başlat. Yönetici izni istemez.
 - Windows açılınca otomatik başlama ve sistem tepsisinde bekleme.
 - GoodbyeDPI-Turkey'deki yedi profil.
 - **Erişim testi:** Engelli ve normal birkaç siteyi deneyip GoodbyeDPI'ın işe yarayıp yaramadığını gösterir.
-- Açık, koyu ve sistem teması.
+- Türkçe, İngilizce ve Rusça arayüz.
+- Yedi tema: Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android ve Şampanya. İstersen Windows'a uyar.
+- Yeni sürüm çıkınca haber verir.
+- Kurulum konumunu kendin seçebilirsin.
 
 ![Erişim testi](docs/images/access-dark.png)
 

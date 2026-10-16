@@ -2,11 +2,11 @@
 
 ## Kurulum
 
-`GoodbyeDPI-Installer.exe`'yi aç, kutudaki sorumluluk metnini okuyup onay kutusunu işaretle ve **Kur**'a bas. Zaten kuruluysa düğmede **Güncelle** yazar. Ardından Windows'un izin penceresini onayla.
+Kurucuyu (`GoodbyeDPI-Installer-<sürüm>.exe`) aç, kutudaki sorumluluk metnini okuyup onay kutusunu işaretle ve **Kur**'a bas. Zaten kuruluysa düğmede **Güncelle** yazar. Ardından Windows'un izin penceresini onayla. Yönetici izni yalnızca kurulumda ve kaldırırken istenir.
 
 > **Sorumluluk Reddi:** Uygulama tamamen deneyseldir ve herhangi bir garanti sunmaz. Her internet ağında çalışmayabilir veya bağlantınızı etkileyebilir. Uygulamayı kullanma kararı ve doğabilecek tüm sorumluluk kullanıcının kendisine aittir.
 
-Uygulama `C:\Program Files\GoodbyeDPI Tray` klasörüne kurulur ve Başlat menüsüne eklenir. Güncellerken seçtiğin profil ve başlangıç ayarların korunur.
+Uygulama varsayılan olarak `C:\Program Files\GoodbyeDPI Tray` klasörüne kurulur ve Başlat menüsüne eklenir. İlk kurulumda **Değiştir** ile başka bir klasör seçebilirsin; o klasörü güvenlik için yalnızca yöneticiler değiştirebilir. Güncellerken uygulama aynı yerde kalır, seçtiğin profil, tema, dil ve başlangıç ayarların korunur.
 
 Daha önce GoodbyeDPI-Turkey'in hizmet kurulum betiğini kullandıysan kurucu o hizmeti bulur ve devralmak için onay ister. Onaylarsan seçtiğin profil korunur, eski klasörü sonra silebilirsin.
 
@@ -18,9 +18,9 @@ Daha önce GoodbyeDPI-Turkey'in hizmet kurulum betiğini kullandıysan kurucu o 
 
 - **Başlat / Durdur:** GoodbyeDPI'ı açar ya da kapatır.
 - **Profil → Profili uygula:** Seçtiğin profile geçer. GoodbyeDPI çalışıyorsa yeni profille yeniden başlar.
-- **Otomatik başlangıç:** GoodbyeDPI'ın Windows'la birlikte çalışmasını ve simgenin saatin yanında açılmasını ayrı ayrı seçebilirsin.
+- **Otomatik başlangıç:** **Windows açıldığında GoodbyeDPI'ı başlat** GoodbyeDPI'ı ve tepsi simgesini birlikte açıp kapatır. **Sistem tepsisinde göster** yalnızca simgeyi yönetir; GoodbyeDPI açılışta başlarken simgeyi gizlemek istersen önce sorar.
 - **Yeniden başlat:** Bağlantı tuhaflaşınca işe yarar.
-- **Konsol:** Motorun canlı çıktısını gösterir .
+- **Konsol:** Motorun canlı çıktısını gösterir.
 - **Erişim testi:** GoodbyeDPI'ın işe yarayıp yaramadığını ölçer (ayrıntılar aşağıda).
 - **Uygulamayı kaldır:** Kaldırma ekranını açar. İstersen Windows Ayarlar > Uygulamalar'dan da kaldırabilirsin.
 
@@ -28,7 +28,9 @@ Pencereyi kapatınca uygulama saatin yanındaki simgeye küçülür; çift tıkl
 
 Yeni bir sürüm çıkınca uygulama sana haber verir: saatin yanındaki simgeden bir bildirim gelir, pencerenin altında da **İndir** bağlantısı görünür. Bunun için günde bir kez GitHub'a son sürümü sorar, başka hiçbir bilgi göndermez. **Hakkında** penceresinde güncel olup olmadığını görebilir, **Şimdi kontrol et** ile beklemeden bakabilirsin. Otomatik kontrolü istemezsen aynı pencereden kapatabilirsin.
 
-Sağ üstteki **Tema** düğmesinden Aydınlık, Karanlık ya da Sistem seçebilirsin. Klavyeyle de kullanılabilir: Tab ile gezin, Enter/Boşluk ile bas, profil kutusunda Aşağı ok ile listeyi aç.
+Başlat, durdur, profil değiştirme ve otomatik başlangıç yönetici izni istemez.
+
+Sağ üstteki **tema** düğmesinden Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android ya da Şampanya'yı seçebilirsin; **Windows'a uy** seçilirse tema Windows'un açık/koyu ayarını izler. Hemen solundaki **bayraklı düğmeden** dili Türkçe, İngilizce ya da Rusça yapabilirsin; dil değişince uygulama kendini yeniden açar. Klavyeyle de kullanılabilir: Tab ile gezin, Enter/Boşluk ile bas, profil kutusunda Aşağı ok ile listeyi aç.
 
 ## Profiller
 
@@ -76,4 +78,4 @@ Hatalar `%LOCALAPPDATA%\GoodbyeDPI Tray\Logs\application.log` dosyasına kaydolu
 ## Kaynak ve Lisans
 
 Motor: [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) 0.2.3rc3.  
-Lisans detayları kurulum klasöründeki `licenses` dizininde yer almaktadır.
+Lisansları uygulamada **Hakkında → Lisanslar**'dan okuyabilirsin; kurulum klasöründeki `licenses` dizininde de dururlar.
