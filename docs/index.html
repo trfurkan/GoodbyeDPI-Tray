@@ -83,6 +83,9 @@ h1 { font-size: clamp(34px, 5vw, 50px); line-height: 1.12; margin: 0 0 18px; let
 .btn:hover { filter: brightness(1.08); }
 .meta { margin-top: 14px; font-size: 14px; color: var(--muted); }
 .shot { border-radius: 14px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--surface); }
+.gallery { margin: 0 auto; }
+.menus { display: flex; gap: 20px; justify-content: center; align-items: flex-start; flex-wrap: wrap; margin-top: 24px; }
+.menus img { border-radius: 12px; box-shadow: var(--shadow); }
 section { padding: 56px 0; border-top: 1px solid var(--border); }
 h2 { font-size: 30px; margin: 0 0 12px; letter-spacing: -.3px; }
 .section-lead { color: var(--muted); margin: 0 0 32px; max-width: 680px; }
@@ -141,7 +144,7 @@ footer p { margin: 4px 0; }
    <div class="shot">
     <picture>
      <source srcset="images/main-light.png" media="(prefers-color-scheme: light)">
-     <img src="images/main-dark.png" width="883" height="819" alt="GoodbyeDPI Tray ana penceresi: GoodbyeDPI çalışıyor, Türkiye · Standart profili etkin">
+     <img src="images/main-dark.png" width="900" height="840" alt="GoodbyeDPI Tray ana penceresi: GoodbyeDPI çalışıyor, Türkiye · Standart profili etkin">
     </picture>
    </div>
   </div>
@@ -172,6 +175,16 @@ footer p { margin: 4px 0; }
    </div>
   </section>
 
+  <section aria-labelledby="temalar">
+   <h2 id="temalar">Temalar ve diller</h2>
+   <p class="section-lead">Aydınlık ve Karanlık'ın yanında beş renkli tema var. Dili de tema düğmesinin yanındaki bayraktan Türkçe, İngilizce ya da Rusça yapabilirsin.</p>
+   <img class="gallery" src="images/themes.png" width="932" height="576" alt="GoodbyeDPI Tray altı farklı temada: Okyanus, Sakura, Güneş Batımı, Android, Şampanya ve Aydınlık" loading="lazy">
+   <div class="menus">
+    <img src="images/menu-theme.png" width="316" height="422" alt="Tema menüsü: Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android, Şampanya ve Windows'a uy" loading="lazy">
+    <img src="images/menu-language.png" width="216" height="184" alt="Dil menüsü: Türkçe, English, Русский, yuvarlak bayraklarla" loading="lazy">
+   </div>
+  </section>
+
   <section aria-labelledby="erisim-testi">
    <div class="split">
     <div>
@@ -181,7 +194,7 @@ footer p { margin: 4px 0; }
     <div class="shot">
      <picture>
       <source srcset="images/access-light.png" media="(prefers-color-scheme: light)">
-      <img src="images/access-dark.png" width="706" height="436" alt="Erişim testi penceresi: engelli ve normal sitelerin bağlantı sonuçları" loading="lazy">
+      <img src="images/access-dark.png" width="720" height="548" alt="Erişim testi penceresi: engelli ve normal sitelerin bağlantı sonuçları" loading="lazy">
      </picture>
     </div>
    </div>
