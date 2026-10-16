@@ -9,7 +9,7 @@ $branding = @("/win32icon:$icon", "/resource:$icon,GoodbyeTray.AppIcon")
 $vendorDir = Join-Path $root 'vendor\goodbyedpi'
 $appDir = Join-Path $root 'build\app'
 New-Item -ItemType Directory -Path $appDir -Force | Out-Null
-$shared = @("$sourceDir\AppInfo.cs", "$sourceDir\WindowsIntegration.cs", "$sourceDir\AppCommands.cs", "$sourceDir\EngineService.cs", "$sourceDir\EngineConsoleForm.cs", "$sourceDir\AccessTestForm.cs")
+$shared = @("$sourceDir\AppInfo.cs", "$sourceDir\WindowsIntegration.cs", "$sourceDir\AppCommands.cs", "$sourceDir\EngineService.cs", "$sourceDir\EngineConsoleForm.cs", "$sourceDir\AccessTestForm.cs", "$sourceDir\UpdateCheck.cs")
 $wpf = Join-Path (Split-Path $compiler -Parent) 'WPF'
 $references = @("/reference:$wpf\PresentationFramework.dll", "/reference:$wpf\PresentationCore.dll", "/reference:$wpf\WindowsBase.dll")
 $output = Join-Path $appDir 'GoodbyeDPI.Tray.exe'

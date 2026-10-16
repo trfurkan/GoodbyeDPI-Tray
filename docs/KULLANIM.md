@@ -26,6 +26,8 @@ Daha önce GoodbyeDPI-Turkey'in hizmet kurulum betiğini kullandıysan kurucu o 
 
 Pencereyi kapatınca uygulama saatin yanındaki simgeye küçülür; çift tıklayınca geri gelir. **Oturum açtığımda sistem tepsisinde göster** seçeneğini kapatırsan simge gizlenir ve pencereyi kapatınca uygulama tamamen kapanır. İki durumda da GoodbyeDPI çalışmaya devam eder, kapatmak için **Durdur**'a bas.
 
+Yeni bir sürüm çıkınca uygulama sana haber verir: saatin yanındaki simgeden bir bildirim gelir, pencerenin altında da **İndir** bağlantısı görünür. Bunun için günde bir kez GitHub'a son sürümü sorar, başka hiçbir bilgi göndermez. **Hakkında** penceresinde güncel olup olmadığını görebilir, **Şimdi kontrol et** ile beklemeden bakabilirsin. Otomatik kontrolü istemezsen aynı pencereden kapatabilirsin.
+
 Sağ üstteki **Tema** düğmesinden Aydınlık, Karanlık ya da Sistem seçebilirsin. Klavyeyle de kullanılabilir: Tab ile gezin, Enter/Boşluk ile bas, profil kutusunda Aşağı ok ile listeyi aç.
 
 ## Profiller

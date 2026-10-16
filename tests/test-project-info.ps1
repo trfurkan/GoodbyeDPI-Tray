@@ -8,14 +8,15 @@ $type=$asm.GetType('GoodbyeTray.MainForm'); $flags=[Reflection.BindingFlags]'Non
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {
  $footer=$type.GetField('footerPanel',$flags).GetValue($form)
- if($footer.Controls.Count -ne 2){throw 'Unexpected footer content'}
+ if($footer.Controls.Count -ne 3){throw 'Unexpected footer content'}
+ if($type.GetField('updateLink',$flags).GetValue($form).Visible){throw 'Update link visible without an update'}
  $profile=@($footer.Controls | Where-Object {$_.Text -eq 'Geliştirici: trfurkan'})
  if($profile.Count -ne 1 -or $profile[0].Tag -ne 'https://github.com/trfurkan' -or $profile[0].GetType().Name -ne 'GitHubProfileLink'){throw 'Profile link or icon missing'}
  if(@($footer.Controls | Where-Object {$_.Text -eq 'Hakkında'}).Count -ne 1){throw 'About link missing'}
  $dialog=$type.GetMethod('CreateAboutDialog',$flags).Invoke($form,$null)
  try {
   $dialog.Show(); [Windows.Forms.Application]::DoEvents()
-  $links=@($dialog.Controls | Where-Object {$_ -is [Windows.Forms.LinkLabel]})
+  $links=@($dialog.Controls | Where-Object {$_ -is [Windows.Forms.LinkLabel] -and $_.Tag})
   if($links.Count -ne 2 -or $links.Tag -notcontains 'https://github.com/trfurkan' -or $links.Tag -notcontains 'https://github.com/cagritaskn/GoodbyeDPI-Turkey'){throw 'Wrong project URLs'}
   $bitmap=[Drawing.Bitmap]::new($dialog.Width,$dialog.Height)
   try{$dialog.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$dialog.Width,$dialog.Height)); $bitmap.Save((Join-Path $root 'build\previews\about-links.png'))}finally{$bitmap.Dispose()}

@@ -15,7 +15,7 @@ foreach($task in $list.JumpItems) {
  if(-not $commands.GetMethod('IsValid',$static).Invoke($null,[object[]]@([string]$command))) { throw "İşlemsiz Jump List girdisi: $command" }
 }
 $version=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $root 'dist\GoodbyeDPI-Installer.exe'))
-if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.5.2.0') { throw 'EXE metadatası yanlış' }
+if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.5.3.0') { throw 'EXE metadatası yanlış' }
 $type=$assembly.GetType('GoodbyeTray.MainForm')
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {
@@ -76,3 +76,29 @@ try {
  if(-not $trayForm.IsDisposed) { throw 'Arayüz kapanmadı' }
 } finally { $trayForm.Dispose() }
 Write-Output 'PASS: 7 komutun IPC aktarımı, tepsi durumu ve profilleri, göster/ayarlar/profil/gizle/çık davranışları, tepsi ayarına göre simge ve kapatma. Motor değiştirilmedi.'
+$update=$assembly.GetType('GoodbyeTray.UpdateCheck'); $isNewer=$update.GetMethod('IsNewer',$static)
+foreach($case in @(@('1.5.3','1.5.2',$true),@('1.10.0','1.9.9',$true),@('2.0','1.5.2',$true),@('1.5.2','1.5.2',$false),@('1.5.1','1.5.2',$false),@('bozuk','1.5.2',$false))) {
+ if($isNewer.Invoke($null,[object[]]@($case[0],$case[1])) -ne $case[2]) { throw "Sürüm karşılaştırması yanlış: $($case[0]) / $($case[1])" }
+}
+$trayForm=[Activator]::CreateInstance($type,[object[]]@($true))
+try {
+ $type.GetField('timer',$instance).GetValue($trayForm).Stop()
+ # Without a tray icon ShowUpdate shows no balloon and stores nothing in the registry.
+ $type.GetMethod('SetTrayVisible',$instance).Invoke($trayForm,[object[]]@($false)) | Out-Null
+ $link=$type.GetField('updateLink',$instance).GetValue($trayForm); $menuItem=$type.GetField('trayUpdate',$instance).GetValue($trayForm)
+ if($link.Visible -or $menuItem.Available) { throw 'Güncelleme yokken bağlantı görünüyor' }
+ $type.GetMethod('ShowUpdate',$instance).Invoke($trayForm,[object[]]@('99.0')) | Out-Null
+ if($link.Text -notlike '*99.0*' -or $menuItem.Text -notlike '*99.0*' -or -not $menuItem.Available) { throw 'Yeni sürüm bağlantısı gösterilmedi' }
+ $about=$type.GetMethod('CreateAboutDialog',$instance).Invoke($trayForm,$null)
+ try {
+  if(-not ($about.Controls | Where-Object { $_ -is [Windows.Forms.CheckBox] -and $_.Text -like '*sürüm*' })) { throw 'Hakkında penceresinde güncelleme seçeneği yok' }
+  if(-not ($about.Controls | Where-Object { $_.Text -eq 'Yeni sürüm var: 99.0' }) -or -not ($about.Controls | Where-Object { $_ -is [Windows.Forms.LinkLabel] -and $_.Text -eq 'İndir' })) { throw 'Hakkında penceresi yeni sürümü göstermiyor' }
+  $icon=$about.Controls | Where-Object { $_.GetType().Name -eq 'UpdateStatusIcon' }; $iconState=$icon.GetType().GetProperty('State',$instance)
+  if([string]$iconState.GetValue($icon) -ne 'Available') { throw 'Durum simgesi yanlış' }
+  # The window follows later changes too: a finished check that finds nothing shows "current".
+  $type.GetMethod('SetUpdateState',$instance).Invoke($trayForm,[object[]]@([Enum]::Parse($assembly.GetType('GoodbyeTray.UpdateState'),'Current'))) | Out-Null
+  if(-not ($about.Controls | Where-Object { $_.Text -eq 'Güncel sürümü kullanıyorsun.' }) -or -not ($about.Controls | Where-Object { $_.Text -eq 'Şimdi kontrol et' }) -or [string]$iconState.GetValue($icon) -ne 'Current') { throw 'Hakkında penceresi güncel durumu göstermiyor' }
+ } finally { $about.Dispose() }
+ if($type.GetField('UpdateStateChanged',$instance).GetValue($trayForm) -ne $null) { throw 'Kapanan Hakkında penceresi dinlemeye devam ediyor' }
+} finally { $type.GetField('quitting',$instance).SetValue($trayForm,$true); $trayForm.Dispose() }
+Write-Output 'PASS: Sürüm karşılaştırması, yeni sürüm bağlantısı ve tepsi menüsü, Hakkında penceresindeki güncelleme seçeneği. GitHub''a istek atılmadı.'

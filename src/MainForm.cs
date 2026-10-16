@@ -142,6 +142,14 @@ namespace GoodbyeTray {
   readonly SoftButton toggle=new SoftButton(), apply=new SoftButton(), restart=new SoftButton();
   readonly SoftButton trayButton;
   readonly Label trayHelp=LabelOf("",9,false);
+  readonly LinkLabel updateLink=new LinkLabel { AutoSize=true,Anchor=AnchorStyles.Right,Margin=new Padding(0,0,16,0),LinkBehavior=LinkBehavior.HoverUnderline,Visible=false };
+  readonly ToolStripMenuItem trayUpdate;
+  // The first check waits a little: right after logon the network is often not up yet.
+  DateTime nextUpdateCheck=DateTime.UtcNow.AddSeconds(30);
+  bool updateChecking;
+  UpdateState updateState;
+  string availableUpdate;
+  event Action UpdateStateChanged;
 
 
   readonly TableLayoutPanel dashboard=new BufferedLayout();
@@ -188,11 +196,12 @@ namespace GoodbyeTray {
    toggle.Dock=DockStyle.Top; toggle.Margin=new Padding(8,10,0,0); toggle.Click+=delegate { Execute(running?"stop":"start",0); }; heroLayout.Controls.Add(toggle,1,0); heroLayout.SetRowSpan(toggle,2);
    notice.Dock=DockStyle.Fill; notice.Text="Profilini seç, gerisini uygulama halleder."; notice.Tag="muted"; notice.Padding=new Padding(2,4,2,0); layout.Controls.Add(notice);
    BuildGeneral(layout); BuildSettings(layout); BuildTools(layout);
-   footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=40; footerPanel.ColumnCount=2; footerPanel.RowCount=1; footerPanel.Margin=Padding.Empty;
-   footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,100));
+   footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=40; footerPanel.ColumnCount=3; footerPanel.RowCount=1; footerPanel.Margin=Padding.Empty;
+   footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,100));
    footerPanel.RowStyles.Add(new RowStyle(SizeType.Percent,100));
    var developer=ProjectLinks.Create("Geliştirici: trfurkan",AppInfo.DeveloperUrl,AppPalette.Accent,true); developer.Dock=DockStyle.Fill; footerPanel.Controls.Add(developer,0,0);
-   var about=new LinkLabel { Text="Hakkında",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline }; about.LinkClicked+=delegate { ShowAbout(); }; footerPanel.Controls.Add(about,1,0);
+   updateLink.LinkClicked+=delegate { DownloadUpdate(); }; footerPanel.Controls.Add(updateLink,1,0);
+   var about=new LinkLabel { Text="Hakkında",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline }; about.LinkClicked+=delegate { ShowAbout(); }; footerPanel.Controls.Add(about,2,0);
    layout.Controls.Add(footerPanel,0,7);
    if(withTray) {
     commands=new AppCommands();
@@ -204,6 +213,7 @@ namespace GoodbyeTray {
     trayProfiles=new ToolStripMenuItem("Profil seçimi");
     for(int i=0;i<Program.Names.Length;i++) { int index=i; trayProfiles.DropDownItems.Add(new ToolStripMenuItem(Program.Names[i],null,delegate { Execute("profile",index); })); } menu.Items.Add(trayProfiles);
     menu.Items.Add("Ayarlar",null,delegate { DispatchCommand("settings"); });
+    trayUpdate=new ToolStripMenuItem("Yeni sürümü indir",null,delegate { DownloadUpdate(); }) { Visible=false }; menu.Items.Add(trayUpdate);
     menu.Items.Add(new ToolStripSeparator());
     menu.Items.Add("Arayüzden çık",null,delegate { DispatchCommand("exit"); });
     bool showTray=true; try { showTray=WindowsIntegration.TrayStartupEnabled(); } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
@@ -214,7 +224,7 @@ namespace GoodbyeTray {
    Resize+=delegate { if(WindowState==FormWindowState.Minimized && TrayShown) HideToTray(); };
    FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(!quitting && e.CloseReason==CloseReason.UserClosing && TrayShown) { e.Cancel=true; HideToTray(); } };
    SystemEvents.UserPreferenceChanged+=ThemeChanged;
-   timer.Interval=250; timer.Tick+=delegate { if(reveal!=null && reveal.WaitOne(0)) Reveal(); string command=commands==null?null:commands.Poll(); if(command!=null) DispatchCommand(command); if(++refreshTicks>=8) { refreshTicks=0; if(!busy && !sizing) RefreshStateAsync(); if(!sizing && Visible) ApplyTheme(false); } }; if(withTray) timer.Start();
+   timer.Interval=250; timer.Tick+=delegate { if(reveal!=null && reveal.WaitOne(0)) Reveal(); string command=commands==null?null:commands.Poll(); if(command!=null) DispatchCommand(command); if(++refreshTicks>=8) { refreshTicks=0; if(!busy && !sizing) RefreshStateAsync(); if(!sizing && Visible) ApplyTheme(false); if(DateTime.UtcNow>=nextUpdateCheck) CheckForUpdateAsync(); } }; if(withTray) timer.Start();
    SizeChanged+=delegate { if(WindowState!=FormWindowState.Minimized) FitDashboard(); }; ResizeBegin+=delegate { sizing=true; }; ResizeEnd+=delegate { sizing=false; FitDashboard(); };
    ApplyTheme(true); FitDashboard(); if(withTray) { Shown+=delegate { RefreshStateAsync(); }; } else RefreshState();
   }
@@ -277,6 +287,34 @@ namespace GoodbyeTray {
    Hide(); ShowInTaskbar=false;
    if(!hideNotified) { hideNotified=true; tray.ShowBalloonTip(3000,"GoodbyeDPI sistem tepsisinde","Açmak için saatin yanındaki simgeye çift tıkla.",ToolTipIcon.Info); }
   }
+  // A manual check (from About) runs even when automatic checks are turned off.
+  async void CheckForUpdateAsync(bool manual=false) {
+   if(updateChecking || IsDisposed) return;
+   if(!manual && !UpdateCheck.Enabled) { nextUpdateCheck=DateTime.UtcNow.AddHours(1); return; }
+   updateChecking=true; SetUpdateState(UpdateState.Checking);
+   try {
+    string latest=await Task.Run(delegate { return UpdateCheck.Fetch(); });
+    nextUpdateCheck=DateTime.UtcNow.AddDays(1);
+    if(IsDisposed) return;
+    if(latest!=null) ShowUpdate(latest); else SetUpdateState(UpdateState.Current);
+   } catch(Exception ex) { nextUpdateCheck=DateTime.UtcNow.AddHours(1); AppInfo.Log("Güncelleme denetimi: "+ex.Message); if(!IsDisposed) SetUpdateState(UpdateState.Failed); }
+   finally { updateChecking=false; }
+  }
+  void SetUpdateState(UpdateState state) { updateState=state; var changed=UpdateStateChanged; if(changed!=null) changed(); }
+  internal void ShowUpdate(string version) {
+   availableUpdate=version; SetUpdateState(UpdateState.Available);
+   updateLink.Text="Yeni sürüm var: "+version+" · İndir"; updateLink.Visible=true;
+   if(trayUpdate!=null) { trayUpdate.Text="Yeni sürümü indir ("+version+")"; trayUpdate.Visible=true; }
+   // Each release is announced once, and only when there is a tray icon to show it.
+   if(TrayShown && UpdateCheck.NotifiedVersion!=version) {
+    tray.ShowBalloonTip(5000,"GoodbyeDPI Tray "+version+" çıktı","İndirmek için simgeye sağ tıkla ya da pencerenin altındaki bağlantıyı kullan.",ToolTipIcon.Info);
+    try { UpdateCheck.NotifiedVersion=version; } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
+   }
+  }
+  void DownloadUpdate() {
+   try { Process.Start(new ProcessStartInfo(UpdateCheck.DownloadUrl) { UseShellExecute=true }); notice.Text="Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur."; }
+   catch(Exception ex) { ReportError(ex); }
+  }
   void Reveal() { Show(); ShowInTaskbar=true; WindowState=FormWindowState.Normal; Activate(); }
   internal void DispatchCommand(string command) {
    if(command=="show") Reveal();
@@ -329,7 +367,7 @@ namespace GoodbyeTray {
   void ReportError(Exception ex) { AppInfo.Log(ex.ToString()); notice.Text="İşlem tamamlanamadı: "+ex.Message; MessageBox.Show(this,ex.Message,"İşlem tamamlanamadı",MessageBoxButtons.OK,MessageBoxIcon.Warning); }
   void ShowAbout() { using(var dialog=CreateAboutDialog()) dialog.ShowDialog(this); }
   internal Form CreateAboutDialog() {
-   var dialog=new Form { Text="GoodbyeDPI — Hakkında",ClientSize=new Size(540,420),Font=Font,BackColor=background,ForeColor=foreground,Icon=Program.AppIcon,StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false };
+   var dialog=new Form { Text="GoodbyeDPI — Hakkında",ClientSize=new Size(540,486),Font=Font,BackColor=background,ForeColor=foreground,Icon=Program.AppIcon,StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false };
    var heading=new Label { Text="GoodbyeDPI Tray",Font=new Font(Font.FontFamily,20,FontStyle.Bold),Location=new Point(24,20),Size=new Size(490,40) }; dialog.Controls.Add(heading);
    dialog.Controls.Add(new Label { Text="Sürüm "+AppInfo.Version+"  ·  Geliştirici: Furkan",Location=new Point(26,66),Size=new Size(488,26),ForeColor=secondary });
    dialog.Controls.Add(new Label { Text=AppInfo.Purpose,Location=new Point(26,108),Size=new Size(488,82) });
@@ -337,6 +375,24 @@ namespace GoodbyeTray {
    var source=ProjectLinks.Create("Kaynak proje · GoodbyeDPI-Turkey",AppInfo.SourceUrl,linkColor); source.SetBounds(26,204,488,34); dialog.Controls.Add(source);
    var developer=ProjectLinks.Create("Geliştirici · Furkan / trfurkan",AppInfo.DeveloperUrl,linkColor); developer.SetBounds(26,246,488,34); dialog.Controls.Add(developer);
    dialog.Controls.Add(new Label { Text="Motor: GoodbyeDPI-Turkey 0.2.3rc3\nLisans: Lisans detayları kurulum klasöründeki licenses dizininde yer almaktadır.",Location=new Point(26,302),Size=new Size(488,76),ForeColor=secondary });
+   var statusIcon=new UpdateStatusIcon { Location=new Point(26,392),Size=new Size(22,22),BackColor=background };
+   var statusText=new Label { Location=new Point(56,388),Size=new Size(300,30),TextAlign=ContentAlignment.MiddleLeft };
+   var checkNow=new LinkLabel { Location=new Point(356,388),Size=new Size(158,30),TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor,DisabledLinkColor=secondary };
+   checkNow.LinkClicked+=delegate { if(updateState==UpdateState.Available) DownloadUpdate(); else CheckForUpdateAsync(true); };
+   Action showState=delegate {
+    if(dialog.IsDisposed) return;
+    statusIcon.State=updateState;
+    statusText.Text=updateState==UpdateState.Current?"Güncel sürümü kullanıyorsun.":updateState==UpdateState.Available?"Yeni sürüm var: "+availableUpdate:updateState==UpdateState.Checking?"Kontrol ediliyor…":updateState==UpdateState.Failed?"Kontrol edilemedi, internetini kontrol et.":"Güncellemeler henüz kontrol edilmedi.";
+    checkNow.Text=updateState==UpdateState.Available?"İndir":updateState==UpdateState.Failed?"Tekrar dene":"Şimdi kontrol et";
+    checkNow.Enabled=updateState!=UpdateState.Checking;
+   };
+   showState(); UpdateStateChanged+=showState; dialog.Disposed+=delegate { UpdateStateChanged-=showState; };
+   dialog.Controls.Add(statusIcon); dialog.Controls.Add(statusText); dialog.Controls.Add(checkNow);
+   var updates=new CheckBox { Text="Yeni sürüm çıkınca haber ver",Location=new Point(26,432),Size=new Size(488,30),Checked=UpdateCheck.Enabled };
+   updates.CheckedChanged+=delegate { try { UpdateCheck.Enabled=updates.Checked; if(updates.Checked) nextUpdateCheck=DateTime.UtcNow; } catch(Exception ex) { ReportError(ex); } };
+   dialog.Controls.Add(updates);
+   // Opening About in the running app checks right away if nothing is known yet.
+   if(commands!=null && updateState==UpdateState.Unknown) dialog.Shown+=delegate { CheckForUpdateAsync(true); };
    dialog.HandleCreated+=delegate { WindowsIntegration.ThemeCaption(dialog,dark,background,foreground); }; return dialog;
   }
   void FitDashboard() {
