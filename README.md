@@ -6,7 +6,7 @@
 ![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)
 ![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-512BD4)
 
-[GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) için Windows sistem tepsisi uygulaması. [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) profillerini komut satırı ya da CMD dosyası olmadan başlatır, durdurur ve Windows'la birlikte çalıştırır.
+[GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) için Windows uygulaması. [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) profillerini komut satırı ya da CMD dosyası olmadan başlatır, durdurur ve Windows'la birlikte çalıştırır.
 
 **[⬇️ Son sürümü indir](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)** · [Tanıtım sayfası](https://trfurkan.github.io/GoodbyeDPI-Tray/) · [Kullanım rehberi](docs/KULLANIM.md)
 
