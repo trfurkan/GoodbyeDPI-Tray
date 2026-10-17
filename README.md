@@ -1,7 +1,7 @@
 # GoodbyeDPI Tray
 
 [![Sürüm](https://img.shields.io/github/v/release/trfurkan/GoodbyeDPI-Tray?label=s%C3%BCr%C3%BCm)](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)
-[![İndirme](https://img.shields.io/github/downloads/trfurkan/GoodbyeDPI-Tray/total?label=indirme)](https://github.com/trfurkan/GoodbyeDPI-Tray/releases)
+[![İndirme](https://img.shields.io/github/downloads/trfurkan/GoodbyeDPI-Tray/total?label=indirme&color=2ea44f)](https://github.com/trfurkan/GoodbyeDPI-Tray/releases)
 [![Lisans](https://img.shields.io/github/license/trfurkan/GoodbyeDPI-Tray?label=lisans)](LICENSE)
 ![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)
 ![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-512BD4)
