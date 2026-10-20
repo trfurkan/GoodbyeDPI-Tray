@@ -89,8 +89,6 @@ docs/                User guide, release notes, website (GitHub Pages)
 
 ## About me
 
-[trfurkan](https://github.com/trfurkan)
-
 Hi, I’m Furkan. In my spare time, I build simple, user-friendly projects as a hobby to make everyday life easier. I make no claim to professional expertise; I’m happy if something I’ve built is useful to you. Thank you for your interest and support!
 
 ## License and acknowledgments
