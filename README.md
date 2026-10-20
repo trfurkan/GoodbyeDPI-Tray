@@ -1,3 +1,5 @@
+[Türkçe](README.md) | [English](README.en.md)
+
 # GoodbyeDPI Tray
 
 [![Sürüm](https://img.shields.io/github/v/release/trfurkan/GoodbyeDPI-Tray?label=s%C3%BCr%C3%BCm)](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)
