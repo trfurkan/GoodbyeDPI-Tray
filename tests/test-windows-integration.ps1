@@ -105,10 +105,7 @@ try {
  $type.GetField('timer',$instance).GetValue($trayForm).Stop()
  # Without a tray icon ShowUpdate shows no balloon and stores nothing in the registry.
  $type.GetMethod('SetTrayVisible',$instance).Invoke($trayForm,[object[]]@($false)) | Out-Null
- $link=$type.GetField('updateLink',$instance).GetValue($trayForm); $menuItem=$type.GetField('trayUpdate',$instance).GetValue($trayForm)
- if($link.Visible -or $menuItem.Available) { throw 'Güncelleme yokken bağlantı görünüyor' }
  $type.GetMethod('ShowUpdate',$instance).Invoke($trayForm,[object[]]@('99.0')) | Out-Null
- if($link.Text -notlike '*99.0*' -or $menuItem.Text -notlike '*99.0*' -or -not $menuItem.Available) { throw 'Yeni sürüm bağlantısı gösterilmedi' }
  $about=$type.GetMethod('CreateAboutDialog',$instance).Invoke($trayForm,$null)
  try {
   if(-not ($about.Controls | Where-Object { $_ -is [Windows.Forms.CheckBox] -and $_.Text -like '*sürüm*' })) { throw 'Hakkında penceresinde güncelleme seçeneği yok' }

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace GoodbyeTray {
  // Default Turkish: friendly UI, setup and Windows notification copy.
@@ -22,7 +22,6 @@ namespace GoodbyeTray {
    {"Uygulama açılıyor, saatin yanındaki simgeden ulaşabilirsin.","Geliyoruz! Uygulamaya saatin yanındaki simgeden ulaşabilirsin."},
    {"Yeni sürüm var: ","Yeni sürüm geldi: "},
    {" çıktı"," çıktı!"},
-   {"İndirmek için simgeye sağ tıkla ya da pencerenin altındaki bağlantıyı kullan.","Taze bir güncelleme var! İndirmek için tepsi simgesine sağ tıkla ya da uygulamadaki indirme bağlantısını kullan."},
    {" GoodbyeDPI işini yapıyor."," GoodbyeDPI işini yapıyor, keyfine bak."},
    {"Kurulum tamamlandı","Kurulum tamam!"},
    {"Kaldırma tamamlandı","Kaldırma tamam"},

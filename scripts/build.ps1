@@ -7,6 +7,10 @@ $sourceDir = Join-Path $root 'src'
 $icon = Join-Path $root 'assets\app.ico'
 if (-not (Test-Path -LiteralPath $icon)) { & (Join-Path $PSScriptRoot 'create-icon.ps1') }
 $branding = @("/win32icon:$icon", "/resource:$icon,GoodbyeTray.AppIcon")
+$version = [regex]::Match([IO.File]::ReadAllText((Join-Path $sourceDir 'AppInfo.cs')), 'Version="([0-9.]+)"').Groups[1].Value
+$notes = Join-Path $root "docs/RELEASE-v$version.md"
+if (-not (Test-Path -LiteralPath $notes)) { throw "Missing release notes: $notes" }
+$branding += "/resource:$notes,GoodbyeTray.ReleaseNotes"
 $vendorDir = Join-Path $root 'vendor\goodbyedpi'
 $appDir = Join-Path $root $(if($IncludeZapret) { 'build\experimental\app' } else { 'build\app' })
 $features = @()

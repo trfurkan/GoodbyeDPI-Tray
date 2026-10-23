@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
@@ -19,6 +19,17 @@ namespace GoodbyeTray {
   internal static string NotesVersion,ReleaseNotes;
   const string ApiUrl="https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases/latest";
   const string PreferencesKey=@"Software\GoodbyeDPITray";
+  internal static string SeenNotesVersion {
+   get { try { using(var key=Registry.CurrentUser.OpenSubKey(PreferencesKey)) return key==null?null:key.GetValue("SeenReleaseNotes") as string; } catch { return null; } }
+   set { using(var key=Registry.CurrentUser.CreateSubKey(PreferencesKey)) key.SetValue("SeenReleaseNotes",value); }
+  }
+  internal static bool ShouldShowInstalledNotes(string seen,string installed) { return String.IsNullOrEmpty(seen) || IsNewer(installed,seen); }
+  internal static string InstalledNotes() {
+   using(var stream=typeof(UpdateCheck).Assembly.GetManifestResourceStream("GoodbyeTray.ReleaseNotes")) {
+    if(stream==null) return "";
+    using(var reader=new StreamReader(stream,Encoding.UTF8)) return ExtractNotes(new JavaScriptSerializer().Serialize(new Dictionary<string,object> { {"body",reader.ReadToEnd()} }));
+   }
+  }
   internal static bool Enabled {
    get { try { using(var key=Registry.CurrentUser.OpenSubKey(PreferencesKey)) return key==null || Convert.ToInt32(key.GetValue("CheckUpdates",1))!=0; } catch { return true; } }
    set { using(var key=Registry.CurrentUser.CreateSubKey(PreferencesKey)) key.SetValue("CheckUpdates",value?1:0,RegistryValueKind.DWord); }
@@ -35,14 +46,16 @@ namespace GoodbyeTray {
    var request=(HttpWebRequest)WebRequest.Create(ApiUrl);
    request.UserAgent="GoodbyeDPI-Tray/"+AppInfo.Version; request.Accept="application/vnd.github+json"; request.Timeout=15000; request.ReadWriteTimeout=15000;
    using(var response=request.GetResponse()) using(var reader=new StreamReader(response.GetResponseStream(),Encoding.UTF8)) {
-    string json=reader.ReadToEnd();
+    return ReadRelease(reader.ReadToEnd());
+   }
+  }
+  internal static string ReadRelease(string json) {
     var match=Regex.Match(json,"\"tag_name\"\\s*:\\s*\"v?([0-9]+(?:\\.[0-9]+){1,3})\"");
-    if(!match.Success || !IsNewer(match.Groups[1].Value,AppInfo.Version)) return null;
+    if(!match.Success) throw new InvalidDataException("Invalid release version");
     string notes=ExtractNotes(json);
     DownloadUrl=InstallerUrl(json) ?? ReleaseUrl;
     ReleaseNotes=notes; NotesVersion=match.Groups[1].Value;
-    return match.Groups[1].Value;
-   }
+    return IsNewer(NotesVersion,AppInfo.Version)?NotesVersion:null;
   }
   // Only the top-level release body is used. JSON escapes (including Unicode and
   // newlines) are decoded by the framework, never by regex or executable HTML.

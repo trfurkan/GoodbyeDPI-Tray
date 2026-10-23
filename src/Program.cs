@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -158,7 +158,7 @@ namespace GoodbyeTray {
     bool created; using(var mutex=new Mutex(true,@"Local\GoodbyeDPI.Tray.UI",out created)) {
      if(!created) { if(Array.IndexOf(args,"--tray")<0 && !AppCommands.Send(command)) { try { using(var signal=EventWaitHandle.OpenExisting(MainForm.RevealEvent)) signal.Set(); } catch(WaitHandleCannotBeOpenedException) { MessageBox.Show(L.T("Uygulama açılıyor, saatin yanındaki simgeden ulaşabilirsin."),"GoodbyeDPI"); } } return 0; }
      if(command=="exit") return 0;
-     using(var form=new MainForm(true)) { if(Array.IndexOf(args,"--tray")>=0) { form.WindowState=FormWindowState.Minimized; form.ShowInTaskbar=false; } else form.Shown+=delegate { form.DispatchCommand(command); }; Application.Run(form); }
+     using(var form=new MainForm(true)) { if(Array.IndexOf(args,"--tray")>=0) { form.WindowState=FormWindowState.Minimized; form.ShowInTaskbar=false; } else form.Shown+=delegate { form.DispatchCommand(command); }; form.Shown+=delegate { form.BeginInvoke(new Action(form.ShowStartupReleaseNotes)); }; Application.Run(form); }
     }
     return 0;
    } catch(Exception ex) { AppInfo.Log(ex.ToString()); if(Array.IndexOf(args,"--quiet")<0) MessageBox.Show(ex.Message,"GoodbyeDPI Tray",MessageBoxButtons.OK,MessageBoxIcon.Error); return 1; }

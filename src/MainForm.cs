@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -154,8 +154,6 @@ namespace GoodbyeTray {
 
   readonly SoftButton toggle=new SoftButton(), apply=new SoftButton(), restart=new SoftButton();
   readonly Label trayHelp=LabelOf("",9,false);
-  readonly LinkLabel updateLink=new LinkLabel { AutoSize=true,Anchor=AnchorStyles.Right,Margin=new Padding(0,0,16,0),LinkBehavior=LinkBehavior.HoverUnderline,Visible=false };
-  readonly ToolStripMenuItem trayUpdate;
   // The first check waits a little: right after logon the network is often not up yet.
   DateTime nextUpdateCheck=DateTime.UtcNow.AddSeconds(30);
   bool updateChecking;
@@ -246,7 +244,6 @@ namespace GoodbyeTray {
    footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,100));
    footerPanel.RowStyles.Add(new RowStyle(SizeType.Percent,100));
    var developer=ProjectLinks.Create(L.T("Geliştirici: trfurkan"),AppInfo.DeveloperUrl,AppPalette.Accent,true); developer.Dock=DockStyle.Fill; footerPanel.Controls.Add(developer,0,0);
-   updateLink.LinkClicked+=delegate { ShowReleaseNotes(); }; footerPanel.Controls.Add(updateLink,1,0);
    var about=new LinkLabel { Text=L.T("Hakkında"),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline }; about.LinkClicked+=delegate { ShowAbout(); }; footerPanel.Controls.Add(about,2,0);
    layout.Controls.Add(footerPanel,0,7);
    if(withTray) {
@@ -263,11 +260,10 @@ namespace GoodbyeTray {
     trayProfiles=new ToolStripMenuItem(L.T("Profil seçimi"));
     for(int i=0;i<Program.Names.Length;i++) { int index=i; trayProfiles.DropDownItems.Add(new ToolStripMenuItem(Program.Names[i],null,delegate { Execute("profile",index); })); } menu.Items.Add(trayProfiles);
     menu.Items.Add(L.T("Ayarlar"),null,delegate { DispatchCommand("settings"); });
-    trayUpdate=new ToolStripMenuItem(L.T("Neler değişti?"),null,delegate { ShowReleaseNotes(); }) { Visible=false }; menu.Items.Add(trayUpdate);
     menu.Items.Add(new ToolStripSeparator());
     menu.Items.Add(L.T("Arayüzden çık"),null,delegate { DispatchCommand("exit"); });
     bool showTray=true; try { showTray=WindowsIntegration.TrayStartupEnabled(); } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
-    tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=showTray }; tray.DoubleClick+=delegate { Reveal(); };
+    tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=showTray }; tray.DoubleClick+=delegate { Reveal(); }; tray.BalloonTipClicked+=delegate { ShowReleaseNotes(); };
     trayHelp.Text=TrayHelp(showTray);
    }
    Shown+=delegate { if(withTray) WindowsIntegration.RegisterJumpList(); if(WindowState==FormWindowState.Minimized && TrayShown) { Hide(); ShowInTaskbar=false; } };
@@ -366,21 +362,28 @@ namespace GoodbyeTray {
    } catch(Exception ex) { nextUpdateCheck=DateTime.UtcNow.AddHours(1); AppInfo.Log("Güncelleme denetimi: "+ex.Message); if(!IsDisposed) SetUpdateState(UpdateState.Failed); }
    finally { updateChecking=false; }
   }
-  void SetUpdateState(UpdateState state) { updateState=state; if(state==UpdateState.Current) { availableUpdate=null; updateLink.Visible=false; if(trayUpdate!=null) trayUpdate.Visible=false; } var changed=UpdateStateChanged; if(changed!=null) changed(); }
+  void SetUpdateState(UpdateState state) { updateState=state; if(state==UpdateState.Current) availableUpdate=null; var changed=UpdateStateChanged; if(changed!=null) changed(); }
   internal void ShowUpdate(string version) {
    availableUpdate=version; SetUpdateState(UpdateState.Available);
-   updateLink.Text=L.T("Yeni sürüm var: ")+version+" · "+L.T("Neler değişti?"); updateLink.Visible=true;
-   if(trayUpdate!=null) { trayUpdate.Text=L.T("Neler değişti?")+" ("+version+")"; trayUpdate.Visible=true; }
    // Each release is announced once, and only when there is a tray icon to show it.
    if(TrayShown && UpdateCheck.NotifiedVersion!=version) {
-    tray.ShowBalloonTip(5000,"GoodbyeDPI Tray "+version+L.T(" çıktı"),L.T("İndirmek için simgeye sağ tıkla ya da pencerenin altındaki bağlantıyı kullan."),ToolTipIcon.Info);
+    tray.ShowBalloonTip(5000,"GoodbyeDPI Tray "+version+L.T(" çıktı"),L.T("Hakkında")+" → "+L.T("Neler değişti?"),ToolTipIcon.Info);
     try { UpdateCheck.NotifiedVersion=version; } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
    }
   }
   void ShowReleaseNotes() {
-   if(String.IsNullOrEmpty(availableUpdate)) return;
-   using(var dialog=new ReleaseNotesForm(dark,availableUpdate,UpdateCheck.NotesVersion==availableUpdate?UpdateCheck.ReleaseNotes:null)) {
-    if(dialog.ShowDialog(Form.ActiveForm ?? this)==DialogResult.OK) DownloadUpdate();
+   ShowReleaseNotes(availableUpdate ?? AppInfo.Version,false);
+  }
+  internal void ShowStartupReleaseNotes() {
+   if(UpdateCheck.ShouldShowInstalledNotes(UpdateCheck.SeenNotesVersion,AppInfo.Version)) ShowReleaseNotes(AppInfo.Version,true);
+  }
+  bool notesOpen;
+  void ShowReleaseNotes(string version,bool remember) {
+   if(notesOpen) return;
+   if(!Visible || WindowState==FormWindowState.Minimized) Reveal();
+   using(var dialog=new ReleaseNotesForm(dark,version,version==AppInfo.Version?UpdateCheck.InstalledNotes():UpdateCheck.NotesVersion==version?UpdateCheck.ReleaseNotes:null)) {
+    if(remember) dialog.Shown+=delegate { try { UpdateCheck.SeenNotesVersion=version; } catch(Exception ex) { AppInfo.Log("Sürüm notları tercihi: "+ex.Message); } };
+    notesOpen=true; try { if(dialog.ShowDialog(Form.ActiveForm ?? this)==DialogResult.OK) DownloadUpdate(); } finally { notesOpen=false; }
    }
   }
   void DownloadUpdate() {
@@ -471,15 +474,18 @@ namespace GoodbyeTray {
    var licenses=new LinkLabel { Text=L.T("Lisanslar"),Location=new Point(26,290),Size=new Size(488,28),LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor };
    licenses.LinkClicked+=delegate { using(var window=new LicenseForm(Path.Combine(Program.InstallDir,"licenses"),dark,background,surface,foreground,secondary,border)) window.ShowDialog(dialog); };
    dialog.Controls.Add(licenses);
+   var notesLink=new LinkLabel { Text=L.T("Neler değişti?"),Location=new Point(26,318),Size=new Size(488,26),LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor };
+   notesLink.LinkClicked+=delegate { ShowReleaseNotes(); }; dialog.Controls.Add(notesLink);
    var statusIcon=new UpdateStatusIcon { Location=new Point(26,350),Size=new Size(22,22),BackColor=background };
    var statusText=new Label { Location=new Point(56,346),Size=new Size(300,30),TextAlign=ContentAlignment.MiddleLeft };
    var checkNow=new LinkLabel { Location=new Point(356,346),Size=new Size(158,30),TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor,DisabledLinkColor=secondary };
-   checkNow.LinkClicked+=delegate { if(updateState==UpdateState.Available) ShowReleaseNotes(); else CheckForUpdateAsync(true); };
+   checkNow.LinkClicked+=delegate { CheckForUpdateAsync(true); };
    Action showState=delegate {
     if(dialog.IsDisposed) return;
+    notesLink.Visible=true;
     statusIcon.State=updateState;
     statusText.Text=updateState==UpdateState.Current?L.T("Güncel sürümü kullanıyorsun."):updateState==UpdateState.Available?L.T("Yeni sürüm var: ")+availableUpdate:updateState==UpdateState.Checking?"Kontrol ediliyor…":updateState==UpdateState.Failed?"Kontrol edilemedi, internetini kontrol et.":L.T("Güncellemeler henüz kontrol edilmedi.");
-    checkNow.Text=updateState==UpdateState.Available?L.T("Neler değişti?"):updateState==UpdateState.Failed?L.T("Tekrar dene"):L.T("Şimdi kontrol et");
+    checkNow.Text=updateState==UpdateState.Failed?L.T("Tekrar dene"):L.T("Şimdi kontrol et");
     checkNow.Enabled=updateState!=UpdateState.Checking;
    };
    showState(); UpdateStateChanged+=showState; dialog.Disposed+=delegate { UpdateStateChanged-=showState; };

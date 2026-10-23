@@ -20,7 +20,7 @@ namespace GoodbyeTray {
    var close=new SoftButton { Text=L.T("Kapat"),Dock=DockStyle.Fill,Margin=new Padding(8,10,0,4),BackColor=background,Fill=surface,Ink=ink,Edge=edge };
    var download=new SoftButton { Text=L.T("Yeni sürümü indir"),Dock=DockStyle.Fill,Margin=new Padding(8,10,0,4),BackColor=background,Fill=contrast?SystemColors.Highlight:AppPalette.Accent,Ink=contrast?SystemColors.HighlightText:AppPalette.AccentInk,Edge=edge };
    close.Click+=delegate { Close(); }; download.Click+=delegate { DialogResult=DialogResult.OK; Close(); };
-   actions.Controls.Add(close,1,0); actions.Controls.Add(download,2,0); AcceptButton=download; CancelButton=close;
+   actions.Controls.Add(close,1,0); actions.Controls.Add(download,2,0); bool newer=UpdateCheck.IsNewer(version,AppInfo.Version); download.Visible=newer; actions.ColumnStyles[2].Width=newer?168:0; AcceptButton=newer?download:close; CancelButton=close;
    HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); };
   }
  }

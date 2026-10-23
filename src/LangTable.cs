@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace GoodbyeTray {
  // Turkish text -> { English, Russian }. Keep the Turkish key exactly as written in the code.
@@ -175,7 +175,6 @@ namespace GoodbyeTray {
    {" · İndir",new[]{" · Download"," · Скачать"}},
    {"Yeni sürümü indir (",new[]{"Download the new version (","Скачать новую версию ("}},
    {" çıktı",new[]{" is out"," вышла"}},
-   {"İndirmek için simgeye sağ tıkla ya da pencerenin altındaki bağlantıyı kullan.",new[]{"Right-click the icon or use the link at the bottom of the window to download it.","Чтобы скачать, щёлкни значок правой кнопкой или используй ссылку внизу окна."}},
    {"Sürüm sayfası açıldı, kurucuyu oradan indirebilirsin.",new[]{"The release page is open; you can download the installer there.","Открыта страница версии; установщик можно скачать там."}},
    {"Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur.",new[]{"The installer is downloading in your browser. Just run it; your settings are kept.","Установщик скачивается в браузере. Просто запусти его — настройки сохранятся."}},
    {"İşlem sürüyor; tamamlandıktan sonra çıkabilirsin.",new[]{"Something is still running; you can quit once it's done.","Операция ещё идёт; выйти можно после её завершения."}},
