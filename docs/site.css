@@ -122,3 +122,11 @@ footer p { margin: 4px 0; }
  .brand span { display: none; }
  .langs a { padding: 4px 8px 4px 5px; }
 }
+
+/* Keep the latest release visible; older releases expand on demand. */
+.release-history { padding: 0; margin: 0; border: 0; background: transparent; }
+.release-history > summary { display: list-item; width: fit-content; max-width: 100%; list-style-position: inside; padding: 8px 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); font-size: 14px; }
+.release-history > summary:hover { border-color: var(--link); }
+.release-history > summary:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+.release-history[open] > summary { margin-bottom: 18px; }
+.release-history .release-card:first-child { border-color: var(--border); }

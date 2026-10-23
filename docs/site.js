@@ -56,6 +56,10 @@
    var list = document.querySelector("[data-releases]");
    if (!list) return;
    var fragment = document.createDocumentFragment();
+   var primary = stable || releases[0];
+   var history = element("details", "release-history");
+   history.appendChild(element("summary", "", list.dataset.others + " (" + (releases.length - 1) + ")"));
+   var older = element("div", "release-list"); history.appendChild(older);
    releases.forEach(function (release, index) {
     var card = element("article", "release-card");
     var meta = element("div", "release-meta");
@@ -69,7 +73,7 @@
     card.appendChild(meta);
     var title = element("h3"); title.appendChild(link(release.tag_name || release.name, release.html_url)); card.appendChild(title);
     if (release.body && release.body.trim()) {
-     var details = element("details"); details.open = index === 0;
+     var details = element("details"); details.open = release === primary;
      details.appendChild(element("summary", "", list.dataset.notes));
      // Release text is untrusted: never insert it as HTML or execute Markdown HTML.
      var text = release.body.replace(/^#{1,6}\s+/gm, "").replace(/\*\*([^*]+)\*\*/g, "$1");
@@ -79,8 +83,9 @@
     var download = installer(release);
     if (download) actions.appendChild(link(list.dataset.download, download.browser_download_url, "btn primary"));
     actions.appendChild(link("GitHub", release.html_url, "btn")); card.appendChild(actions);
-    fragment.appendChild(card);
+    if (release === primary) fragment.appendChild(card); else older.appendChild(card);
    });
+   if (older.childElementCount) fragment.appendChild(history);
    list.replaceChildren(fragment);
   })
   .catch(function () {});
