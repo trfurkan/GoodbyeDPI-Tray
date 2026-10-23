@@ -77,6 +77,21 @@ h2 { font-size: 30px; margin: 0 0 12px; letter-spacing: -.3px; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
 .card h3 { margin: 0 0 6px; font-size: 18px; }
 .card p { margin: 0; color: var(--muted); font-size: 15.5px; }
+.release-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.release-heading .section-lead { margin-bottom: 0; }
+.release-heading > a { font-size: 15px; }
+.release-list { display: grid; gap: 18px; }
+.release-card { min-width: 0; padding: 26px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.release-card:first-child { border-color: var(--link); }
+.release-card h3 { margin: 12px 0; font-size: 24px; overflow-wrap: anywhere; }
+.release-card h3 a { color: var(--text); text-decoration: none; }
+.release-card h3 a:hover { text-decoration: underline; }
+.release-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 14px; }
+.release-badge { background: var(--accent); color: var(--accent-text); border-radius: 999px; padding: 3px 10px; font-weight: 600; }
+.release-highlights { padding-left: 22px; color: var(--muted); }
+.release-highlights li + li { margin-top: 8px; }
+.release-card details { margin: 12px 0 20px; padding: 0; border: 0; }
+.release-body { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font-size: 16px; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
 ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
 ol.steps li { counter-increment: step; position: relative; padding: 0 0 18px 48px; }
