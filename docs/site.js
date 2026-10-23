@@ -17,7 +17,7 @@
  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { if (!root.getAttribute("data-theme")) swapImages(); });
  swapImages();
 
- // One request powers both the download buttons and recent stable releases.
+ // Fetch every page so older published releases are not omitted.
  // Static release content remains usable without JavaScript or if GitHub is unavailable.
  var repository = "https://github.com/trfurkan/GoodbyeDPI-Tray/";
  function trusted(url) { return typeof url === "string" && url.indexOf(repository + "releases/") === 0; }
@@ -33,14 +33,25 @@
  function link(text, url, className) {
   var node = element("a", className, text); node.href = url; return node;
  }
- fetch("https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases?per_page=20")
-  .then(function (r) { return r.ok ? r.json() : null; })
+ function fetchReleases(page) {
+  return fetch("https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases?per_page=100&page=" + page)
+   .then(function (response) {
+    if (!response.ok) throw new Error("Releases unavailable");
+    var more = /rel="next"/.test(response.headers.get("Link") || "");
+    return response.json().then(function (items) {
+     if (!Array.isArray(items)) throw new Error("Invalid releases response");
+     return more ? fetchReleases(page + 1).then(function (rest) { return items.concat(rest); }) : items;
+    });
+   });
+ }
+ fetchReleases(1)
   .then(function (data) {
    if (!Array.isArray(data)) return;
-   var releases = data.filter(function (r) { return !r.draft && !r.prerelease && trusted(r.html_url); })
-    .sort(function (a, b) { return Date.parse(b.published_at) - Date.parse(a.published_at); }).slice(0, 3);
+   var releases = data.filter(function (r) { return !r.draft && trusted(r.html_url); })
+    .sort(function (a, b) { return Date.parse(b.published_at) - Date.parse(a.published_at); });
    if (!releases.length) return;
-   var asset = installer(releases[0]);
+   var stable = releases.filter(function (r) { return !r.prerelease; })[0];
+   var asset = stable && installer(stable);
    if (asset) document.querySelectorAll("a[data-installer]").forEach(function (a) { a.href = asset.browser_download_url; });
    var list = document.querySelector("[data-releases]");
    if (!list) return;
@@ -48,7 +59,8 @@
    releases.forEach(function (release, index) {
     var card = element("article", "release-card");
     var meta = element("div", "release-meta");
-    if (index === 0) meta.appendChild(element("span", "release-badge", list.dataset.latest));
+    if (release === stable) meta.appendChild(element("span", "release-badge", list.dataset.latest));
+    if (release.prerelease) meta.appendChild(element("span", "release-badge", list.dataset.prerelease));
     var date = new Date(release.published_at);
     if (!isNaN(date.getTime())) {
      var time = element("time", "", date.toLocaleDateString(root.lang, { year: "numeric", month: "long", day: "numeric" }));
