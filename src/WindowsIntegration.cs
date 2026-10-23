@@ -124,6 +124,25 @@ namespace GoodbyeTray {
    } catch(Exception ex) { ShellStatus=L.T("Kullanılamıyor: ")+ex.Message; AppInfo.Log("Jump List: "+ex.Message); }
   }
  }
+ static class MenuAppearance {
+  static readonly Font MenuFont=new Font("Segoe UI",10);
+  internal static void Apply(ToolStripDropDown menu,Color background,Color foreground,Color border,int minimumWidth) {
+   menu.Font=MenuFont; menu.Padding=new Padding(6); menu.BackColor=background; menu.ForeColor=foreground;
+   menu.Renderer=new MenuRenderer(background,foreground,border);
+   var drop=menu as ToolStripDropDownMenu;
+   if(drop!=null) { drop.ShowImageMargin=false; drop.ShowCheckMargin=true; }
+   int width=minimumWidth;
+   foreach(ToolStripItem item in menu.Items) width=Math.Max(width,TextRenderer.MeasureText(item.Text,MenuFont).Width+80);
+   menu.MinimumSize=new Size(width,0);
+   foreach(ToolStripItem item in menu.Items) {
+    item.Font=MenuFont; item.AutoSize=false; item.Margin=Padding.Empty;
+    item.Size=new Size(width-12,item is ToolStripSeparator?12:String.IsNullOrEmpty(item.AccessibleDescription)?Math.Max(38,MenuFont.Height+18):66);
+    item.Padding=new Padding(8,4,12,4);
+    var parent=item as ToolStripMenuItem;
+    if(parent!=null && parent.HasDropDownItems) Apply(parent.DropDown,background,foreground,border,minimumWidth);
+   }
+  }
+ }
  // One shared renderer keeps profile, theme and tray menus consistent.
  class MenuRenderer : ToolStripProfessionalRenderer {
   readonly Color background,foreground,selection,accent,border;
@@ -131,9 +150,9 @@ namespace GoodbyeTray {
   protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e) { e.Graphics.Clear(background); }
   protected override void OnRenderImageMargin(ToolStripRenderEventArgs e) { using(var brush=new SolidBrush(background)) e.Graphics.FillRectangle(brush,e.AffectedBounds); }
   protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawRectangle(pen,0,0,e.ToolStrip.Width-1,e.ToolStrip.Height-1); }
-  protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; bool active=e.Item.Enabled && (e.Item.Selected || (item!=null && item.Checked)); if(active) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; using(var path=SoftButton.Round(new Rectangle(3,1,e.Item.Width-6,e.Item.Height-2),10)) using(var brush=new SolidBrush(selection)) e.Graphics.FillPath(brush,path); } }
+  protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; bool active=(e.Item.Enabled && e.Item.Selected) || (item!=null && item.Checked); if(active) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; using(var path=SoftButton.Round(new Rectangle(3,1,e.Item.Width-6,e.Item.Height-2),10)) using(var brush=new SolidBrush(selection)) e.Graphics.FillPath(brush,path); } }
   protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; var r=e.ImageRectangle; using(var pen=new Pen(accent,2)) e.Graphics.DrawLines(pen,new[]{new Point(r.Left+3,r.Top+r.Height/2),new Point(r.Left+7,r.Top+r.Height/2+4),new Point(r.Right-2,r.Top+3)}); }
-  protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e) { e.ArrowColor=foreground; base.OnRenderArrow(e); }
+  protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e) { e.ArrowColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:foreground; base.OnRenderArrow(e); }
   protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,12,e.Item.Height/2,e.Item.Width-12,e.Item.Height/2); }
   protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; e.TextColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:item!=null && item.Checked?accent:foreground;
    // An item with a description (AccessibleDescription) shows it as a smaller, muted second line under its name.

@@ -5,6 +5,8 @@ Add-Type -AssemblyName System.Windows.Forms
 [Windows.Forms.Application]::SetUnhandledExceptionMode([Windows.Forms.UnhandledExceptionMode]::ThrowException)
 [Windows.Forms.Application]::EnableVisualStyles()
 $assembly = [Reflection.Assembly]::LoadFile((Join-Path $root 'build\app\GoodbyeDPI.Tray.exe'))
+# Texts are checked in Turkish whatever language this computer's app is set to.
+$assembly.GetType('GoodbyeTray.L').GetProperty('Current',[Reflection.BindingFlags]'NonPublic,Static').SetValue($null,'tr')
 $flags = [Reflection.BindingFlags]'NonPublic,Instance'
 $formType = $assembly.GetType('GoodbyeTray.MainForm')
 $form = [Activator]::CreateInstance($formType,[object[]]@($false))

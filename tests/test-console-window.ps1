@@ -4,6 +4,8 @@ Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 $root=Split-Path $PSScriptRoot -Parent
 $asm=[Reflection.Assembly]::LoadFile((Join-Path $root 'build\app\GoodbyeDPI.Tray.exe'))
+# Texts are checked in Turkish whatever language this computer's app is set to.
+$asm.GetType('GoodbyeTray.L').GetProperty('Current',[Reflection.BindingFlags]'NonPublic,Static').SetValue($null,'tr')
 $type=$asm.GetType('GoodbyeTray.EngineConsoleForm'); $flags=[Reflection.BindingFlags]'NonPublic,Instance'; $static=[Reflection.BindingFlags]'NonPublic,Static'
 $parser=$type.GetMethod('TryParse',$static)
 foreach($profile in 0..6){

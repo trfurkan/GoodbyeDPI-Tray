@@ -12,6 +12,8 @@ public static class ResizeDamage {
 [Windows.Forms.Application]::EnableVisualStyles()
 $root=Split-Path $PSScriptRoot -Parent
 $assembly=[Reflection.Assembly]::LoadFile((Join-Path $root 'build\app\GoodbyeDPI.Tray.exe'))
+# Texts are checked in Turkish whatever language this computer's app is set to.
+$assembly.GetType('GoodbyeTray.L').GetProperty('Current',[Reflection.BindingFlags]'NonPublic,Static').SetValue($null,'tr')
 $flags=[Reflection.BindingFlags]'NonPublic,Instance'
 $panelType=$assembly.GetType('GoodbyeTray.SoftPanel')
 $hostForm=[Windows.Forms.Form]::new(); $hostForm.ClientSize=[Drawing.Size]::new(600,300)
@@ -29,7 +31,7 @@ foreach($theme in @('light','black')) {
   $type.GetMethod('SetThemePreference',$flags).Invoke($form,[object[]]@($theme,$false))|Out-Null
   $form.Show(); [Windows.Forms.Application]::DoEvents()
   for($cycle=0;$cycle -lt 5;$cycle++) {foreach($size in @([Drawing.Size]::new(640,640),[Drawing.Size]::new(1420,1000),[Drawing.Size]::new(800,720),[Drawing.Size]::new(1100,680))) {$form.Size=$size; [Windows.Forms.Application]::DoEvents()
-    foreach($name in @('toggle','profiles','engineStartup','startup','restart','apply','themeButton','detail')) {
+    foreach($name in @('toggle','profiles','engineStartup','startup','restart','apply','findProfile','pauseButton','themeButton','detail')) {
      $control=$type.GetField($name,$flags).GetValue($form)
      if(-not $control.Visible -or $control.Height -lt $control.Font.Height){throw "Clipped control: $name"}
      $bounds=$form.RectangleToClient($control.RectangleToScreen($control.ClientRectangle))

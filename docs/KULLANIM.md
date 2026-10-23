@@ -1,5 +1,21 @@
 # GoodbyeDPI Tray — Kullanım
 
+## Motor ve profiller
+
+Standart kurucu yalnızca GoodbyeDPI ve mevcut yedi profilini içerir.
+Zapret 2 şimdilik dağıtımdan çıkarıldı; kodu ve `vendor/zapret2` dosyaları
+projede korunuyor. Daha önce Zapret seçilmişse yeni kurucu güncelleme sırasında
+Türkiye · Standart profiline geçer ve hizmetin açık/kapalı durumunu korur.
+Önceki kurulumdan kalan Zapret dosyaları çalıştırılmaz.
+
+Profil bulucu yedi GoodbyeDPI profilini dener ve işlem sonunda önceki profili
+ve açık/kapalı durumunu geri yükler.
+
+Geliştirme için `scripts/build.ps1 -IncludeZapret` kullanılabilir. Bu seçenek
+ayrı `build/experimental/app` ve `dist/experimental` klasörlerine çıktı üretir;
+normal kurucunun üzerine yazmaz. Zapret denemeleri `tests/test-zapret.ps1` ile
+bu deneysel derleme üzerinden çalıştırılır.
+
 ## Kurulum
 
 Kurucuyu (`GoodbyeDPI-Installer-<sürüm>.exe`) aç, kutudaki sorumluluk metnini okuyup onay kutusunu işaretle ve **Kur**'a bas. Zaten kuruluysa düğmede **Güncelle** yazar. Ardından Windows'un izin penceresini onayla. Yönetici izni yalnızca kurulumda ve kaldırırken istenir.
@@ -22,15 +38,24 @@ Daha önce GoodbyeDPI-Turkey'in hizmet kurulum betiğini kullandıysan kurucu o 
 - **Yeniden başlat:** Bağlantı tuhaflaşınca işe yarar.
 - **Konsol:** Motorun canlı çıktısını gösterir.
 - **Erişim testi:** GoodbyeDPI'ın işe yarayıp yaramadığını ölçer (ayrıntılar aşağıda).
+- **Uygun profil bul:** Yedi profili deneyip erişim sonuçlarına göre birini önerir.
+- **Geçici durdur:** Motoru 5 veya 15 dakika durdurur, ardından kendiliğinden başlatır.
 - **Uygulamayı kaldır:** Kaldırma ekranını açar. İstersen Windows Ayarlar > Uygulamalar'dan da kaldırabilirsin.
 
 Pencereyi kapatınca uygulama saatin yanındaki simgeye küçülür; çift tıklayınca geri gelir. **Sistem tepsisinde göster** seçeneğini kapatırsan simge gizlenir ve pencereyi kapatınca uygulama tamamen kapanır. İki durumda da GoodbyeDPI çalışmaya devam eder, kapatmak için **Durdur**'a bas.
 
-Yeni bir sürüm çıkınca uygulama sana haber verir: saatin yanındaki simgeden bir bildirim gelir, pencerenin altında da **İndir** bağlantısı görünür. Bunun için günde bir kez GitHub'a son sürümü sorar, başka hiçbir bilgi göndermez. **Hakkında** penceresinde güncel olup olmadığını görebilir, **Şimdi kontrol et** ile beklemeden bakabilirsin. Otomatik kontrolü istemezsen aynı pencereden kapatabilirsin.
+
+Yeni bir sürüm çıkınca uygulama sana haber verir: saatin yanındaki simgeden bir bildirim gelir, pencerenin altında da **Neler değişti?** bağlantısı görünür. Bunun için günde bir kez GitHub'a son sürümü sorar, başka hiçbir bilgi göndermez. **Hakkında** penceresinde güncel olup olmadığını görebilir, **Şimdi kontrol et** ile beklemeden bakabilirsin. Otomatik kontrolü istemezsen aynı pencereden kapatabilirsin.
 
 Başlat, durdur, profil değiştirme ve otomatik başlangıç yönetici izni istemez.
 
 Sağ üstteki **tema** düğmesinden Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android ya da Şampanya'yı seçebilirsin; **Windows'a uy** seçilirse tema Windows'un açık/koyu ayarını izler. Hemen solundaki **bayraklı düğmeden** dili Türkçe, İngilizce ya da Rusça yapabilirsin; dil değişince uygulama kendini yeniden açar. Klavyeyle de kullanılabilir: Tab ile gezin, Enter/Boşluk ile bas, profil kutusunda Aşağı ok ile listeyi aç.
+
+## Güncellemede neler değişti?
+
+Yeni sürüm bulunduğunda ana pencerenin altındaki, tepsi menüsündeki veya **Hakkında** ekranındaki **Neler değişti?** bağlantısını aç. Uygulama, aynı güncelleme sorgusundan aldığı GitHub sürüm notlarını en fazla sekiz maddelik kısa bir listeyle gösterir. Notlar yayımlandıkları dilde görünür.
+
+**Tüm sürüm notları** GitHub sayfasını açar; **Yeni sürümü indir** kurucuyu tarayıcından indirir. Not paylaşılmamışsa bunu belirten bir açıklama gösterilir. Güncelleme bulunduğunda pencere kendiliğinden açılmaz.
 
 ## Profiller
 
@@ -53,6 +78,18 @@ DNS'i yönlendirmeyen profillerde internet sağlayıcının DNS'i engelli sitele
 "Çalışıyor" yazması GoodbyeDPI'ın açık olduğunu gösterir, her sitenin açılacağı anlamına gelmez. Bunu görmek için Erişim testini kullan.
 
 ## Erişim testi
+
+### Uygun profil bul
+
+Ana penceredeki **Uygun profil bul**, seçili motorun profillerini sırayla deneyerek Discord, Roblox ve Wattpad erişimini ölçer. Google bağlantısı da internet kontrolü olarak kullanılır. Test başlamadan önce onay istenir; profil geçişlerinde bağlantın kısa sürelerle kesilebilir.
+
+Test bittiğinde veya **Vazgeç** dediğinde önceki profilin ve motorun açık/kapalı durumu geri yüklenir. İptal, devam eden bağlantı denemesinin bitmesini bekleyebilir. Sonuç ekranı her profil için erişilen site sayısını gösterir. Google kontrolü başarısız olan ve henüz denenmemiş profiller ayrıca belirtilir. En çok siteye erişen profil önerilir; eşit sonuçlarda mevcut profil tercih edilir. Öneriyi kabul edersen profil uygulanır. Test sonuçları diğer sitelere erişim garantisi değildir.
+
+### Geçici durdur
+
+Ana pencereden veya tepsi menüsünden **Geçici durdur → 5 dakika durdur / 15 dakika durdur** seç. GoodbyeDPI motoru durur; süreyi Windows hizmeti takip eder ve süre dolunca motoru yeniden başlatır. Arayüzü kapatmak molayı iptal etmez. Bilgisayar uyurken süre dolarsa uyanınca devam eder.
+
+Erken dönmek için **Başlat**'a veya **Molayı yönet → Şimdi devam et**'e bas. **Molayı yönet → Molayı iptal et, kapalı kalsın** ya da tepsi menüsünden **Durdur** dersen otomatik dönüş iptal edilir. Profil değiştirmek de molayı bitirir. Bilgisayarı yeniden başlatınca mola korunmaz; normal Windows başlangıç tercihin geçerli olur. Profil bulucu mola sırasında kullanılamaz. Bu özellikler için yeni kurucuyla uygulamayı ve hizmeti birlikte güncelle.
 
 ![Erişim testi](images/access-dark.png)
 

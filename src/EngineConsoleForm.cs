@@ -43,7 +43,7 @@ namespace GoodbyeTray {
    int newline=frame.IndexOf('\n'); if(newline<0) return false;
    string[] header=frame.Substring(0,newline).TrimEnd('\r').Split('|');
    int pid; if(header.Length!=4 || header[0]!="GDC1" || !Int32.TryParse(header[1],out profile) || profile<0 || profile>=Program.Names.Length || !Int32.TryParse(header[3],out pid)) return false;
-   status=header[2]; if(status!="starting" && status!="running" && status!="stopped" && status!="exited") return false;
+   status=header[2]; if(status!="starting" && status!="switching" && status!="running" && status!="stopped" && status!="exited" && status!="paused") return false;
    output=frame.Substring(newline+1); return true;
   }
   async void ReadFrame() {
@@ -62,10 +62,11 @@ namespace GoodbyeTray {
     if(frame==null) { state.Text=L.T("Henüz çıktı yok. Motoru başlatınca burada görünecek."); return; }
     int profile; string status,output; if(!TryParse(frame,out profile,out status,out output)) return;
     lastFrame=frame; lastRunning=serviceRunning;
-    if(!serviceRunning && (status=="running" || status=="starting")) status="stopped";
+    if(status=="paused") output="";
+    if(!serviceRunning && (status=="running" || status=="starting" || status=="switching" || status=="paused")) status="stopped";
     caption.Text=(status=="stopped" || status=="exited"?L.T("Son Oturum Günlüğü — "):L.T("Etkin profil: "))+Program.Names[profile];
-    Text="GoodbyeDPI — "+Program.Names[profile]+L.T(" — Konsol");
-    state.Text=status=="running"?L.T("Canlı çıktı · Bu pencereyi kapatmak motoru durdurmaz."):status=="starting"?L.T("Motor başlatılıyor…"):"";
+    Text=Program.MotorName(profile)+" — "+Program.Names[profile]+L.T(" — Konsol");
+    state.Text=status=="switching"?L.T("Profil değişiyor, motorun hazır olmasını bekliyoruz…"):status=="paused"?L.T("GoodbyeDPI molada. Süre bitince geri gelecek."):status=="running"?L.T("Canlı çıktı · Bu pencereyi kapatmak motoru durdurmaz."):status=="starting"?L.T("Motor başlatılıyor…"):"";
     if(output!=terminal.Text) { terminal.Text=output; terminal.ScrollToEnd(); }
    } catch(IOException) { } catch(UnauthorizedAccessException) { if(!disposed) state.Text=L.T("Çıktı okunamadı. Kurulum dosyasıyla güncellemeyi dene."); }
    finally { reading=false; }

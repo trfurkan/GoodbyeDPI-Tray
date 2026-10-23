@@ -1,0 +1,24 @@
+Zapret 2 v1.0.6, unmodified upstream Windows binaries and Lua scripts.
+Upstream commit: 221d7dff24bfec0cd5ac0a5070b8acef2008af3d
+Downloaded archive (also contains engine source and build instructions):
+https://github.com/bol-van/zapret2/releases/download/v1.0.6/zapret2-v1.0.6.zip
+Archive SHA256: e141b51b60c895fe9548f4d644365461dcad8155e068d284a9aae1724504237d
+
+Included runtime versions from that archive:
+- x86 Cygwin 3.3.6; x86_64 Cygwin 3.4.10, unmodified DLLs.
+  Source: https://cygwin.com/git.html
+  Source mirror: https://github.com/mirror/newlib-cygwin
+  Licensing: https://www.cygwin.com/licensing.html
+- WinDivert DLL and driver, unmodified upstream bundled versions.
+  Source/build instructions: https://github.com/basil00/WinDivert
+
+Keep the licenses/ directory with redistributed copies. The tray application
+runs winws2.exe as a separate process; its own license does not replace these
+components' licenses. No upstream batch file or service installer is run.
+
+App profiles target HTTP/TLS on TCP 80/443 and do not change Windows DNS settings.
+The Superonline TLS preset uses multidisorder:pos=2:seqovl=1, as used by:
+https://github.com/alimali54/zapret-win-turkey/blob/master/zapret-win-turkey.au3
+The separate Superonline TCP profile additionally drops outbound QUIC Initial
+packets on UDP 443 for applications that can fall back to TCP. It does not
+implement Discord voice handling. These presets need testing on the user's line.

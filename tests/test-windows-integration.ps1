@@ -4,6 +4,8 @@ Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 $root=Split-Path $PSScriptRoot -Parent
 $assembly=[Reflection.Assembly]::LoadFile((Join-Path $root 'build\app\GoodbyeDPI.Tray.exe'))
+# Texts are checked in Turkish whatever language this computer's app is set to.
+$assembly.GetType('GoodbyeTray.L').GetProperty('Current',[Reflection.BindingFlags]'NonPublic,Static').SetValue($null,'tr')
 $static=[Reflection.BindingFlags]'NonPublic,Static'
 $instance=[Reflection.BindingFlags]'NonPublic,Instance'
 $windows=$assembly.GetType('GoodbyeTray.WindowsIntegration')
@@ -15,7 +17,7 @@ foreach($task in $list.JumpItems) {
  if(-not $commands.GetMethod('IsValid',$static).Invoke($null,[object[]]@([string]$command))) { throw "İşlemsiz Jump List girdisi: $command" }
 }
 $version=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $root 'dist\GoodbyeDPI-Installer.exe'))
-if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.7.2.0') { throw 'EXE metadatası yanlış' }
+if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.8.0.0') { throw 'EXE metadatası yanlış' }
 $type=$assembly.GetType('GoodbyeTray.MainForm')
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {
@@ -55,6 +57,7 @@ try {
  $setTray.Invoke($trayForm,[object[]]@($true)) | Out-Null
  $type.GetMethod('HideToTray',$instance).Invoke($trayForm,$null) | Out-Null
  if($trayForm.Visible -or $trayForm.ShowInTaskbar) { throw 'Tepsiye gizlenmedi' }
+ if($tray.BalloonTipText -ne '') { throw 'Gizleme bildirimi kaldirilmadi' }
  $setTray.Invoke($trayForm,[object[]]@($false)) | Out-Null
  if($tray.Visible) { throw 'Ayar kapalıyken tepsi simgesi gizlenmedi' }
  $trayHelp=$type.GetField('trayHelp',$instance).GetValue($trayForm)
@@ -109,12 +112,12 @@ try {
  $about=$type.GetMethod('CreateAboutDialog',$instance).Invoke($trayForm,$null)
  try {
   if(-not ($about.Controls | Where-Object { $_ -is [Windows.Forms.CheckBox] -and $_.Text -like '*sürüm*' })) { throw 'Hakkında penceresinde güncelleme seçeneği yok' }
-  if(-not ($about.Controls | Where-Object { $_.Text -eq 'Yeni sürüm var: 99.0' }) -or -not ($about.Controls | Where-Object { $_ -is [Windows.Forms.LinkLabel] -and $_.Text -eq 'İndir' })) { throw 'Hakkında penceresi yeni sürümü göstermiyor' }
+  if(-not ($about.Controls | Where-Object { $_.Text -eq 'Yeni sürüm geldi: 99.0' }) -or -not ($about.Controls | Where-Object { $_ -is [Windows.Forms.LinkLabel] -and $_.Text -eq 'Neler değişti?' })) { throw 'Hakkında penceresi yeni sürümü göstermiyor' }
   $icon=$about.Controls | Where-Object { $_.GetType().Name -eq 'UpdateStatusIcon' }; $iconState=$icon.GetType().GetProperty('State',$instance)
   if([string]$iconState.GetValue($icon) -ne 'Available') { throw 'Durum simgesi yanlış' }
   # The window follows later changes too: a finished check that finds nothing shows "current".
   $type.GetMethod('SetUpdateState',$instance).Invoke($trayForm,[object[]]@([Enum]::Parse($assembly.GetType('GoodbyeTray.UpdateState'),'Current'))) | Out-Null
-  if(-not ($about.Controls | Where-Object { $_.Text -eq 'Güncel sürümü kullanıyorsun.' }) -or -not ($about.Controls | Where-Object { $_.Text -eq 'Şimdi kontrol et' }) -or [string]$iconState.GetValue($icon) -ne 'Current') { throw 'Hakkında penceresi güncel durumu göstermiyor' }
+  if(-not ($about.Controls | Where-Object { $_.Text -eq 'Tertemiz! En güncel sürümdesin.' }) -or -not ($about.Controls | Where-Object { $_.Text -eq 'Güncellemelere bak' }) -or [string]$iconState.GetValue($icon) -ne 'Current') { throw 'Hakkında penceresi güncel durumu göstermiyor' }
  } finally { $about.Dispose() }
  if($type.GetField('UpdateStateChanged',$instance).GetValue($trayForm) -ne $null) { throw 'Kapanan Hakkında penceresi dinlemeye devam ediyor' }
 } finally { $type.GetField('quitting',$instance).SetValue($trayForm,$true); $trayForm.Dispose() }
@@ -149,5 +152,25 @@ foreach($file in Get-ChildItem (Join-Path $root 'src') -Filter *.cs) {
  }
 }
 if($missing.Count) { throw "Cevirisi olmayan metinler:`n$($missing -join "`n")" }
+# Friendly Turkish copy must refer to a text the code actually shows.
+$used=@{}
+foreach($file in Get-ChildItem (Join-Path $root 'src') -Filter *.cs) { if($file.Name -like 'Lang*.cs') { continue }; foreach($m in [regex]::Matches([IO.File]::ReadAllText($file.FullName,[Text.Encoding]::UTF8),'L\.T\("((?:[^"\\]|\\.)*)"\)')) { $used[[regex]::Unescape($m.Groups[1].Value)]=$true } }
+$stale=@($lang.GetProperty('KankaKeys',$static).GetValue($null) | Where-Object { -not $used.ContainsKey($_) })
+if($stale.Count) { throw "Kodda kullanilmayan Turkce metinleri:`n$($stale -join "`n")" }
+$translate=$lang.GetMethod('T',$static)
+$language=$lang.GetProperty('Current',$static)
+foreach($code in 'tr','kanka') {
+ $language.SetValue($null,$code)
+ if($language.GetValue($null) -ne 'tr' -or $translate.Invoke($null,[object[]]@('GoodbyeDPI çalışıyor')) -ne 'GoodbyeDPI iş başında') { throw 'Varsayilan Turkce veya eski dil tercihi uyumsuz' }
+}
+foreach($key in $lang.GetProperty('KankaKeys',$static).GetValue($null)) {
+ $copy=$translate.Invoke($null,[object[]]@($key))
+ if($copy -match '[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|\u23F3|\uFE0F') { throw "Turkce metinde emoji kaldi: $key" }
+}
+foreach($code in 'en','ru') {
+ $language.SetValue($null,$code)
+ if($translate.Invoke($null,[object[]]@('GoodbyeDPI çalışıyor')) -eq 'GoodbyeDPI iş başında') { throw 'Turkce metin baska dile sizdi' }
+}
+$language.SetValue($null,'tr')
 foreach($code in 'tr','en','ru') { $flag=$lang.GetMethod('Flag',$static).Invoke($null,[object[]]@($code)); if($flag.Width -ne 20) { throw 'Bayrak cizilemedi' }; $flag.Dispose() }
-Write-Output 'PASS: Tum arayuz metinlerinin Ingilizce ve Rusca cevirisi var, uc bayrak ciziliyor.'
+Write-Output 'PASS: Varsayilan Turkce, eski dil tercihi, emojisiz metinler, Ingilizce/Rusca ceviriler ve uc bayrak.'

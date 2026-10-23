@@ -11,6 +11,8 @@ public static class ChromeProbe {
 "@
 $root=Split-Path $PSScriptRoot -Parent
 $asm=[Reflection.Assembly]::LoadFile((Join-Path $root 'build\app\GoodbyeDPI.Tray.exe'))
+# Texts are checked in Turkish whatever language this computer's app is set to.
+$asm.GetType('GoodbyeTray.L').GetProperty('Current',[Reflection.BindingFlags]'NonPublic,Static').SetValue($null,'tr')
 $type=$asm.GetType('GoodbyeTray.MainForm')
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {

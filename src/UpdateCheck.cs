@@ -7,6 +7,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using System.Collections.Generic;
+using System.Web.Script.Serialization;
 
 namespace GoodbyeTray {
  // Asks GitHub which release is the latest. Only that request is sent; nothing about the user or the computer.
@@ -14,6 +16,7 @@ namespace GoodbyeTray {
   internal const string ReleaseUrl="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest";
   // Installer file names carry the version (GoodbyeDPI-Installer-1.5.3.exe), so the link comes from the release itself.
   internal static string DownloadUrl=ReleaseUrl;
+  internal static string NotesVersion,ReleaseNotes;
   const string ApiUrl="https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases/latest";
   const string PreferencesKey=@"Software\GoodbyeDPITray";
   internal static bool Enabled {
@@ -35,9 +38,32 @@ namespace GoodbyeTray {
     string json=reader.ReadToEnd();
     var match=Regex.Match(json,"\"tag_name\"\\s*:\\s*\"v?([0-9]+(?:\\.[0-9]+){1,3})\"");
     if(!match.Success || !IsNewer(match.Groups[1].Value,AppInfo.Version)) return null;
+    string notes=ExtractNotes(json);
     DownloadUrl=InstallerUrl(json) ?? ReleaseUrl;
+    ReleaseNotes=notes; NotesVersion=match.Groups[1].Value;
     return match.Groups[1].Value;
    }
+  }
+  // Only the top-level release body is used. JSON escapes (including Unicode and
+  // newlines) are decoded by the framework, never by regex or executable HTML.
+  internal static string ExtractNotes(string json) {
+   var root=new JavaScriptSerializer().DeserializeObject(json) as Dictionary<string,object>;
+   object body; if(root==null || !root.TryGetValue("body",out body) || !(body is string)) return "";
+   var bullets=new List<string>(); var paragraphs=new List<string>(); bool code=false;
+   foreach(string raw in ((string)body).Replace("\r","").Split('\n')) {
+    string line=raw.Trim();
+    if(line.StartsWith("```") || line.StartsWith("~~~")) { code=!code; continue; }
+    if(code || line.Length==0 || line.StartsWith("#") || line=="---" || line.StartsWith("<!--")) continue;
+    bool bullet=Regex.IsMatch(line,@"^(?:[-*+]\s+|\d+[.)]\s+)");
+    line=Regex.Replace(line,@"^(?:[-*+]\s+|\d+[.)]\s+)","");
+    line=Regex.Replace(line,@"!\[[^\]]*\]\([^)]*\)","");
+    line=Regex.Replace(line,@"\[([^\]]+)\]\([^)]*\)","$1");
+    line=Regex.Replace(line,@"<[^>]*>","").Replace("**","").Replace("__","").Replace("`","").Trim();
+    if(line.Length==0) continue;
+    if(line.Length>240) line=line.Substring(0,237)+"…";
+    var target=bullet?bullets:paragraphs; if(target.Count<8) target.Add("• "+line);
+   }
+   return String.Join(Environment.NewLine+Environment.NewLine,(bullets.Count>0?bullets:paragraphs).ToArray());
   }
   // Only an .exe from this repository's releases is accepted; anything else falls back to the release page.
   internal static string InstallerUrl(string json) {

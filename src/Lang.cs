@@ -8,6 +8,7 @@ using Microsoft.Win32;
 namespace GoodbyeTray {
  // Interface language. Turkish text in the code is the key; Table holds its English and Russian forms.
  // A missing entry falls back to Turkish, and tests check that every L.T text has one.
+ // Turkish uses friendly UI and notification copy (LangKanka.cs).
  static partial class L {
   internal static readonly string[] Codes={"tr","en","ru"};
   internal static readonly string[] Names={"Türkçe","English","Русский"};
@@ -16,18 +17,19 @@ namespace GoodbyeTray {
   internal static string Current { get { if(current==null) current=Stored() ?? FromWindows(); return current; } set { current=Array.IndexOf(Codes,value)>=0?value:"tr"; } }
   // The saved choice, or null when the user never picked one.
   internal static string Stored() {
-   try { using(var key=Registry.CurrentUser.OpenSubKey(PreferencesKey)) { string saved=key==null?null:key.GetValue("Language") as string; return Array.IndexOf(Codes,saved)>=0?saved:null; } }
+   try { using(var key=Registry.CurrentUser.OpenSubKey(PreferencesKey)) { string saved=key==null?null:key.GetValue("Language") as string; return saved=="kanka"?"tr":Array.IndexOf(Codes,saved)>=0?saved:null; } }
    catch { return null; }
   }
   // First run follows the Windows display language; anything other than Turkish or Russian gets English.
   static string FromWindows() { string code=CultureInfo.CurrentUICulture.TwoLetterISOLanguageName; return code=="tr"?"tr":code=="ru"?"ru":"en"; }
-  internal static void Save(string code) { using(var key=Registry.CurrentUser.CreateSubKey(PreferencesKey)) key.SetValue("Language",code); current=code; }
+  internal static void Save(string code) { Current=code; using(var key=Registry.CurrentUser.CreateSubKey(PreferencesKey)) key.SetValue("Language",Current); }
   internal static string T(string turkish) {
-   if(Current=="tr" || turkish==null) return turkish;
+   if(turkish==null) return null;
+   if(Current=="tr") { string friendly; return Kanka.TryGetValue(turkish,out friendly)?friendly:turkish; }
    string[] forms; return Table.TryGetValue(turkish,out forms)?forms[Current=="en"?0:1]:turkish;
   }
   internal static bool Has(string turkish) { return Table.ContainsKey(turkish); }
-  // Round flag for the language picker: Turkey, United Kingdom, Russia.
+  // Round flags for the language picker: Turkey, United Kingdom and Russia.
   internal static Bitmap Flag(string code) {
    var bitmap=new Bitmap(20,20);
    using(var g=Graphics.FromImage(bitmap)) using(var circle=new GraphicsPath()) {

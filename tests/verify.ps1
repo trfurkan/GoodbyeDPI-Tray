@@ -2,6 +2,8 @@
 $root = Split-Path $PSScriptRoot -Parent
 $vendorDir = Join-Path $root 'vendor\goodbyedpi'
 $assembly = [Reflection.Assembly]::LoadFile((Join-Path $root 'build\app\GoodbyeDPI.Tray.exe'))
+# Texts are checked in Turkish whatever language this computer's app is set to.
+$assembly.GetType('GoodbyeTray.L').GetProperty('Current',[Reflection.BindingFlags]'NonPublic,Static').SetValue($null,'tr')
 $type = $assembly.GetType('GoodbyeTray.Program')
 $flags = [Reflection.BindingFlags]'NonPublic,Static'
 $arguments = $type.GetField('Args',$flags).GetValue($null)
@@ -81,7 +83,7 @@ foreach ($file in $files) {
  try {
   $sha = [Security.Cryptography.SHA256]::Create()
   try { $actual = [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-','') } finally { $sha.Dispose() }
-  $source = if ($file.StartsWith('GoodbyeDPI.Tray.exe')) { Join-Path (Join-Path $root 'build\app') $file } else { Join-Path $vendorDir $file }
+  $source = if ($file.StartsWith('GoodbyeDPI.Tray.exe')) { Join-Path (Join-Path $root 'build\app') $file } elseif ($file.StartsWith('zapret2/')) { Join-Path (Join-Path $root 'vendor') $file } else { Join-Path $vendorDir $file }
   $rootNotices=@{'licenses/LICENSE-goodbyedpi-tray.txt'='LICENSE';'licenses/NOTICE-goodbyedpi-tray.txt'='NOTICE';'licenses/THIRD_PARTY_NOTICES.md'='THIRD_PARTY_NOTICES.md'}
   if($rootNotices.ContainsKey($file)){$source=Join-Path $root $rootNotices[$file]}
   if ($actual -ne (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash) { throw "Paket dosyası değişmiş: $file" }

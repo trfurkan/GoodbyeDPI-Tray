@@ -25,7 +25,8 @@ namespace GoodbyeTray {
    if(!reportProgress) return;
    try { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"progress.txt"),percent+"\n"+message); } catch(IOException) { } catch(UnauthorizedAccessException) { }
   }
-  internal static readonly string[] Files={"GoodbyeDPI.Tray.exe","GoodbyeDPI.Tray.exe.config","x86/goodbyedpi.exe","x86/WinDivert.dll","x86/WinDivert32.sys","x86/WinDivert64.sys","x86_64/goodbyedpi.exe","x86_64/WinDivert.dll","x86_64/WinDivert64.sys","licenses/LICENSE-getline.txt","licenses/LICENSE-goodbyedpi.txt","licenses/LICENSE-uthash.txt","licenses/LICENSE-windivert.txt","licenses/LICENSE-goodbyedpi-tray.txt","licenses/NOTICE-goodbyedpi-tray.txt","licenses/THIRD_PARTY_NOTICES.md"};
+  internal static readonly string[] AllFiles={"zapret2/SOURCE.txt","GoodbyeDPI.Tray.exe","GoodbyeDPI.Tray.exe.config","x86/goodbyedpi.exe","x86/WinDivert.dll","x86/WinDivert32.sys","x86/WinDivert64.sys","x86_64/goodbyedpi.exe","x86_64/WinDivert.dll","x86_64/WinDivert64.sys","licenses/LICENSE-getline.txt","licenses/LICENSE-goodbyedpi.txt","licenses/LICENSE-uthash.txt","licenses/LICENSE-windivert.txt","licenses/LICENSE-goodbyedpi-tray.txt","licenses/NOTICE-goodbyedpi-tray.txt","licenses/THIRD_PARTY_NOTICES.md","zapret2/licenses/CYGWIN_LICENSE.txt","zapret2/licenses/GPL-3.0.txt","zapret2/licenses/LGPL-3.0.txt","zapret2/licenses/LICENSE-windivert.txt","zapret2/licenses/LICENSE-zapret2.txt","zapret2/x86/cygwin1.dll","zapret2/x86/WinDivert.dll","zapret2/x86/WinDivert32.sys","zapret2/x86/winws2.exe","zapret2/x86/zapret-antidpi.lua","zapret2/x86/zapret-lib.lua","zapret2/x86_64/cygwin1.dll","zapret2/x86_64/WinDivert.dll","zapret2/x86_64/WinDivert64.sys","zapret2/x86_64/winws2.exe","zapret2/x86_64/zapret-antidpi.lua","zapret2/x86_64/zapret-lib.lua"};
+  internal static readonly string[] Files=Array.FindAll(AllFiles,delegate(string file) { return Program.ZapretEnabled || !file.StartsWith("zapret2/",StringComparison.Ordinal); });
   [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern bool MoveFileEx(string existing,string destination,int flags);
   static string App { get { return Path.Combine(Program.InstallDir,"GoodbyeDPI.Tray.exe"); } }
   internal static string Target(string relative) {
@@ -111,7 +112,7 @@ namespace GoodbyeTray {
    bool existing=previousCommand!=null;
    // With the user's consent, a foreign GoodbyeDPI service is taken over: repointed to this app, restored on failure.
    bool foreign=existing && replaceForeign && Program.ForeignProfile()>=0;
-   int previousProfile=foreign?Program.ForeignProfile():existing?Program.Profile():0;
+   int previousProfile=foreign?Program.ForeignProfile():existing?Program.UpgradeProfile(Program.OwnedProfile()):0;
    if(foreign) AppInfo.Log("Eski GoodbyeDPI hizmeti devralınıyor: "+previousCommand);
    else if(existing) Program.RequireOwned();
    else if(Process.GetProcessesByName("goodbyedpi").Length>0) throw new InvalidOperationException(L.T("Açık GoodbyeDPI penceresini kapatıp tekrar dene."));
@@ -154,14 +155,14 @@ namespace GoodbyeTray {
    } catch(Exception failure) {
     AppInfo.Log("Kurulum başarısız: "+Stage+" "+failure);
     try {
-     if(Program.Profile()>=0) Program.Stop();
-     if(!existing && Program.Profile()>=0) Program.Sc("delete GoodbyeDPI");
+     if(Program.OwnedProfile()>=0) Program.Stop();
+     if(!existing && Program.OwnedProfile()>=0) Program.Sc("delete GoodbyeDPI");
      if(existing) Program.Sc("config GoodbyeDPI binPath= \""+previousCommand.Replace("\"","\\\"")+"\"");
      if(foreign) { Program.Sc("config GoodbyeDPI DisplayName= \"GoodbyeDPI\""); Program.Sc("sdset GoodbyeDPI "+Program.ServiceSecurity.Replace("(A;;CCLCSWRPWPLOCRRC;;;IU)","(A;;CCLCSWLOCRRC;;;IU)")); }
      foreach(var item in backup) { string path=Target(item.Key); if(item.Value==null) { if(File.Exists(path)) File.Delete(path); } else if(!String.Equals(path,Application.ExecutablePath,StringComparison.OrdinalIgnoreCase)) File.WriteAllBytes(path,item.Value); }
      if(!hadRegistration) Registry.LocalMachine.DeleteSubKeyTree(UninstallKey,false);
      else using(var registration=Registry.LocalMachine.CreateSubKey(UninstallKey)) { foreach(string name in registration.GetValueNames()) if(!registrationValues.ContainsKey(name)) registration.DeleteValue(name,false); foreach(var value in registrationValues) registration.SetValue(value.Key,value.Value,registrationKinds[value.Key]); }
-     if(existing && running) Program.Start();
+     if(existing && running) using(var restored=new System.ServiceProcess.ServiceController(Program.ServiceName)) { restored.Start(); restored.WaitForStatus(System.ServiceProcess.ServiceControllerStatus.Running,TimeSpan.FromSeconds(20)); }
      if(createdDir && Directory.Exists(Program.InstallDir) && Directory.GetFileSystemEntries(Program.InstallDir).Length==0) Directory.Delete(Program.InstallDir);
     } catch(Exception rollback) { AppInfo.Log("Geri yükleme: "+rollback); throw new IOException(failure.Message+"\nGeri yükleme tamamlanamadı: "+rollback.Message,failure); }
     throw;
@@ -195,8 +196,8 @@ namespace GoodbyeTray {
    Report(30,L.T("Sürücü kaldırılıyor…")); RemoveOwnedDriver();
    int removed=0;
    foreach(string file in Files) { DeleteOrSchedule(Target(file)); Report(35+45*(++removed)/Files.Length,L.T("Uygulama dosyaları kaldırılıyor…")); }
-   DeleteOrSchedule(Target("uninstall.ps1")); DeleteOrSchedule(Target("engine-console.txt")); DeleteOrSchedule(Target("engine-console.log")); DeleteOrSchedule(Target(SetupName)); DeleteOrSchedule(Target(LegacySetupName)); DeleteOrSchedule(Target(UninstallShortcut));
-   foreach(string folder in new[]{"x86","x86_64","licenses"}) { string path=Target(folder); if(Directory.Exists(path) && Directory.GetFileSystemEntries(path).Length==0) Directory.Delete(path); }
+   DeleteOrSchedule(Target("uninstall.ps1")); DeleteOrSchedule(Target("engine-console.txt")); DeleteOrSchedule(Target("engine-console.log")); DeleteOrSchedule(Target("engine-request-error.log")); DeleteOrSchedule(Target(SetupName)); DeleteOrSchedule(Target(LegacySetupName)); DeleteOrSchedule(Target(UninstallShortcut));
+   foreach(string folder in new[]{"x86","x86_64","licenses","zapret2/x86","zapret2/x86_64","zapret2/licenses","zapret2"}) { string path=Target(folder); if(Directory.Exists(path) && Directory.GetFileSystemEntries(path).Length==0) Directory.Delete(path); }
    Registry.LocalMachine.DeleteSubKeyTree(UninstallKey,false);
    // Never recursively delete an installation directory: preserve unknown user files.
    if(Directory.Exists(Program.InstallDir) && Directory.GetFileSystemEntries(Program.InstallDir).Length==0) Directory.Delete(Program.InstallDir);

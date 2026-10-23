@@ -115,6 +115,7 @@ namespace GoodbyeTray {
    if(pending==0) flush=Task.Run(delegate { AccessProbe.ForgetCachedAnswers(); });
    var ready=flush; pending++; testAll.Enabled=false; spinner.Start(); state.Text=L.T("Durum: Siteler test ediliyor…");
    string domain=row.Domain; var result=await Task.Run(delegate { ready.Wait(); return AccessProbe.Run(domain); });
+   AppInfo.Log("Erisim testi: site="+domain+", erisim="+result.Reached+", durum="+result.Status+", ayrinti="+result.Detail);
    if(disposed || IsDisposed) return;
    row.State=result.Reached?AccessRow.Phase.Reached:AccessRow.Phase.Failed; row.Status=result.Status; row.Detail=result.Detail; row.Retry.Enabled=true; row.Invalidate();
    if(--pending==0) { spinner.Stop(); testAll.Enabled=true; Summarize(); }

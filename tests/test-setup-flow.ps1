@@ -4,6 +4,8 @@ Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 $root=Split-Path $PSScriptRoot -Parent
 $assembly=[Reflection.Assembly]::LoadFile((Join-Path $root 'dist\GoodbyeDPI-Installer.exe'))
+# Texts are checked in Turkish whatever language this computer's app is set to.
+$assembly.GetType('GoodbyeTray.L').GetProperty('Current',[Reflection.BindingFlags]'NonPublic,Static').SetValue($null,'tr')
 $type=$assembly.GetType('GoodbyeTray.SetupForm')
 $flags=[Reflection.BindingFlags]'NonPublic,Instance'
 foreach($remove in @($false,$true)) {

@@ -33,6 +33,8 @@ namespace GoodbyeTray {
     for(int i=0;i<Known.GetLength(0);i++) { string path=Path.Combine(folder,Known[i,0]); if(File.Exists(path)) { paths.Add(path); list.Items.Add(Known[i,1]); seen.Add(Known[i,0]); } }
     foreach(string path in Directory.GetFiles(folder)) if(!seen.Contains(Path.GetFileName(path))) { paths.Add(path); list.Items.Add(Path.GetFileNameWithoutExtension(path)); }
    }
+   string zapret=Path.GetFullPath(Path.Combine(folder,"..","zapret2","licenses"));
+   if(Program.ZapretEnabled && Directory.Exists(zapret)) foreach(string path in Directory.GetFiles(zapret)) { paths.Add(path); list.Items.Add("Zapret 2 · "+Path.GetFileNameWithoutExtension(path)); }
    list.SelectedIndexChanged+=delegate { ShowSelected(); };
    if(paths.Count>0) list.SelectedIndex=0;
    else { list.Visible=false; layout.ColumnStyles[0].Width=0; text.Font=Font; text.Text=L.T("Lisans dosyaları bulunamadı.\n\nUygulamayı kurucuyla kurduğunda burada görünür. Lisansları GitHub'daki THIRD_PARTY_NOTICES.md dosyasında da okuyabilirsin."); }
@@ -49,26 +51,27 @@ namespace GoodbyeTray {
   internal readonly List<string> Items=new List<string>();
   internal Color SelectedColor,EdgeColor;
   internal event EventHandler SelectedIndexChanged;
-  int selected=-1;
+  int selected=-1,first;
   const int RowHeight=34;
   public LicenseList() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.Selectable,true); TabStop=true; AccessibleRole=AccessibleRole.List; }
   internal int SelectedIndex {
    get { return selected; }
-   set { int next=Math.Max(-1,Math.Min(Items.Count-1,value)); if(next==selected) return; selected=next; Invalidate(); if(SelectedIndexChanged!=null) SelectedIndexChanged(this,EventArgs.Empty); }
+   set { int next=Math.Max(-1,Math.Min(Items.Count-1,value)); if(next==selected) return; selected=next; int visible=Math.Max(1,Height/RowHeight); if(selected<first) first=Math.Max(0,selected); if(selected>=first+visible) first=selected-visible+1; Invalidate(); if(SelectedIndexChanged!=null) SelectedIndexChanged(this,EventArgs.Empty); }
   }
   protected override void OnPaint(PaintEventArgs e) {
    e.Graphics.Clear(BackColor);
-   for(int i=0;i<Items.Count;i++) {
-    var row=new Rectangle(0,i*RowHeight,Width-1,RowHeight-4);
+   for(int i=first;i<Items.Count;i++) {
+    var row=new Rectangle(0,(i-first)*RowHeight,Width-1,RowHeight-4);
     if(i==selected) {
      e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
      using(var path=SoftButton.Round(row,8)) { using(var brush=new SolidBrush(SelectedColor)) e.Graphics.FillPath(brush,path); using(var pen=new Pen(EdgeColor)) e.Graphics.DrawPath(pen,path); }
     }
     TextRenderer.DrawText(e.Graphics,Items[i],Font,new Rectangle(row.X+12,row.Y,row.Width-16,row.Height),ForeColor,TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
    }
-   if(Focused && selected>=0) ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(3,selected*RowHeight+3,Width-7,RowHeight-10),ForeColor,SelectedColor);
+   if(Focused && selected>=first) ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(3,(selected-first)*RowHeight+3,Width-7,RowHeight-10),ForeColor,SelectedColor);
   }
-  protected override void OnMouseDown(MouseEventArgs e) { base.OnMouseDown(e); Focus(); int i=e.Y/RowHeight; if(i<Items.Count) SelectedIndex=i; }
+  protected override void OnMouseDown(MouseEventArgs e) { base.OnMouseDown(e); Focus(); int i=first+e.Y/RowHeight; if(i<Items.Count) SelectedIndex=i; }
+  protected override void OnMouseWheel(MouseEventArgs e) { base.OnMouseWheel(e); first=Math.Max(0,Math.Min(Math.Max(0,Items.Count-Math.Max(1,Height/RowHeight)),first-Math.Sign(e.Delta)*3)); Invalidate(); }
   protected override bool IsInputKey(Keys keyData) { return keyData==Keys.Up || keyData==Keys.Down || base.IsInputKey(keyData); }
   protected override void OnKeyDown(KeyEventArgs e) { base.OnKeyDown(e); if(e.KeyCode==Keys.Down) SelectedIndex=selected+1; else if(e.KeyCode==Keys.Up) SelectedIndex=Math.Max(0,selected-1); else if(e.KeyCode==Keys.Home) SelectedIndex=0; else if(e.KeyCode==Keys.End) SelectedIndex=Items.Count-1; }
   protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }

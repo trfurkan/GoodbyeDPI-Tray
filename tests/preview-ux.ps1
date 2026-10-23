@@ -5,6 +5,8 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 $assembly = [Reflection.Assembly]::LoadFile((Join-Path $root 'build\app\GoodbyeDPI.Tray.exe'))
+# Texts are checked in Turkish whatever language this computer's app is set to.
+$assembly.GetType('GoodbyeTray.L').GetProperty('Current',[Reflection.BindingFlags]'NonPublic,Static').SetValue($null,'tr')
 $formType = $assembly.GetType('GoodbyeTray.MainForm')
 $previewDir = Join-Path $root 'build\previews'
 New-Item -ItemType Directory -Path $previewDir -Force | Out-Null
@@ -17,7 +19,7 @@ foreach ($dark in @($false,$true)) {
   $formType.GetMethod('SetServiceState',$flags).Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
   [Windows.Forms.Application]::DoEvents()
   $mode = if ($dark) { 'dark' } else { 'light' }
-  foreach ($fieldName in @('toggle','profiles','engineStartup','startup','restart','apply','themeButton')) {
+  foreach ($fieldName in @('toggle','profiles','engineStartup','startup','restart','apply','findProfile','pauseButton','themeButton')) {
    $control = $formType.GetField($fieldName,$flags).GetValue($form)
    if (-not $control.Visible) { throw "Ana panelde görünmeyen kontrol: $fieldName" }
    $rect = $form.RectangleToClient($control.RectangleToScreen($control.ClientRectangle))
