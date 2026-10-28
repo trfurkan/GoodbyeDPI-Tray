@@ -16,6 +16,7 @@ namespace GoodbyeTray {
   internal const string ReleaseUrl="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest";
   // Installer file names carry the version (GoodbyeDPI-Installer-1.5.3.exe), so the link comes from the release itself.
   internal static string DownloadUrl=ReleaseUrl;
+  internal static UpdateAsset DownloadAsset;
   internal static string NotesVersion,ReleaseNotes;
   const string ApiUrl="https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases/latest";
   const string PreferencesKey=@"Software\GoodbyeDPITray";
@@ -54,6 +55,16 @@ namespace GoodbyeTray {
     if(!match.Success) throw new InvalidDataException("Invalid release version");
     string notes=ExtractNotes(json);
     DownloadUrl=InstallerUrl(json) ?? ReleaseUrl;
+    DownloadAsset=null;
+    var data=new JavaScriptSerializer().DeserializeObject(json) as Dictionary<string,object>;
+    object assets;
+    if(data!=null && data.TryGetValue("assets",out assets) && assets is object[]) foreach(object entry in (object[])assets) {
+     var asset=entry as Dictionary<string,object>; object url,size,digest;
+     if(asset!=null && asset.TryGetValue("browser_download_url",out url) && Convert.ToString(url)==DownloadUrl && UpdateDownload.ValidUrl(DownloadUrl) && asset.TryGetValue("size",out size)) {
+      long bytes; if(Int64.TryParse(Convert.ToString(size),out bytes) && bytes>0 && bytes<=200*1024*1024) DownloadAsset=new UpdateAsset { Url=DownloadUrl,Size=bytes,Digest=asset.TryGetValue("digest",out digest)?digest as string:null };
+      break;
+     }
+    }
     ReleaseNotes=notes; NotesVersion=match.Groups[1].Value;
     return IsNewer(NotesVersion,AppInfo.Version)?NotesVersion:null;
   }

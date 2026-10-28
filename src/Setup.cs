@@ -96,7 +96,7 @@ namespace GoodbyeTray {
    using(var key=Registry.LocalMachine.CreateSubKey(UninstallKey)) {
     key.SetValue("DisplayName","GoodbyeDPI Tray"); key.SetValue("DisplayVersion",AppInfo.Version); key.SetValue("Publisher",AppInfo.Developer);
     key.SetValue("InstallLocation",Program.InstallDir); key.SetValue("DisplayIcon",App);
-    key.SetValue("UninstallString","\""+App+"\" --uninstall"); key.SetValue("NoModify",1,RegistryValueKind.DWord); key.SetValue("NoRepair",1,RegistryValueKind.DWord);
+    key.SetValue("UninstallString","\""+App+"\" --uninstall"); key.SetValue("QuietUninstallString","\""+App+"\" --uninstall --silent");key.SetValue("NoModify",1,RegistryValueKind.DWord); key.SetValue("NoRepair",1,RegistryValueKind.DWord);
     // Settings > Apps reads the size from EstimatedSize (KB); without it the list shows none.
     long bytes=0; foreach(var file in new DirectoryInfo(Program.InstallDir).GetFiles("*",SearchOption.AllDirectories)) bytes+=file.Length;
     key.SetValue("EstimatedSize",(int)Math.Min(Int32.MaxValue,(bytes+1023)/1024),RegistryValueKind.DWord);
@@ -225,6 +225,7 @@ namespace GoodbyeTray {
   }
   internal static void ClearUserSettings() {
    Registry.CurrentUser.DeleteSubKeyTree(@"Software\GoodbyeDPITray",false);
+   Toast.Remove();
    if(File.Exists(AppInfo.LogPath)) File.Delete(AppInfo.LogPath);
    string logs=Path.GetDirectoryName(AppInfo.LogPath),data=Path.GetDirectoryName(logs);
    foreach(string folder in new[]{logs,data}) if(Directory.Exists(folder) && Directory.GetFileSystemEntries(folder).Length==0) Directory.Delete(folder);
@@ -236,6 +237,35 @@ namespace GoodbyeTray {
    string copy=Path.Combine(dir,Path.GetFileName(Application.ExecutablePath)); File.Copy(Application.ExecutablePath,copy);
    if(File.Exists(Application.ExecutablePath+".config")) File.Copy(Application.ExecutablePath+".config",copy+".config");
    return copy;
+  }
+  // Installs or removes without any window, for package managers such as winget. Same steps as the buttons;
+  // only the usage notice is left unconfirmed. Exit codes: 0 done, 3010 a restart finishes it, 1602 UAC declined, 1 failed (see the log).
+  static int Silent(bool remove,string[] args) {
+   bool temporary=Array.IndexOf(args,"--temporary")>=0;
+   try {
+    // Run from the install folder (Settings > Apps), a temporary copy does the removal so the folder can go.
+    if(remove && !temporary && InsideInstallDir(Application.ExecutablePath)) {
+     string dir=Path.Combine(Path.GetTempPath(),"GoodbyeDPI-Uninstall-"+Guid.NewGuid().ToString("N")); Directory.CreateDirectory(dir);
+     Process.Start(new ProcessStartInfo(CopySelf(dir),"--uninstall --silent --temporary") { UseShellExecute=false,WorkingDirectory=dir }).Dispose();
+     return 0;
+    }
+    bool wasInstalled=File.Exists(Path.Combine(Program.InstallDir,"GoodbyeDPI.Tray.exe"));
+    if(remove && !wasInstalled) return 0;
+    string location=null; int at=Array.IndexOf(args,"--location");
+    if(!remove && !wasInstalled && at>=0 && at+1<args.Length) { location=args[at+1]; string problem=CheckLocation(location); if(problem!=null) throw new InvalidOperationException(problem); }
+    int code=Elevate(remove,Array.IndexOf(args,"--replace-foreign")>=0,location,new Progress<Tuple<int,string>>(delegate { }));
+    if(code!=0 && code!=3010) { AppInfo.Log("Sessiz "+(remove?"kaldırma":"kurulum")+" başarısız, çıkış kodu "+code); return 1; }
+    UserSetup(remove,wasInstalled);
+    if(remove) ClearUserSettings();
+    // The tray icon comes back after a silent install or update, but never as administrator.
+    else if(code==0 && !new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)) Process.Start(new ProcessStartInfo(App,"--tray") { UseShellExecute=false }).Dispose();
+    return code;
+   } catch(Exception ex) {
+    var denied=ex as System.ComponentModel.Win32Exception;
+    if(denied!=null && denied.NativeErrorCode==1223) { AppInfo.Log("Sessiz kurulum: yönetici izni verilmedi."); return 1602; }
+    AppInfo.Log("Sessiz kurulum: "+ex); return 1;
+   }
+   finally { if(temporary) DeleteSelfLater(); }
   }
   static void RelaunchFromTemp() {
    string dir=Path.Combine(Path.GetTempPath(),"GoodbyeDPI-Uninstall-"+Guid.NewGuid().ToString("N")); Directory.CreateDirectory(dir);
@@ -275,6 +305,7 @@ namespace GoodbyeTray {
     }
     if(args.Length==2 && args[0]=="--preview") { using(var form=new SetupForm(false)) { form.Show(); Application.DoEvents(); using(var bitmap=new Bitmap(form.Width,form.Height)) { form.DrawToBitmap(bitmap,new Rectangle(Point.Empty,bitmap.Size)); bitmap.Save(args[1]); } } return 0; }
     bool remove=args.Length>=1 && args[0]=="--uninstall";
+    if(Array.IndexOf(args,"--silent")>=0) return Silent(remove,args);
     if(remove && args.Length==1 && InsideInstallDir(Application.ExecutablePath)) { RelaunchFromTemp(); return 0; }
     Application.Run(new SetupForm(remove));
     if(Array.IndexOf(args,"--temporary")>=0) DeleteSelfLater();

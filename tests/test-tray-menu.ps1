@@ -1,4 +1,4 @@
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -21,7 +21,7 @@ try {
   $type.GetMethod('SetThemePreference',$flags).Invoke($form,[object[]]@($mode,$false)) | Out-Null
   $tray=$type.GetField('tray',$flags).GetValue($form)
   $menu=$tray.ContextMenuStrip
-  if($menu.Font.Size -lt 10 -or $menu.Items[0].Height -lt 38) { throw 'Compact legacy tray layout remains' }
+  if($menu.Font.Size -lt 10 -or $menu.Items[0].Height -gt 32 -or $menu.Items[0].Height -lt $menu.Font.Height) { throw 'Tray row spacing is incorrect' }
   Save-Menu $menu ('tray-menu-'+$mode)
   $sub=$type.GetField('trayPause',$flags).GetValue($form).DropDown
   if($sub.BackColor -ne $menu.BackColor -or $sub.Items[0].Height -lt 60) { throw 'Pause submenu style missing' }

@@ -16,9 +16,12 @@ $appDir = Join-Path $root $(if($IncludeZapret) { 'build\experimental\app' } else
 $features = @()
 if($IncludeZapret) { $features += '/define:ENABLE_ZAPRET' }
 New-Item -ItemType Directory -Path $appDir -Force | Out-Null
-$shared = @("$sourceDir\AppInfo.cs", "$sourceDir\WindowsIntegration.cs", "$sourceDir\AppCommands.cs", "$sourceDir\EngineService.cs", "$sourceDir\EngineConsoleForm.cs", "$sourceDir\AccessTestForm.cs", "$sourceDir\UpdateCheck.cs", "$sourceDir\LicenseForm.cs", "$sourceDir\Lang.cs", "$sourceDir\LangTable.cs", "$sourceDir\LangKanka.cs", "$sourceDir\ProfileSearch.cs", "$sourceDir\ConnectionTools.cs", "$sourceDir\ProfileSearchForm.cs", "$sourceDir\ReleaseNotesForm.cs")
+$shared = @("$sourceDir\AppInfo.cs", "$sourceDir\WindowsIntegration.cs", "$sourceDir\AppCommands.cs", "$sourceDir\EngineService.cs", "$sourceDir\EngineConsoleForm.cs", "$sourceDir\AccessTestForm.cs", "$sourceDir\UpdateCheck.cs", "$sourceDir\LicenseForm.cs", "$sourceDir\Lang.cs", "$sourceDir\LangTable.cs", "$sourceDir\LangKanka.cs", "$sourceDir\ProfileSearch.cs", "$sourceDir\ConnectionTools.cs", "$sourceDir\ProfileSearchForm.cs", "$sourceDir\ReleaseNotesForm.cs", "$sourceDir\UpdateDownloadForm.cs", "$sourceDir\Toast.cs")
 $wpf = Join-Path (Split-Path $compiler -Parent) 'WPF'
 $references = @("/reference:System.Web.Extensions.dll", "/reference:$wpf\PresentationFramework.dll", "/reference:$wpf\PresentationCore.dll", "/reference:$wpf\WindowsBase.dll")
+# Windows notifications come from the Windows Runtime metadata that ships with Windows 10/11.
+$winmd = Join-Path $env:WINDIR 'System32\WinMetadata'
+$references += @("/reference:$winmd\Windows.UI.winmd", "/reference:$winmd\Windows.Data.winmd", "/reference:$winmd\Windows.Foundation.winmd", "/reference:$(Split-Path $compiler -Parent)\System.Runtime.dll", "/reference:$(Split-Path $compiler -Parent)\System.Runtime.InteropServices.WindowsRuntime.dll","/reference:System.Runtime.WindowsRuntime.dll", "/nowarn:1701")
 $output = Join-Path $appDir 'GoodbyeDPI.Tray.exe'
 & $compiler /nologo /target:winexe /platform:anycpu /optimize+ @branding @references @features "/out:$output" "/win32manifest:$sourceDir\app.manifest" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.ServiceProcess.dll /main:GoodbyeTray.Program "$sourceDir\Program.cs" "$sourceDir\MainForm.cs" "$sourceDir\Setup.cs" @shared
 if ($LASTEXITCODE -ne 0) { throw 'Derleme başarısız.' }

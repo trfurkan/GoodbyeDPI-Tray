@@ -17,7 +17,7 @@ foreach($task in $list.JumpItems) {
  if(-not $commands.GetMethod('IsValid',$static).Invoke($null,[object[]]@([string]$command))) { throw "İşlemsiz Jump List girdisi: $command" }
 }
 $version=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $root 'dist\GoodbyeDPI-Installer.exe'))
-if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.8.0.0') { throw 'EXE metadatası yanlış' }
+if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.8.1.0') { throw 'EXE metadatası yanlış' }
 $type=$assembly.GetType('GoodbyeTray.MainForm')
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {
@@ -111,6 +111,7 @@ try {
   if(-not ($about.Controls | Where-Object { $_ -is [Windows.Forms.CheckBox] -and $_.Text -like '*sürüm*' })) { throw 'Hakkında penceresinde güncelleme seçeneği yok' }
   if(-not ($about.Controls | Where-Object { $_.Text -eq 'Yeni sürüm geldi: 99.0' }) -or -not ($about.Controls | Where-Object { $_ -is [Windows.Forms.LinkLabel] -and $_.Text -eq 'Neler değişti?' })) { throw 'Hakkında penceresi yeni sürümü göstermiyor' }
   $icon=$about.Controls | Where-Object { $_.GetType().Name -eq 'UpdateStatusIcon' }; $iconState=$icon.GetType().GetProperty('State',$instance)
+  if(-not ($about.Controls | Where-Object { $_ -is [Windows.Forms.LinkLabel] -and $_.Text -eq 'Yeni sürümü indir' })) { throw 'Direct update download entry missing' }
   if([string]$iconState.GetValue($icon) -ne 'Available') { throw 'Durum simgesi yanlış' }
   # The window follows later changes too: a finished check that finds nothing shows "current".
   $type.GetMethod('SetUpdateState',$instance).Invoke($trayForm,[object[]]@([Enum]::Parse($assembly.GetType('GoodbyeTray.UpdateState'),'Current'))) | Out-Null

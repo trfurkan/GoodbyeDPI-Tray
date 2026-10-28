@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -157,6 +157,19 @@ namespace GoodbyeTray {
   // The first check waits a little: right after logon the network is often not up yet.
   DateTime nextUpdateCheck=DateTime.UtcNow.AddSeconds(30);
   bool updateChecking;
+  bool startupNoticePending, updateBalloon;
+  DateTime startupNoticeAfter, startupNoticeDeadline;
+  internal void BeginStartupNotification() { startupNoticePending=true; startupNoticeAfter=DateTime.UtcNow.AddSeconds(8); startupNoticeDeadline=DateTime.UtcNow.AddSeconds(45); }
+  internal void TryStartupNotification() {
+   if(!startupNoticePending || DateTime.UtcNow<startupNoticeAfter || stateReadPending || notesOpen || !TrayShown) return;
+   if((!available || transition || !running) && DateTime.UtcNow<startupNoticeDeadline) return;
+   startupNoticePending=false; updateBalloon=false;
+   Notify("GoodbyeDPI Tray",status.Text,available?ToolTipIcon.Info:ToolTipIcon.Warning);
+  }
+  void NotificationClicked() { if(updateBalloon) ShowReleaseNotes(); else Reveal(); }
+  // A Windows notification when the system offers one, the tray balloon otherwise.
+  void Notify(string title,string body,ToolTipIcon icon) { if(!Toast.Show(title,body,this,NotificationClicked)) tray.ShowBalloonTip(5000,title,body,icon); }
+
   UpdateState updateState;
   string availableUpdate;
   event Action UpdateStateChanged;
@@ -263,14 +276,14 @@ namespace GoodbyeTray {
     menu.Items.Add(new ToolStripSeparator());
     menu.Items.Add(L.T("Arayüzden çık"),null,delegate { DispatchCommand("exit"); });
     bool showTray=true; try { showTray=WindowsIntegration.TrayStartupEnabled(); } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
-    tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=showTray }; tray.DoubleClick+=delegate { Reveal(); }; tray.BalloonTipClicked+=delegate { ShowReleaseNotes(); };
+    tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=showTray }; tray.DoubleClick+=delegate { Reveal(); }; tray.BalloonTipClicked+=delegate { NotificationClicked(); };
     trayHelp.Text=TrayHelp(showTray);
    }
    Shown+=delegate { if(withTray) WindowsIntegration.RegisterJumpList(); if(WindowState==FormWindowState.Minimized && TrayShown) { Hide(); ShowInTaskbar=false; } };
    Resize+=delegate { if(WindowState==FormWindowState.Minimized && TrayShown) HideToTray(); };
    FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(busy && e.CloseReason==CloseReason.UserClosing) { e.Cancel=true; return; } if(!quitting && e.CloseReason==CloseReason.UserClosing && TrayShown) { e.Cancel=true; HideToTray(); } };
    SystemEvents.UserPreferenceChanged+=ThemeChanged;
-   timer.Interval=250; timer.Tick+=delegate { if(reveal!=null && reveal.WaitOne(0)) Reveal(); string command=commands==null?null:commands.Poll(); if(command!=null) DispatchCommand(command); if(++refreshTicks>=8) { refreshTicks=0; if(!busy && !sizing) RefreshStateAsync(); if(!sizing && Visible) ApplyTheme(false); if(DateTime.UtcNow>=nextUpdateCheck) CheckForUpdateAsync(); } }; if(withTray) timer.Start();
+   timer.Interval=250; timer.Tick+=delegate { if(reveal!=null && reveal.WaitOne(0)) Reveal(); string command=commands==null?null:commands.Poll(); if(command!=null) DispatchCommand(command); TryStartupNotification(); if(++refreshTicks>=8) { refreshTicks=0; if(!busy && !sizing) RefreshStateAsync(); if(!sizing && Visible) ApplyTheme(false); if(DateTime.UtcNow>=nextUpdateCheck && !startupNoticePending) CheckForUpdateAsync(); } }; if(withTray) timer.Start();
    SizeChanged+=delegate { if(WindowState!=FormWindowState.Minimized) FitDashboard(); }; ResizeBegin+=delegate { sizing=true; }; ResizeEnd+=delegate { sizing=false; FitDashboard(); };
    ApplyTheme(true); FitDashboard(); if(withTray) { Shown+=delegate { RefreshStateAsync(); }; } else RefreshState();
   }
@@ -350,7 +363,7 @@ namespace GoodbyeTray {
    Hide(); ShowInTaskbar=false;
   }
   // A manual check (from About) runs even when automatic checks are turned off.
-  async void CheckForUpdateAsync(bool manual=false) {
+  async void CheckForUpdateAsync(bool manual=false,bool openNotes=false) {
    if(updateChecking || IsDisposed) return;
    if(!manual && !UpdateCheck.Enabled) { nextUpdateCheck=DateTime.UtcNow.AddHours(1); return; }
    updateChecking=true; SetUpdateState(UpdateState.Checking);
@@ -358,7 +371,7 @@ namespace GoodbyeTray {
     string latest=await Task.Run(delegate { return UpdateCheck.Fetch(); });
     nextUpdateCheck=DateTime.UtcNow.AddDays(1);
     if(IsDisposed) return;
-    if(latest!=null) ShowUpdate(latest); else SetUpdateState(UpdateState.Current);
+    if(latest!=null) { ShowUpdate(latest); if(openNotes) ShowReleaseNotes(); } else SetUpdateState(UpdateState.Current);
    } catch(Exception ex) { nextUpdateCheck=DateTime.UtcNow.AddHours(1); AppInfo.Log("Güncelleme denetimi: "+ex.Message); if(!IsDisposed) SetUpdateState(UpdateState.Failed); }
    finally { updateChecking=false; }
   }
@@ -367,7 +380,8 @@ namespace GoodbyeTray {
    availableUpdate=version; SetUpdateState(UpdateState.Available);
    // Each release is announced once, and only when there is a tray icon to show it.
    if(TrayShown && UpdateCheck.NotifiedVersion!=version) {
-    tray.ShowBalloonTip(5000,"GoodbyeDPI Tray "+version+L.T(" çıktı"),L.T("Hakkında")+" → "+L.T("Neler değişti?"),ToolTipIcon.Info);
+    updateBalloon=true;
+    Notify("GoodbyeDPI Tray "+version+L.T(" çıktı"),L.T("Hakkında")+" → "+L.T("Neler değişti?"),ToolTipIcon.Info);
     try { UpdateCheck.NotifiedVersion=version; } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
    }
   }
@@ -387,8 +401,11 @@ namespace GoodbyeTray {
    }
   }
   void DownloadUpdate() {
-   string url=UpdateCheck.DownloadUrl;
-   try { Process.Start(new ProcessStartInfo(url) { UseShellExecute=true }); notice.Text=url==UpdateCheck.ReleaseUrl?L.T("Sürüm sayfası açıldı, kurucuyu oradan indirebilirsin."):L.T("Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur."); }
+   try {
+    var asset=UpdateCheck.DownloadAsset;
+    if(asset==null) { Process.Start(new ProcessStartInfo(UpdateCheck.ReleaseUrl) { UseShellExecute=true }); notice.Text=L.T("Sürüm sayfası açıldı, kurucuyu oradan indirebilirsin."); return; }
+    using(var dialog=new UpdateDownloadForm(dark,asset)) if(dialog.ShowDialog(Form.ActiveForm ?? this)==DialogResult.OK) notice.Text=L.T("Kurucu açıldı. Güncellemeyi kurulum penceresinden tamamlayabilirsin.");
+   }
    catch(Exception ex) { ReportError(ex); }
   }
   void Reveal() { Show(); ShowInTaskbar=true; WindowState=FormWindowState.Normal; Activate(); }
@@ -479,13 +496,13 @@ namespace GoodbyeTray {
    var statusIcon=new UpdateStatusIcon { Location=new Point(26,350),Size=new Size(22,22),BackColor=background };
    var statusText=new Label { Location=new Point(56,346),Size=new Size(300,30),TextAlign=ContentAlignment.MiddleLeft };
    var checkNow=new LinkLabel { Location=new Point(356,346),Size=new Size(158,30),TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor,DisabledLinkColor=secondary };
-   checkNow.LinkClicked+=delegate { CheckForUpdateAsync(true); };
+   checkNow.LinkClicked+=delegate { if(updateState==UpdateState.Available) DownloadUpdate(); else CheckForUpdateAsync(true,true); };
    Action showState=delegate {
     if(dialog.IsDisposed) return;
     notesLink.Visible=true;
     statusIcon.State=updateState;
     statusText.Text=updateState==UpdateState.Current?L.T("Güncel sürümü kullanıyorsun."):updateState==UpdateState.Available?L.T("Yeni sürüm var: ")+availableUpdate:updateState==UpdateState.Checking?"Kontrol ediliyor…":updateState==UpdateState.Failed?"Kontrol edilemedi, internetini kontrol et.":L.T("Güncellemeler henüz kontrol edilmedi.");
-    checkNow.Text=updateState==UpdateState.Failed?L.T("Tekrar dene"):L.T("Şimdi kontrol et");
+    checkNow.Text=updateState==UpdateState.Available?L.T("Yeni sürümü indir"):updateState==UpdateState.Failed?L.T("Tekrar dene"):L.T("Şimdi kontrol et");
     checkNow.Enabled=updateState!=UpdateState.Checking;
    };
    showState(); UpdateStateChanged+=showState; dialog.Disposed+=delegate { UpdateStateChanged-=showState; };
@@ -571,7 +588,7 @@ namespace GoodbyeTray {
    BackColor=background; PaintControls(this); PaintButton(toggle,true); WindowsIntegration.ThemeCaption(this,dark,background,foreground);
    if(diagnosticsWindow!=null && !diagnosticsWindow.IsDisposed) { ((EngineConsoleForm)diagnosticsWindow).ApplyPalette(dark); }
    if(accessWindow!=null && !accessWindow.IsDisposed) ((AccessTestForm)accessWindow).ApplyPalette(dark);
-   if(tray!=null) MenuAppearance.Apply(tray.ContextMenuStrip,surface,foreground,border,300);
+   if(tray!=null) MenuAppearance.Apply(tray.ContextMenuStrip,surface,foreground,border,230,true);
    Invalidate(true);
   }
   void PaintButton(SoftButton button,bool primary) { button.Fill=primary?AppPalette.Accent:surface; button.Ink=primary?AppPalette.AccentInk:foreground; button.Edge=primary?button.Fill:border; if(SystemInformation.HighContrast) { button.Fill=primary?foreground:background; button.Ink=primary?background:foreground; } Color host=background; for(Control parent=button.Parent;parent!=null;parent=parent.Parent) { if(parent is SoftPanel) { host=surface; break; } } button.BackColor=host; button.ForeColor=button.Ink; button.Invalidate(); }

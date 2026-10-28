@@ -15,7 +15,6 @@ namespace GoodbyeTray {
    {"Tepsi simgesi açıldı, oturum açınca da gelecek.","Simge yerine kuruldu! Oturum açınca da saatin yanında bekliyor olacak."},
    {"Tepsi simgesi gizlendi.","Simge saklambaç oynuyor. Uygulamaya Başlat menüsünden ulaşabilirsin."},
    {"Sürüm sayfası açıldı, kurucuyu oradan indirebilirsin.","Sürüm sayfasını açtık, kurucuyu oradan kapabilirsin."},
-   {"Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur.","Güncelleme yolda! Kurucuyu açıp kur, ayarların korunur."},
    {"Güncel sürümü kullanıyorsun.","Tertemiz! En güncel sürümdesin."},
    {"Bir saniye…","Bir saniye, çarklar dönüyor…"},
    {"Windows izin isteyebilir, bekle…","Windows kapıyı çalabilir; izin verirsen devam ediyoruz…"},

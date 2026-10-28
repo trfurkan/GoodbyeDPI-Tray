@@ -4,6 +4,15 @@ namespace GoodbyeTray {
  // Turkish text -> { English, Russian }. Keep the Turkish key exactly as written in the code.
  static partial class L {
   static readonly Dictionary<string,string[]> Table=new Dictionary<string,string[]> {
+   {"İptal",new[]{"Cancel","Отмена"}},
+   {"Kurucu dosyası doğrulanamadı.",new[]{"The installer could not be verified.","Не удалось проверить установщик."}},
+   {"Kurucu bağlantısı geçersiz.",new[]{"The installer link is invalid.","Недействительная ссылка на установщик."}},
+   {"Güncelleme indiriliyor",new[]{"Downloading update","Загрузка обновления"}},
+   {"İndirme hazırlanıyor…",new[]{"Preparing download…","Подготовка загрузки…"}},
+   {"Kurucu indiriliyor. Tamamlanınca açılacak.",new[]{"Downloading the installer. It will open when complete.","Установщик загружается. После загрузки он откроется."}},
+   {"Kurucu açılıyor…",new[]{"Opening the installer…","Открываем установщик…"}},
+   {"İndirme veya kurucu açma başarısız. Tekrar deneyebilirsin.",new[]{"Could not download or open the installer. You can try again.","Не удалось загрузить или открыть установщик. Попробуйте ещё раз."}},
+   {"Kurucu açıldı. Güncellemeyi kurulum penceresinden tamamlayabilirsin.",new[]{"The installer is open. Complete the update in its window.","Установщик открыт. Завершите обновление в его окне."}},
    {"Superonline için TLS alternatifi; DNS ayarlarını değiştirmez.",new[]{"TLS alternative for Superonline; does not change DNS settings.","Альтернативный TLS-профиль для Superonline; DNS не меняется."}},
    {"QUIC başlangıcını engeller; destekleyen uygulamalar TCP'ye döner. DNS değişmez.",new[]{"Blocks QUIC Initial packets; compatible apps fall back to TCP. DNS is unchanged.","Блокирует начало QUIC; совместимые приложения переходят на TCP. DNS не меняется."}},
    {"DPI motoru",new[]{"DPI engine","Движок DPI"}},
@@ -176,7 +185,6 @@ namespace GoodbyeTray {
    {"Yeni sürümü indir (",new[]{"Download the new version (","Скачать новую версию ("}},
    {" çıktı",new[]{" is out"," вышла"}},
    {"Sürüm sayfası açıldı, kurucuyu oradan indirebilirsin.",new[]{"The release page is open; you can download the installer there.","Открыта страница версии; установщик можно скачать там."}},
-   {"Kurucu tarayıcında iniyor. Açıp kurman yeterli, ayarların korunur.",new[]{"The installer is downloading in your browser. Just run it; your settings are kept.","Установщик скачивается в браузере. Просто запусти его — настройки сохранятся."}},
    {"İşlem sürüyor; tamamlandıktan sonra çıkabilirsin.",new[]{"Something is still running; you can quit once it's done.","Операция ещё идёт; выйти можно после её завершения."}},
    {"Önce kurulumu tamamla.",new[]{"Finish the installation first.","Сначала заверши установку."}},
    {"Kurulum gerekiyor",new[]{"Installation needed","Требуется установка"}},

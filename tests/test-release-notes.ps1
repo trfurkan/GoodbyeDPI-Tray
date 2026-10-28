@@ -63,6 +63,7 @@ try {
   }
  })
  $script:unexpectedDownload=$false
+ $mainType.GetField('updateBalloon',$instance).SetValue($main,$true)
  $main.Hide(); $closer.Start()
  try {
   $tray=$mainType.GetField('tray',$instance).GetValue($main)
