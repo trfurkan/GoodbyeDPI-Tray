@@ -11,7 +11,9 @@ $instance=[Reflection.BindingFlags]'NonPublic,Instance'
 $windows=$assembly.GetType('GoodbyeTray.WindowsIntegration')
 $commands=$assembly.GetType('GoodbyeTray.AppCommands')
 $list=$windows.GetMethod('BuildJumpList',$static).Invoke($null,[object[]]@([string](Join-Path $root 'build\app\GoodbyeDPI.Tray.exe')))
-if($list.JumpItems.Count -ne 7) { throw 'Jump List görevleri eksik' }
+if($list.JumpItems.Count -ne 3) { throw 'Jump List görevleri eksik' }
+# Each task has its own drawn icon: a real ICO file with six sizes.
+foreach($task in $list.JumpItems) { $bytes=[IO.File]::ReadAllBytes($task.IconResourcePath); if($task.IconResourcePath -notlike '*.ico' -or [BitConverter]::ToUInt16($bytes,2) -ne 1 -or [BitConverter]::ToUInt16($bytes,4) -ne 6) { throw 'Jump List simgesi yok' } }
 foreach($task in $list.JumpItems) {
  $command=$task.Arguments.Substring(9)
  if(-not $commands.GetMethod('IsValid',$static).Invoke($null,[object[]]@([string]$command))) { throw "İşlemsiz Jump List girdisi: $command" }

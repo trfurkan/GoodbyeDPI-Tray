@@ -41,8 +41,27 @@ foreach($dark in @($false,$true)) {
   $until=[DateTime]::UtcNow.AddSeconds(5)
   while($form.GetType().GetField('active',$instance).GetValue($form) -and [DateTime]::UtcNow -lt $until) { [Windows.Forms.Application]::DoEvents(); Start-Sleep -Milliseconds 10 }
   if(-not $form.GetType().GetField('retry',$instance).GetValue($form).Visible) { throw ('Retry unavailable: '+$form.GetType().GetField('status',$instance).GetValue($form).Text) }
+  if($form.GetType().GetField('status',$instance).GetValue($form).Text -ne 'İndirme başarısız. Tekrar deneyebilirsin.') { throw 'Download failure message wrong' }
   $bitmap=[Drawing.Bitmap]::new($form.Width,$form.Height)
   try { $form.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$form.Width,$form.Height));$bitmap.Save((Join-Path $root "build/previews/update-download-$dark.png")) } finally { $bitmap.Dispose() }
  } finally { $form.Dispose() }
 }
+# A downloaded installer that cannot be opened: retry opens it again without a download, closing the window deletes it.
+$prefix=$asm.GetType('GoodbyeTray.UpdateDownload').GetField('FolderPrefix',$flags).GetValue($null)
+$folder=Join-Path ([IO.Path]::GetTempPath()) ($prefix+'test-'+[Guid]::NewGuid().ToString('N')); New-Item -ItemType Directory $folder | Out-Null
+$form=[Activator]::CreateInstance($asm.GetType('GoodbyeTray.UpdateDownloadForm'),$instance,$null,[object[]]@($false,$asset),$null)
+try {
+ $form.GetType().GetField('downloaded',$instance).SetValue($form,(Join-Path $folder 'missing.exe'))
+ $form.Show(); $until=[DateTime]::UtcNow.AddSeconds(5)
+ do { [Windows.Forms.Application]::DoEvents(); Start-Sleep -Milliseconds 10 } while($form.GetType().GetField('active',$instance).GetValue($form) -and [DateTime]::UtcNow -lt $until)
+ if($form.GetType().GetField('status',$instance).GetValue($form).Text -ne 'Kurucu açılamadı. Tekrar deneyebilirsin.') { throw ('Open failure message wrong: '+$form.GetType().GetField('status',$instance).GetValue($form).Text) }
+ if(-not (Test-Path $folder)) { throw 'Downloaded installer discarded before the window closed' }
+ $form.Close()
+ if(Test-Path $folder) { throw 'Unopened installer left in Temp' }
+} finally { $form.Dispose() }
+# Earlier update folders are removed at start.
+$old=Join-Path ([IO.Path]::GetTempPath()) ($prefix+'test-'+[Guid]::NewGuid().ToString('N')); New-Item -ItemType Directory $old | Out-Null; Set-Content (Join-Path $old 'GoodbyeDPI-Installer.exe') 'x'
+$asm.GetType('GoodbyeTray.UpdateDownload').GetMethod('CleanOld',$flags).Invoke($null,$null)
+if(Test-Path $old) { throw 'Old update folder not cleaned' }
+Write-Output 'PASS: Download and open failures told apart, unopened installer deleted on close, old update folders cleaned.'
 Write-Output 'PASS: Repository URL restrictions, progress, complete/truncated/oversized files, SHA256 mismatch, cancellation, asset metadata, themed error/retry UI. No installer launched.'

@@ -7,5 +7,4 @@
 
 **Düzeltmeler**
 
-- Tepsi menüsü daha derli toplu.
 - Küçük hatalar giderildi, bazı şeyler iyileştirildi.

@@ -110,18 +110,79 @@ namespace GoodbyeTray {
    } catch(DllNotFoundException) { LastCaptionResult=-1; } catch(EntryPointNotFoundException) { LastCaptionResult=-1; }
   }
   internal static readonly string[] Actions={"show","start","stop","restart","profiles","settings","exit"};
-  internal static readonly string[] Titles={L.T("Uygulamayı aç"),L.T("GoodbyeDPI'ı başlat"),L.T("GoodbyeDPI'ı durdur"),L.T("GoodbyeDPI'ı yeniden başlat"),L.T("Profil seçimi"),L.T("Ayarlar"),L.T("Arayüzden çık")};
+  // The jump list keeps only the tasks that do something without opening the window; each has its own icon.
+  internal static readonly string[] JumpActions={"start","stop","restart"};
+  internal static readonly string[] JumpTitles={L.T("GoodbyeDPI'ı başlat"),L.T("GoodbyeDPI'ı durdur"),L.T("GoodbyeDPI'ı yeniden başlat")};
   internal static JumpList BuildJumpList(string executable) {
    var list=new JumpList(); list.ShowRecentCategory=false; list.ShowFrequentCategory=false;
-   for(int i=0;i<Actions.Length;i++) list.JumpItems.Add(new JumpTask { Title=Titles[i],Description=Titles[i],ApplicationPath=executable,Arguments="--action "+Actions[i],WorkingDirectory=System.IO.Path.GetDirectoryName(executable),IconResourcePath=executable,IconResourceIndex=0 });
+   for(int i=0;i<JumpActions.Length;i++) {
+    string icon=JumpIcons.PathFor(JumpActions[i]);
+    list.JumpItems.Add(new JumpTask { Title=JumpTitles[i],Description=JumpTitles[i],ApplicationPath=executable,Arguments="--action "+JumpActions[i],WorkingDirectory=System.IO.Path.GetDirectoryName(executable),IconResourcePath=icon ?? executable,IconResourceIndex=0 });
+   }
    return list;
   }
   internal static void RegisterJumpList() {
    try {
     var list=BuildJumpList(Application.ExecutablePath);
     int rejected=0; list.JumpItemsRejected+=delegate(object sender,JumpItemsRejectedEventArgs e) { rejected+=e.RejectedItems.Count; };
-    list.Apply(); ShellStatus=rejected==0?L.T("7 görev kaydedildi"):rejected+L.T(" görev Windows tarafından reddedildi");
+    list.Apply(); ShellStatus=rejected==0?L.T("Görevler kaydedildi"):rejected+L.T(" görev Windows tarafından reddedildi");
    } catch(Exception ex) { ShellStatus=L.T("Kullanılamıyor: ")+ex.Message; AppInfo.Log("Jump List: "+ex.Message); }
+  }
+ }
+ // Round icons for the jump list tasks: green play, red stop, blue restart arrow. The shell wants a file,
+ // so they are drawn once into the user's app data folder (the uninstall removes that folder).
+ static class JumpIcons {
+  internal static string Folder { get { return System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(AppInfo.LogPath)),"Icons"); } }
+  // Bump the suffix when the drawing changes, so Windows does not keep showing its cached copy.
+  internal static string PathFor(string action) {
+   try {
+    string path=System.IO.Path.Combine(Folder,action+"-2.ico");
+    if(!System.IO.File.Exists(path)) { System.IO.Directory.CreateDirectory(Folder); System.IO.File.WriteAllBytes(path,Icon(action)); }
+    return path;
+   } catch(Exception ex) { AppInfo.Log("Jump List simgesi: "+ex.Message); return null; }
+  }
+  internal static byte[] Icon(string action) {
+   int[] sizes={16,20,24,32,48,64};
+   var images=new byte[sizes.Length][];
+   for(int i=0;i<sizes.Length;i++) using(var bitmap=Draw(action,sizes[i])) images[i]=Dib(bitmap);
+   // Classic ICO container with 32-bit images, readable by every part of Windows.
+   using(var stream=new System.IO.MemoryStream()) using(var writer=new System.IO.BinaryWriter(stream)) {
+    writer.Write((short)0); writer.Write((short)1); writer.Write((short)sizes.Length);
+    int offset=6+16*sizes.Length;
+    for(int i=0;i<sizes.Length;i++) { writer.Write((byte)sizes[i]); writer.Write((byte)sizes[i]); writer.Write((byte)0); writer.Write((byte)0); writer.Write((short)1); writer.Write((short)32); writer.Write(images[i].Length); writer.Write(offset); offset+=images[i].Length; }
+    foreach(byte[] image in images) writer.Write(image);
+    writer.Flush(); return stream.ToArray();
+   }
+  }
+  // Icon image: BITMAPINFOHEADER (height doubled for the mask), bottom-up BGRA pixels, then an empty AND mask.
+  static byte[] Dib(Bitmap bitmap) {
+   int size=bitmap.Width, maskStride=((size+31)/32)*4;
+   using(var stream=new System.IO.MemoryStream()) using(var writer=new System.IO.BinaryWriter(stream)) {
+    writer.Write(40); writer.Write(size); writer.Write(size*2); writer.Write((short)1); writer.Write((short)32); writer.Write(0); writer.Write(size*size*4+maskStride*size); writer.Write(0); writer.Write(0); writer.Write(0); writer.Write(0);
+    for(int y=size-1;y>=0;y--) for(int x=0;x<size;x++) { Color c=bitmap.GetPixel(x,y); writer.Write(c.B); writer.Write(c.G); writer.Write(c.R); writer.Write(c.A); }
+    writer.Write(new byte[maskStride*size]);
+    writer.Flush(); return stream.ToArray();
+   }
+  }
+  static Bitmap Draw(string action,int size) {
+   var bitmap=new Bitmap(size,size,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+   using(var g=Graphics.FromImage(bitmap)) {
+    g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.PixelOffsetMode=System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+    Color fill=action=="start"?Color.FromArgb(0x16,0xA3,0x4A):action=="stop"?Color.FromArgb(0xDC,0x26,0x26):Color.FromArgb(0x25,0x63,0xEB);
+    float s=size;
+    using(var brush=new SolidBrush(fill)) g.FillEllipse(brush,0.5f,0.5f,s-1,s-1);
+    using(var white=new SolidBrush(Color.White)) {
+     if(action=="start") g.FillPolygon(white,new[]{new PointF(s*0.40f,s*0.29f),new PointF(s*0.40f,s*0.71f),new PointF(s*0.74f,s*0.5f)});
+     else if(action=="stop") using(var square=SoftButton.Round(Rectangle.Round(new RectangleF(s*0.31f,s*0.31f,s*0.38f,s*0.38f)),Math.Max(2,size/8))) g.FillPath(white,square);
+     else {
+      using(var pen=new Pen(Color.White,Math.Max(1.6f,s*0.11f))) { pen.StartCap=System.Drawing.Drawing2D.LineCap.Round; g.DrawArc(pen,s*0.27f,s*0.27f,s*0.46f,s*0.46f,-60,290); }
+      // Arrow head at the open end of the arc.
+      double angle=-60*Math.PI/180; float cx=s*0.5f+(float)Math.Cos(angle)*s*0.23f, cy=s*0.5f+(float)Math.Sin(angle)*s*0.23f, h=s*0.17f;
+      g.FillPolygon(white,new[]{new PointF(cx-h*0.2f,cy-h),new PointF(cx+h*0.95f,cy+h*0.05f),new PointF(cx-h*0.45f,cy+h*0.7f)});
+     }
+    }
+   }
+   return bitmap;
   }
  }
  static class MenuAppearance {

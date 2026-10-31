@@ -228,6 +228,7 @@ namespace GoodbyeTray {
    Toast.Remove();
    if(File.Exists(AppInfo.LogPath)) File.Delete(AppInfo.LogPath);
    string logs=Path.GetDirectoryName(AppInfo.LogPath),data=Path.GetDirectoryName(logs);
+   if(Directory.Exists(JumpIcons.Folder)) Directory.Delete(JumpIcons.Folder,true);
    foreach(string folder in new[]{logs,data}) if(Directory.Exists(folder) && Directory.GetFileSystemEntries(folder).Length==0) Directory.Delete(folder);
   }
   // A running exe cannot delete itself, so an uninstall started from the install folder continues from a temporary copy.

@@ -51,10 +51,7 @@ AppsAndFeaturesEntries:
   Publisher: Furkan
   ProductCode: GoodbyeDPITray
 Installers:
-- Architecture: x86
-  InstallerUrl: $url
-  InstallerSha256: $sha
-- Architecture: x64
+- Architecture: neutral
   InstallerUrl: $url
   InstallerSha256: $sha
 ManifestType: installer

@@ -33,7 +33,7 @@ namespace GoodbyeTray {
   }
   internal static string Download(UpdateAsset asset,IProgress<long> progress,CancellationToken token) {
    if(asset==null || !ValidUrl(asset.Url)) throw new InvalidDataException(L.T("Kurucu bağlantısı geçersiz."));
-   string folder=Path.Combine(Path.GetTempPath(),"GoodbyeDPI-update-"+Guid.NewGuid().ToString("N"));
+   string folder=Path.Combine(Path.GetTempPath(),FolderPrefix+Guid.NewGuid().ToString("N"));
    Directory.CreateDirectory(folder);
    string partial=Path.Combine(folder,"installer.part"),complete=Path.Combine(folder,"GoodbyeDPI-Installer.exe");
    try {
@@ -45,10 +45,18 @@ namespace GoodbyeTray {
     }
     token.ThrowIfCancellationRequested(); File.Move(partial,complete); return complete;
    } catch {
-    if(File.Exists(partial)) File.Delete(partial);
-    if(File.Exists(complete)) File.Delete(complete);
-    Directory.Delete(folder); token.ThrowIfCancellationRequested(); throw;
+    // Cleanup failures are only logged, so the original error is the one reported.
+    Discard(folder); token.ThrowIfCancellationRequested(); throw;
    }
+  }
+  internal const string FolderPrefix="GoodbyeDPI-update-";
+  internal static void Discard(string folder) {
+   try { if(Directory.Exists(folder)) Directory.Delete(folder,true); } catch(Exception ex) { AppInfo.Log("Güncelleme klasörü silinemedi: "+ex.Message); }
+  }
+  // Installers from earlier updates; one still running is locked and simply waits for the next start.
+  internal static void CleanOld() {
+   try { foreach(string folder in Directory.GetDirectories(Path.GetTempPath(),FolderPrefix+"*")) try { Directory.Delete(folder,true); } catch(IOException) { } catch(UnauthorizedAccessException) { } }
+   catch(Exception ex) { AppInfo.Log("Eski güncelleme klasörleri: "+ex.Message); }
   }
  }
  sealed class UpdateDownloadForm : Form {
@@ -74,24 +82,41 @@ namespace GoodbyeTray {
    FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(active) { e.Cancel=true; closeRequested=true; cancel.Enabled=false; cancellation.Cancel(); } };
    Shown+=delegate { BeginDownload(); }; HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); };
   }
+  // A verified installer that has not been opened yet: "Tekrar dene" opens it again instead of downloading it again.
+  string downloaded;
+  bool launched;
   async void BeginDownload() {
    if(active) return;
-   active=true; closeRequested=false; retry.Visible=false; cancel.Text=L.T("İptal"); progress.Value=0; amount.Text=""; status.Text=L.T("Kurucu indiriliyor. Tamamlanınca açılacak.");
-   cancellation=new CancellationTokenSource(); string file=null;
+   active=true; closeRequested=false; retry.Visible=false; cancel.Text=L.T("İptal"); cancel.Enabled=true;
+   cancellation=new CancellationTokenSource();
    try {
-    var reporter=new Progress<long>(delegate(long bytes) { if(IsDisposed || !active) return; progress.Value=(int)Math.Min(100,bytes*100/Math.Max(1,asset.Size)); amount.Text=String.Format("{0:0.0} / {1:0.0} MB · %{2}",bytes/1048576.0,asset.Size/1048576.0,progress.Value); });
-    file=await Task.Run(delegate { return UpdateDownload.Download(asset,reporter,cancellation.Token); });
-    cancellation.Token.ThrowIfCancellationRequested();
+    if(downloaded==null) {
+     progress.Value=0; amount.Text=""; status.Text=L.T("Kurucu indiriliyor. Tamamlanınca açılacak.");
+     var reporter=new Progress<long>(delegate(long bytes) { if(IsDisposed || !active) return; progress.Value=(int)Math.Min(100,bytes*100/Math.Max(1,asset.Size)); amount.Text=String.Format("{0:0.0} / {1:0.0} MB · %{2}",bytes/1048576.0,asset.Size/1048576.0,progress.Value); });
+     downloaded=await Task.Run(delegate { return UpdateDownload.Download(asset,reporter,cancellation.Token); });
+     cancellation.Token.ThrowIfCancellationRequested();
+    }
     status.Text=L.T("Kurucu açılıyor…"); cancel.Enabled=false;
     // Windows checks a downloaded file (SmartScreen) before it starts, which can take seconds; keep that off the window's thread.
-    string installer=file; await Task.Run(delegate { Process.Start(new ProcessStartInfo(installer) { UseShellExecute=true }).Dispose(); }); file=null; active=false; DialogResult=DialogResult.OK; Close();
+    string installer=downloaded; await Task.Run(delegate { using(Process.Start(new ProcessStartInfo(installer) { UseShellExecute=true })) { } });
+    launched=true; active=false; DialogResult=DialogResult.OK; Close();
    } catch(OperationCanceledException) { active=false; Close(); }
-   catch(Exception ex) { AppInfo.Log("Güncelleme indirme: "+ex); status.Text=L.T("İndirme veya kurucu açma başarısız. Tekrar deneyebilirsin."); retry.Visible=true; cancel.Text=L.T("Kapat"); }
+   catch(Exception ex) {
+    AppInfo.Log("Güncelleme indirme: "+ex);
+    var refused=ex as System.ComponentModel.Win32Exception;
+    // 1223: the Windows warning (SmartScreen or UAC) was answered with "don't run"; the download itself is fine.
+    status.Text=refused!=null && refused.NativeErrorCode==1223 && downloaded!=null?L.T("Kurucu açılmadı. Tekrar dene'ye basınca yeniden indirmeden açılır."):downloaded!=null?L.T("Kurucu açılamadı. Tekrar deneyebilirsin."):L.T("İndirme başarısız. Tekrar deneyebilirsin.");
+    retry.Visible=true; cancel.Text=L.T("Kapat");
+   }
    finally {
-    active=false; cancellation.Dispose(); cancellation=null;
-    if(file!=null) try { File.Delete(file); Directory.Delete(Path.GetDirectoryName(file)); } catch(Exception ex) { AppInfo.Log(ex.Message); }
+    active=false; cancel.Enabled=true; cancellation.Dispose(); cancellation=null;
     if(closeRequested && !IsDisposed) Close();
    }
+  }
+  protected override void OnFormClosed(FormClosedEventArgs e) {
+   // An installer that never opened is not needed any more; an opened one is cleaned up at a later start.
+   if(downloaded!=null && !launched) UpdateDownload.Discard(Path.GetDirectoryName(downloaded));
+   base.OnFormClosed(e);
   }
  }
 }
