@@ -18,16 +18,18 @@ $sha = (Get-FileHash $installer -Algorithm SHA256).Hash
 Remove-Item $installer
 $date = ([datetime]$release.published_at).ToString('yyyy-MM-dd')
 
-$header = "# Created with scripts/winget-manifest.ps1`nPackageIdentifier: $id`nPackageVersion: $Version"
+$schema = '1.12.0'
+# Each file starts with the schema line winget-pkgs expects, then the package identity.
+function Header([string]$type) { "# yaml-language-server: `$schema=https://aka.ms/winget-manifest.$type.$schema.schema.json`n# Created with scripts/winget-manifest.ps1`n`nPackageIdentifier: $id`nPackageVersion: $Version" }
 $files = @{
  "$id.yaml" = @"
-$header
+$(Header version)
 DefaultLocale: tr-TR
 ManifestType: version
-ManifestVersion: 1.6.0
+ManifestVersion: $schema
 "@
  "$id.installer.yaml" = @"
-$header
+$(Header installer)
 InstallerType: exe
 Scope: machine
 ElevationRequirement: elevatesSelf
@@ -55,10 +57,10 @@ Installers:
   InstallerUrl: $url
   InstallerSha256: $sha
 ManifestType: installer
-ManifestVersion: 1.6.0
+ManifestVersion: $schema
 "@
  "$id.locale.tr-TR.yaml" = @"
-$header
+$(Header defaultLocale)
 PackageLocale: tr-TR
 Publisher: Furkan
 PublisherUrl: https://github.com/trfurkan
@@ -77,10 +79,10 @@ Tags:
 - turkey
 ReleaseNotesUrl: $repo/releases/tag/v$Version
 ManifestType: defaultLocale
-ManifestVersion: 1.6.0
+ManifestVersion: $schema
 "@
  "$id.locale.en-US.yaml" = @"
-$header
+$(Header locale)
 PackageLocale: en-US
 Publisher: Furkan
 PublisherUrl: https://github.com/trfurkan
@@ -99,7 +101,7 @@ Tags:
 - turkey
 ReleaseNotesUrl: $repo/releases/tag/v$Version
 ManifestType: locale
-ManifestVersion: 1.6.0
+ManifestVersion: $schema
 "@
 }
 $utf8 = New-Object Text.UTF8Encoding $false
