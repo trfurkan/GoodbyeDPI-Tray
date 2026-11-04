@@ -135,17 +135,34 @@ namespace GoodbyeTray {
    } catch(Exception ex) { AppInfo.Log("Güvenlik duvarı kuralı: "+ex.Message); return -1; }
   }
  }
+ // DNS server the GoodbyeDPI profiles with DNS redirection use. Each answers on a non-standard port, which the
+ // operator's port 53 interception does not catch. Stored under HKLM next to BlockQuic; Yandex when missing.
+ static class DnsChoice {
+  const string SettingsKey=@"SOFTWARE\GoodbyeDPITray";
+  internal static readonly string[] Names={"Yandex","AdGuard · reklam engelli","AdGuard · filtresiz"};
+  static readonly string[] Arguments={Program.Dns,
+   " --dns-addr 94.140.14.14 --dns-port 5353 --dnsv6-addr 2a10:50c0::ad1:ff --dnsv6-port 5353",
+   " --dns-addr 94.140.14.140 --dns-port 5353 --dnsv6-addr 2a10:50c0::1:ff --dnsv6-port 5353"};
+  internal static int Selected {
+   get { try { using(var key=Microsoft.Win32.Registry.LocalMachine.OpenSubKey(SettingsKey)) { int value=key==null?0:Convert.ToInt32(key.GetValue("Dns",0)); return value>=0 && value<Arguments.Length?value:0; } } catch(Exception) { return 0; } }
+   set { if(value<0 || value>=Arguments.Length) throw new ArgumentOutOfRangeException("value"); using(var key=Microsoft.Win32.Registry.LocalMachine.CreateSubKey(SettingsKey)) key.SetValue("Dns",value,Microsoft.Win32.RegistryValueKind.DWord); }
+  }
+  internal static bool Uses(int profile) { return profile>=0 && profile<Program.ZapretStart && Program.Args[profile].EndsWith(Program.Dns); }
+  // The arguments the engine runs with; the stored profile arguments keep Yandex so older service paths still match.
+  internal static string EngineArgs(int profile) { string args=Program.Args[profile]; return Uses(profile)?args.Substring(0,args.Length-Program.Dns.Length)+Arguments[Selected]:args; }
+ }
  // Requests a signed-in user may send without admin rights (the installer grants start, stop and user-defined control).
  // The service applies them itself, so users never get the right to change the service configuration.
  static class EngineRequest {
-  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, Pause5=160, Pause15=161;
-  internal const string SetProfile="--set-profile", SetStart="--set-start", SetQuic="--set-quic";
+  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, DnsBase=154, Pause5=160, Pause15=161;
+  internal const string SetProfile="--set-profile", SetStart="--set-start", SetQuic="--set-quic", SetDns="--set-dns";
   // Applies a configuration request as the service. Only these fixed changes are possible.
   internal static void Apply(string name,string value) {
    int profile;
    if(name==SetProfile && Int32.TryParse(value,out profile) && profile>=0 && profile<Program.Args.Length) Program.Configure(profile);
    else if(name==SetStart && (value=="auto" || value=="demand")) Program.Sc("config GoodbyeDPI start= "+value);
    else if(name==SetQuic && (value=="on" || value=="off")) QuicBlock.Wanted=value=="on";
+   else if(name==SetDns && Int32.TryParse(value,out profile) && profile>=0 && profile<DnsChoice.Names.Length) DnsChoice.Selected=profile;
    else throw new ArgumentException(L.T("Bilinmeyen hizmet isteği."));
   }
  }
@@ -179,6 +196,11 @@ namespace GoodbyeTray {
     } else if(action=="quic-on" || action=="quic-off") {
      bool on=action=="quic-on";
      Request(service,on?EngineRequest.QuicOn:EngineRequest.QuicOff,new[]{EngineRequest.SetQuic,on?"on":"off"},delegate { return QuicBlock.Wanted==on; });
+    } else if(action=="dns") {
+     // The profile argument carries the DNS choice here.
+     if(profile<0 || profile>=DnsChoice.Names.Length) throw new ArgumentOutOfRangeException("profile");
+     if(DnsChoice.Selected==profile) return;
+     Request(service,EngineRequest.DnsBase+profile,new[]{EngineRequest.SetDns,profile.ToString()},delegate { return DnsChoice.Selected==profile; });
     } else if(action=="auto-on" || action=="auto-off") {
      bool auto=action=="auto-on";
      Request(service,auto?EngineRequest.AutoOn:EngineRequest.AutoOff,new[]{EngineRequest.SetStart,auto?"auto":"demand"},delegate { return StartsWithWindows()==auto; });
@@ -239,7 +261,7 @@ namespace GoodbyeTray {
     Program.ValidateEngine(profile); Program.CheckOtherEngines();
     last=""; output="";
     EngineConsole.Write(EngineConsole.Encode(profile,"starting",0,""));
-    session=new NativeConsoleSession(); session.Start(Program.EngineFor(profile),Program.Args[profile]);
+    session=new NativeConsoleSession(); session.Start(Program.EngineFor(profile),DnsChoice.EngineArgs(profile));
     if(session.Child.WaitForExit(profile>=Program.ZapretStart?2000:800)) throw new InvalidOperationException(L.T("GoodbyeDPI başlatılamadı: ").Replace("GoodbyeDPI",Program.MotorName(profile))+session.Read());
     NativeConsoleSession.FlushDns();
     Capture(); capture=new System.Threading.Timer(delegate { Tick(); },null,500,500);
@@ -265,7 +287,14 @@ namespace GoodbyeTray {
      lock(sync) if(!stopping && session!=null) QuicBlock.Apply();
      return;
     }
-    int next=command-EngineRequest.ProfileBase; if(next<0 || next>=Program.Args.Length) return;
+    int next;
+    if(command>=EngineRequest.DnsBase && command<EngineRequest.DnsBase+DnsChoice.Names.Length) {
+     EngineRequest.Apply(EngineRequest.SetDns,(command-EngineRequest.DnsBase).ToString());
+     // A profile with DNS redirection restarts with the new server; the switch below does that in place.
+     lock(sync) if(stopping || session==null || !DnsChoice.Uses(profile)) return;
+     next=profile;
+    } else next=command-EngineRequest.ProfileBase;
+    if(next<0 || next>=Program.Args.Length) return;
     lock(sync) {
      if(stopping) return;
      int previous=profile; DateTime? previousPause=pauseUntil;

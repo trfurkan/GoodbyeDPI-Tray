@@ -184,5 +184,5 @@ if(([regex]::Matches($service,'QuicBlock\.Disable\(\)')).Count -lt 2 -or ([regex
 if(-not (Test-Path 'HKLM:\SOFTWARE\GoodbyeDPITray') -and -not $quic.GetProperty('Wanted',$static).GetValue($null)) { throw 'QUIC engeli varsayilan olarak kapali' }
 foreach($text in '"quic-on"','EngineRequest.QuicOn','SetQuic') { if(-not $service.Contains($text)) { throw "QUIC ayar istegi eksik: $text" } }
 $main=$assembly.GetType('GoodbyeTray.MainForm'); $window=[Activator]::CreateInstance($main,[object[]]@($false))
-try { $box=$main.GetField('quicBlock',$instance).GetValue($window); if($box.Text -ne "Tarayıcılarda QUIC'i engelle" -or $box.Parent -eq $null) { throw 'QUIC ayari arayuzde yok' } } finally { $window.Dispose() }
+try { $box=$main.GetField('quicBlock',$instance).GetValue($window); if($box.Text -ne "Tarayıcılarda QUIC'i engelle" -or $box.Parent -eq $null) { throw 'QUIC ayari arayuzde yok' }; $picker=$main.GetField('dnsServer',$instance).GetValue($window); if($picker.Items.Count -ne 3 -or $picker.Items[1] -ne 'AdGuard · reklam engelli' -or $picker.Parent -eq $null) { throw 'DNS secimi arayuzde yok' } } finally { $window.Dispose() }
 Write-Output 'PASS: QUIC kurali motor calisirken ekleniyor; durunca, molada ve kaldirinca siliniyor; Ayarlar bolumunde acilip kapatilabiliyor.'

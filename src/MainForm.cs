@@ -150,6 +150,7 @@ namespace GoodbyeTray {
   int SelectedProfile { get { return profiles.SelectedIndex<0?-1:profiles.SelectedIndex+(motors.SelectedIndex==1?Program.ZapretStart:0); } }
   void SelectProfile(int id) { motors.SelectedIndex=id>=Program.ZapretStart?1:0; profiles.SelectedIndex=id>=Program.ZapretStart?id-Program.ZapretStart:id; }
   readonly CheckBox startup=new CheckBox(), engineStartup=new CheckBox(), quicBlock=new CheckBox();
+  readonly ProfilePicker dnsServer=new ProfilePicker();
 
 
   readonly SoftButton toggle=new SoftButton(), apply=new SoftButton(), restart=new SoftButton();
@@ -223,7 +224,7 @@ namespace GoodbyeTray {
    ClientSize=new Size(900,Math.Min(840,Screen.PrimaryScreen.WorkingArea.Height-70)); MinimumSize=new Size(760,740); StartPosition=FormStartPosition.CenterScreen; Icon=Program.AppIcon;
    var scroll=new Panel { Dock=DockStyle.Fill,AutoScroll=false }; Controls.Add(scroll);
    var layout=dashboard; layout.Dock=DockStyle.Fill; layout.AutoSize=false; layout.Padding=new Padding(20,10,20,10); layout.ColumnCount=1; layout.RowCount=8;
-   foreach(int height in new[]{104,112,0,160,218,58}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
+   foreach(int height in new[]{104,112,0,160,252,58}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
    layout.RowStyles.Add(new RowStyle(SizeType.Absolute,0)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); scroll.Controls.Add(layout);
    var header=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=3,RowCount=1 };
    header.RowStyles.Add(new RowStyle(SizeType.Percent,100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,180)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,172));
@@ -309,11 +310,20 @@ namespace GoodbyeTray {
    pending.Dock=DockStyle.Fill; pending.Tag="muted"; content.Controls.Add(pending);
   }
   void BuildSettings(TableLayoutPanel layout) {
-   var content=Section(layout,L.T("Ayarlar"),new[]{28,28,26,28,26,28,26}); startupContent=content;
+   var content=Section(layout,L.T("Ayarlar"),new[]{28,28,26,28,26,28,26,34}); startupContent=content;
    engineStartup.Text=L.T("Windows açıldığında GoodbyeDPI'ı başlat"); engineStartup.AutoSize=true; content.Controls.Add(engineStartup,0,1); var serviceHelp=LabelOf(L.T("Bilgisayar açılınca GoodbyeDPI ve tepsi simgesi de başlar."),9,false); serviceHelp.Tag="muted"; content.Controls.Add(serviceHelp,0,2);
    startup.Text=L.T("Sistem tepsisinde göster"); startup.AutoSize=true; content.Controls.Add(startup,0,3); trayHelp.Text=TrayHelp(true); trayHelp.Tag="muted"; content.Controls.Add(trayHelp,0,4);
    quicBlock.Text=L.T("Tarayıcılarda QUIC'i engelle"); quicBlock.AutoSize=true; content.Controls.Add(quicBlock,0,5); var quicHelp=LabelOf(L.T("Discord gibi siteler tarayıcıda açılmıyorsa açık kalsın. Yalnızca GoodbyeDPI çalışırken etkilidir."),9,false); quicHelp.Tag="muted"; content.Controls.Add(quicHelp,0,6);
    quicBlock.CheckedChanged+=delegate { if(!refreshing) Execute(quicBlock.Checked?"quic-on":"quic-off",0); };
+   var dnsRow=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=3,RowCount=1,Margin=Padding.Empty };
+   dnsRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); dnsRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,230)); dnsRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+   var dnsLabel=LabelOf(L.T("DNS sunucusu"),10,false); dnsLabel.AutoSize=true; dnsLabel.Anchor=AnchorStyles.Left; dnsRow.Controls.Add(dnsLabel,0,0);
+   dnsServer.Dock=DockStyle.Top; dnsServer.Height=30; dnsServer.Margin=new Padding(10,2,10,0); dnsServer.AccessibleName=L.T("DNS sunucusu");
+   foreach(string name in DnsChoice.Names) dnsServer.Items.Add(L.T(name));
+   dnsServer.SelectedIndex=DnsChoice.Selected; dnsRow.Controls.Add(dnsServer,1,0);
+   var dnsHelp=LabelOf(L.T("Standart ve \"+ DNS\" profillerinde kullanılır."),9,false); dnsHelp.Tag="muted"; dnsHelp.AutoSize=true; dnsHelp.Anchor=AnchorStyles.Left; dnsRow.Controls.Add(dnsHelp,2,0);
+   content.Controls.Add(dnsRow,0,7);
+   dnsServer.SelectedIndexChanged+=delegate { if(!refreshing && dnsServer.SelectedIndex>=0) Execute("dns",dnsServer.SelectedIndex); };
    // Starting with Windows covers both parts: the service and the tray entry in Task Manager follow this box together.
    // Execute changes the tray entry only after the service change worked, so the two never drift apart.
    engineStartup.CheckedChanged+=delegate {
@@ -439,7 +449,7 @@ namespace GoodbyeTray {
    pauseButton.Text=paused?L.T("Molayı yönet"):L.T("Geçici durdur");
    trayPause.Enabled=available && running && !busy && !transition;
    engineStartup.Text=L.T("Windows açıldığında GoodbyeDPI'ı başlat").Replace("GoodbyeDPI",Program.MotorName(activeProfile));
-   engineStartup.Enabled=available && !busy && !transition; quicBlock.Enabled=available && !busy && !transition; startup.Enabled=!busy;
+   engineStartup.Enabled=available && !busy && !transition; quicBlock.Enabled=available && !busy && !transition; dnsServer.Enabled=quicBlock.Enabled; startup.Enabled=!busy;
    UpdateSelection();
    PaintButton(toggle,true);
    if(tray!=null) {
@@ -461,7 +471,7 @@ namespace GoodbyeTray {
   async void Execute(string action,int profile) {
    if(busy) return;
    stateRevision++; busy=true; notice.Text=L.T("Bir saniye…"); SetServiceState(activeProfile,running?ServiceControllerStatus.Running:ServiceControllerStatus.Stopped);
-   string done=action.StartsWith("pause")?L.T("GoodbyeDPI molada. Süre bitince geri gelecek."):action=="profile"?L.T("Profil uygulandı."):action=="stop"?L.T("GoodbyeDPI durduruldu."):action=="auto-on"||action=="auto-off"?L.T("Başlangıç tercihin kaydedildi."):action.StartsWith("quic")?L.T("Tarayıcı ayarın kaydedildi."):L.T("GoodbyeDPI başlatıldı.");
+   string done=action.StartsWith("pause")?L.T("GoodbyeDPI molada. Süre bitince geri gelecek."):action=="profile"?L.T("Profil uygulandı."):action=="stop"?L.T("GoodbyeDPI durduruldu."):action=="auto-on"||action=="auto-off"?L.T("Başlangıç tercihin kaydedildi."):action.StartsWith("quic")?L.T("Tarayıcı ayarın kaydedildi."):action=="dns"?L.T("DNS sunucusu değişti."):L.T("GoodbyeDPI başlatıldı.");
    done=done.Replace("GoodbyeDPI",Program.MotorName(action=="profile"?profile:activeProfile));
    try {
     Program.RequireOwned();
@@ -520,7 +530,7 @@ namespace GoodbyeTray {
    if(dashboard.RowStyles.Count<8 || startupContent==null) return;
    bool compact=ClientSize.Height<860;
    // The tray help stays visible even when compact: it says what closing the window does.
-   int[] heights=compact?new[]{64,96,0,144,196,96}:new[]{104,112,0,160,218,106};
+   int[] heights=compact?new[]{64,96,0,144,230,96}:new[]{104,112,0,160,252,106};
    dashboard.SuspendLayout(); startupContent.SuspendLayout(); footerPanel.SuspendLayout();
    try {
     for(int i=0;i<heights.Length;i++) if(dashboard.RowStyles[i].Height!=heights[i]) dashboard.RowStyles[i].Height=heights[i];
@@ -542,7 +552,7 @@ namespace GoodbyeTray {
     refreshing=true;
     try {
      bool changed=startup.Checked!=snapshot.Item1 || engineStartup.Checked!=snapshot.Item2 || activeProfile!=snapshot.Item3 || running!=(snapshot.Item3>=0 && snapshot.Item4==ServiceControllerStatus.Running) || transition!=(snapshot.Item3>=0 && snapshot.Item4!=ServiceControllerStatus.Running && snapshot.Item4!=ServiceControllerStatus.Stopped);
-     startup.Checked=snapshot.Item1; engineStartup.Checked=snapshot.Item2; quicBlock.Checked=QuicBlock.Wanted; SetTrayVisible(snapshot.Item1);
+     startup.Checked=snapshot.Item1; engineStartup.Checked=snapshot.Item2; quicBlock.Checked=QuicBlock.Wanted; dnsServer.SelectedIndex=DnsChoice.Selected; SetTrayVisible(snapshot.Item1);
      if(changed || String.IsNullOrEmpty(status.Text) || snapshot.Item4==ServiceControllerStatus.Running) SetServiceState(snapshot.Item3,snapshot.Item4);
      if(snapshot.Item5) detail.Text=L.T("Farklı bir GoodbyeDPI kurulumu bulundu.");
     } finally { refreshing=false; }
@@ -554,7 +564,7 @@ namespace GoodbyeTray {
    try {
     startup.Checked=WindowsIntegration.TrayStartupEnabled(); SetTrayVisible(startup.Checked);
     using(var key=Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\GoodbyeDPI")) engineStartup.Checked=key!=null && Convert.ToInt32(key.GetValue("Start",3))==2;
-    quicBlock.Checked=QuicBlock.Wanted;
+    quicBlock.Checked=QuicBlock.Wanted; dnsServer.SelectedIndex=DnsChoice.Selected;
     int active=Program.Profile(); var state=ServiceControllerStatus.Stopped;
     if(active>=0) using(var svc=new ServiceController(Program.ServiceName)) state=svc.Status;
     SetServiceState(active,state);

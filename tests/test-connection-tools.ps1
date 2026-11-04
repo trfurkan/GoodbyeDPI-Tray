@@ -34,10 +34,16 @@ namespace GoodbyeTray {
  static class L { internal static string T(string s) { return s; } }
  static class AppInfo { internal static void Log(string s) {} }
  static class QuicBlock { internal static bool Wanted=true; internal static int Applied, Disabled; internal static void Apply() { Applied++; } internal static void Disable() { Disabled++; } }
+ static class DnsChoice {
+  internal static readonly string[] Names={"Yandex","AdGuard","AdGuard filtresiz"};
+  internal static int Selected;
+  internal static bool Uses(int p) { return p==0; }
+  internal static string EngineArgs(int p) { return Program.Args[p]+(Uses(p)?"#dns"+Selected:""); }
+ }
  static class EngineRequest {
-  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, Pause5=160, Pause15=161;
-  internal const string SetStart="start",SetProfile="profile",SetQuic="quic";
-  internal static void Apply(string name,string value) { if(name==SetProfile) Program.Selected=Int32.Parse(value); }
+  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, DnsBase=154, Pause5=160, Pause15=161;
+  internal const string SetStart="start",SetProfile="profile",SetQuic="quic",SetDns="dns";
+  internal static void Apply(string name,string value) { if(name==SetProfile) Program.Selected=Int32.Parse(value); if(name==SetDns) DnsChoice.Selected=Int32.Parse(value); }
  }
  static class EngineConsole {
   internal static string Last,Error;
@@ -67,9 +73,9 @@ namespace GoodbyeTray {
  sealed class FakeChild { internal bool HasExited; internal int Id=1; internal bool WaitForExit(int ms) { return false; } }
  sealed class NativeConsoleSession : IDisposable {
   internal static int Starts,Stops;
-  internal static string FailArgument,LastEngine;
+  internal static string FailArgument,LastEngine,LastArgs;
   internal FakeChild Child=new FakeChild();
-  internal void Start(string exe,string args) { Starts++; LastEngine=exe; if(args==FailArgument) throw new IOException("simulated engine failure"); }
+  internal void Start(string exe,string args) { Starts++; LastEngine=exe; LastArgs=args; if(args==FailArgument) throw new IOException("simulated engine failure"); }
   internal void Stop() { Child.HasExited=true; }
   public void Dispose() { Stops++; Child.HasExited=true; }
   internal string Read() { return "engine output"; }
@@ -123,6 +129,14 @@ namespace GoodbyeTray {
     NativeConsoleSession.FailArgument=null;
     call("OnCustomCommand",new object[]{128});
     Check(Program.Selected==0 && NativeConsoleSession.LastEngine=="fake","switch back to GoodbyeDPI");
+    int before=NativeConsoleSession.Starts;
+    call("OnCustomCommand",new object[]{155});
+    Check(DnsChoice.Selected==1 && NativeConsoleSession.Starts==before+1 && NativeConsoleSession.LastArgs=="a#dns1" && EngineConsole.Last.StartsWith("running|"),"DNS change restarts a DNS profile with the new server");
+    call("OnCustomCommand",new object[]{129}); before=NativeConsoleSession.Starts;
+    call("OnCustomCommand",new object[]{156});
+    Check(DnsChoice.Selected==2 && NativeConsoleSession.Starts==before,"DNS change leaves a profile without DNS running");
+    call("OnCustomCommand",new object[]{128});
+    Check(NativeConsoleSession.LastArgs=="a#dns2","next start uses the saved DNS server");
     call("OnCustomCommand",new object[]{160});
     var until=(DateTime?)type.GetField("pauseUntil",flags).GetValue(engine);
     Check(until.HasValue && (until.Value-DateTime.UtcNow).TotalMinutes>4.9,"five minute deadline");
@@ -154,4 +168,11 @@ foreach($pair in @(@('StartPending','Running'),@('StopPending','Stopped'),@('Run
  $actual=$stable.Invoke($null,[object[]]@([ServiceProcess.ServiceControllerStatus]$pair[0]))
  if($actual.ToString() -ne $pair[1]) { throw "Wrong transition target: $($pair[0]) -> $actual" }
 }
+$dns=$assembly.GetType('GoodbyeTray.DnsChoice'); $static=[Reflection.BindingFlags]'NonPublic,Static'
+$uses=$dns.GetMethod('Uses',$static); $engineArgs=$dns.GetMethod('EngineArgs',$static)
+$real=$assembly.GetType('GoodbyeTray.Program').GetField('Args',$static).GetValue($null)
+foreach($p in 0..6) { $expected=$real[$p].EndsWith(' --dns-addr 77.88.8.8 --dns-port 1253 --dnsv6-addr 2a02:6b8::feed:0ff --dnsv6-port 1253'); if($uses.Invoke($null,@($p)) -ne $expected) { throw "DNS profile detection wrong: $p" } }
+$argsField=$dns.GetField('Arguments',$static).GetValue($null)
+if($argsField.Count -ne 3 -or $argsField[1] -notmatch '94\.140\.14\.14 --dns-port 5353' -or $argsField[2] -notmatch '94\.140\.14\.140 --dns-port 5353') { throw 'AdGuard DNS arguments wrong' }
+if($engineArgs.Invoke($null,@(1)) -ne $real[1]) { throw 'Profile without DNS must keep its arguments' }
 Write-Output 'PASS: Profile ranking, ties, offline results, cancellation/failure rollback; 5/15 minute pause, deadline resume and manual stop cancellation. Fake engine only.'

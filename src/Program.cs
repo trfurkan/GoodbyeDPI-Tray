@@ -135,6 +135,12 @@ namespace GoodbyeTray {
    } else if(action=="auto-on") Sc("config GoodbyeDPI start= auto");
    else if(action=="auto-off") Sc("config GoodbyeDPI start= demand");
    else if(action=="quic-on" || action=="quic-off") { QuicBlock.Wanted=action=="quic-on"; using(var svc=new ServiceController(ServiceName)) if(svc.Status==ServiceControllerStatus.Running && EngineConsole.PauseUntil()==null) QuicBlock.Apply(); }
+   else if(action=="dns") {
+    if(profile<0 || profile>=DnsChoice.Names.Length) throw new ArgumentOutOfRangeException("profile");
+    DnsChoice.Selected=profile;
+    bool restart; using(var svc=new ServiceController(ServiceName)) restart=svc.Status==ServiceControllerStatus.Running && EngineConsole.PauseUntil()==null && DnsChoice.Uses(Profile());
+    if(restart) { Stop(); Start(); }
+   }
    else if(action=="remove") { Stop(); Sc("delete GoodbyeDPI"); }
    else throw new ArgumentException(L.T("Bilinmeyen işlem."));
   }
