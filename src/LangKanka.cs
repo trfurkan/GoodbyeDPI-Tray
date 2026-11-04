@@ -87,7 +87,6 @@ namespace GoodbyeTray {
    {"Seçtiğin profil henüz uygulanmadı.","Seçtiğin profil sırada bekliyor, uygula demen yeter."},
    {"Bu profil şu an kullanılıyor.","Bu profil şu an sahnede."},
    {"Kurulumdan sonra profil seçebilirsin.","Kurulum bitince profilini seçersin."},
-   {"Otomatik başlangıç","Otomatik başlangıç"},
    {"Windows açıldığında GoodbyeDPI'ı başlat","Bilgisayar açılınca GoodbyeDPI da uyansın"},
    {"Bilgisayar açılınca GoodbyeDPI ve tepsi simgesi de başlar.","Bilgisayar açılınca GoodbyeDPI ve simgesi de gözünü açar."},
    {"Sistem tepsisinde göster","Saatin yanında dursun"},

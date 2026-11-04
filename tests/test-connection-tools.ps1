@@ -33,9 +33,10 @@ namespace GoodbyeTray {
  }
  static class L { internal static string T(string s) { return s; } }
  static class AppInfo { internal static void Log(string s) {} }
+ static class QuicBlock { internal static bool Wanted=true; internal static int Applied, Disabled; internal static void Apply() { Applied++; } internal static void Disable() { Disabled++; } }
  static class EngineRequest {
-  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, Pause5=160, Pause15=161;
-  internal const string SetStart="start",SetProfile="profile";
+  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, Pause5=160, Pause15=161;
+  internal const string SetStart="start",SetProfile="profile",SetQuic="quic";
   internal static void Apply(string name,string value) { if(name==SetProfile) Program.Selected=Int32.Parse(value); }
  }
  static class EngineConsole {

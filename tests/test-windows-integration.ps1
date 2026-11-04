@@ -19,7 +19,7 @@ foreach($task in $list.JumpItems) {
  if(-not $commands.GetMethod('IsValid',$static).Invoke($null,[object[]]@([string]$command))) { throw "İşlemsiz Jump List girdisi: $command" }
 }
 $version=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $root 'dist\GoodbyeDPI-Installer.exe'))
-if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.8.1.0') { throw 'EXE metadatası yanlış' }
+if($version.CompanyName -ne 'Furkan' -or $version.FileVersion -ne '1.8.2.0') { throw 'EXE metadatası yanlış' }
 $type=$assembly.GetType('GoodbyeTray.MainForm')
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {
@@ -174,3 +174,15 @@ foreach($code in 'en','ru') {
 $language.SetValue($null,'tr')
 foreach($code in 'tr','en','ru') { $flag=$lang.GetMethod('Flag',$static).Invoke($null,[object[]]@($code)); if($flag.Width -ne 20) { throw 'Bayrak cizilemedi' }; $flag.Dispose() }
 Write-Output 'PASS: Varsayilan Turkce, eski dil tercihi, emojisiz metinler, Ingilizce/Rusca ceviriler ve uc bayrak.'
+# QUIC rule: read-only check here (adding a firewall rule needs admin); the engine adds it on start and removes it on stop, pause and uninstall.
+$quic=$assembly.GetType('GoodbyeTray.QuicBlock')
+if($quic.GetField('RuleName',$static).GetValue($null) -ne 'GoodbyeDPI Tray - QUIC') { throw 'QUIC kural adi degisti' }
+[void]$quic.GetProperty('Active',$static).GetValue($null)
+$service=[IO.File]::ReadAllText((Join-Path $root 'src\EngineService.cs'),[Text.Encoding]::UTF8); $setupSource=[IO.File]::ReadAllText((Join-Path $root 'src\Setup.cs'),[Text.Encoding]::UTF8)
+if(([regex]::Matches($service,'QuicBlock\.Disable\(\)')).Count -lt 2 -or ([regex]::Matches($service,'QuicBlock\.Apply\(\)')).Count -lt 2 -or -not $setupSource.Contains('QuicBlock.Disable(); QuicBlock.RemoveSettings();')) { throw 'QUIC kurali motorla birlikte acilip kapanmiyor' }
+# The setting is on unless someone turned it off, and the switch reaches the service as a request.
+if(-not (Test-Path 'HKLM:\SOFTWARE\GoodbyeDPITray') -and -not $quic.GetProperty('Wanted',$static).GetValue($null)) { throw 'QUIC engeli varsayilan olarak kapali' }
+foreach($text in '"quic-on"','EngineRequest.QuicOn','SetQuic') { if(-not $service.Contains($text)) { throw "QUIC ayar istegi eksik: $text" } }
+$main=$assembly.GetType('GoodbyeTray.MainForm'); $window=[Activator]::CreateInstance($main,[object[]]@($false))
+try { $box=$main.GetField('quicBlock',$instance).GetValue($window); if($box.Text -ne "Tarayıcılarda QUIC'i engelle" -or $box.Parent -eq $null) { throw 'QUIC ayari arayuzde yok' } } finally { $window.Dispose() }
+Write-Output 'PASS: QUIC kurali motor calisirken ekleniyor; durunca, molada ve kaldirinca siliniyor; Ayarlar bolumunde acilip kapatilabiliyor.'

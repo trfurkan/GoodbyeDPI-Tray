@@ -108,16 +108,44 @@ namespace GoodbyeTray {
    using(var stream=new FileStream(PathName,FileMode.Create,FileAccess.Write,FileShare.Read)) using(var writer=new StreamWriter(stream,new UTF8Encoding(false))) writer.Write(text);
   }
  }
+ // Browsers reach Cloudflare sites such as Discord over QUIC (UDP 443), which GoodbyeDPI does not handle, so the
+ // blocked handshake leaves the page loading forever. While the engine runs, a Windows Firewall rule blocks outbound
+ // UDP 443; browsers then fall back to TCP, which GoodbyeDPI does handle. Failures are only logged: the engine runs regardless.
+ static class QuicBlock {
+  internal const string RuleName="GoodbyeDPI Tray - QUIC";
+  const string SettingsKey=@"SOFTWARE\GoodbyeDPITray";
+  // The user's choice (on unless turned off). Kept under HKLM so the service reads it; only the service and admins write it.
+  internal static bool Wanted {
+   get { try { using(var key=Microsoft.Win32.Registry.LocalMachine.OpenSubKey(SettingsKey)) return key==null || Convert.ToInt32(key.GetValue("BlockQuic",1))!=0; } catch(Exception) { return true; } }
+   set { using(var key=Microsoft.Win32.Registry.LocalMachine.CreateSubKey(SettingsKey)) key.SetValue("BlockQuic",value?1:0,Microsoft.Win32.RegistryValueKind.DWord); }
+  }
+  internal static void RemoveSettings() { Microsoft.Win32.Registry.LocalMachine.DeleteSubKeyTree(SettingsKey,false); }
+  // Applies the choice to a running engine.
+  internal static void Apply() { if(Wanted) Enable(); else Disable(); }
+  internal static void Enable() { if(Netsh("show rule name=\""+RuleName+"\"")!=0) Netsh("add rule name=\""+RuleName+"\" dir=out action=block protocol=UDP remoteport=443 description=\"GoodbyeDPI Tray: tarayıcılar Discord gibi sitelere TCP ile bağlansın diye, GoodbyeDPI çalışırken QUIC engellenir.\""); }
+  internal static void Disable() { if(Netsh("show rule name=\""+RuleName+"\"")==0) Netsh("delete rule name=\""+RuleName+"\""); }
+  internal static bool Active { get { return Netsh("show rule name=\""+RuleName+"\"")==0; } }
+  static int Netsh(string arguments) {
+   try {
+    using(var process=Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory,"netsh.exe"),"advfirewall firewall "+arguments) { UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true })) {
+     process.StandardOutput.ReadToEnd(); process.StandardError.ReadToEnd();
+     if(!process.WaitForExit(10000)) { process.Kill(); return -1; }
+     return process.ExitCode;
+    }
+   } catch(Exception ex) { AppInfo.Log("Güvenlik duvarı kuralı: "+ex.Message); return -1; }
+  }
+ }
  // Requests a signed-in user may send without admin rights (the installer grants start, stop and user-defined control).
  // The service applies them itself, so users never get the right to change the service configuration.
  static class EngineRequest {
-  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, Pause5=160, Pause15=161;
-  internal const string SetProfile="--set-profile", SetStart="--set-start";
+  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, Pause5=160, Pause15=161;
+  internal const string SetProfile="--set-profile", SetStart="--set-start", SetQuic="--set-quic";
   // Applies a configuration request as the service. Only these fixed changes are possible.
   internal static void Apply(string name,string value) {
    int profile;
    if(name==SetProfile && Int32.TryParse(value,out profile) && profile>=0 && profile<Program.Args.Length) Program.Configure(profile);
    else if(name==SetStart && (value=="auto" || value=="demand")) Program.Sc("config GoodbyeDPI start= "+value);
+   else if(name==SetQuic && (value=="on" || value=="off")) QuicBlock.Wanted=value=="on";
    else throw new ArgumentException(L.T("Bilinmeyen hizmet isteği."));
   }
  }
@@ -148,6 +176,9 @@ namespace GoodbyeTray {
      bool wasRunning=service.Status==ServiceControllerStatus.Running;
      if(Program.Profile()==profile && (!wasRunning || EngineConsole.IsRunning(profile))) return;
      Request(service,EngineRequest.ProfileBase+profile,new[]{EngineRequest.SetProfile,profile.ToString()},delegate { return Program.Profile()==profile && (!wasRunning || EngineConsole.IsRunning(profile)); });
+    } else if(action=="quic-on" || action=="quic-off") {
+     bool on=action=="quic-on";
+     Request(service,on?EngineRequest.QuicOn:EngineRequest.QuicOff,new[]{EngineRequest.SetQuic,on?"on":"off"},delegate { return QuicBlock.Wanted==on; });
     } else if(action=="auto-on" || action=="auto-off") {
      bool auto=action=="auto-on";
      Request(service,auto?EngineRequest.AutoOn:EngineRequest.AutoOff,new[]{EngineRequest.SetStart,auto?"auto":"demand"},delegate { return StartsWithWindows()==auto; });
@@ -212,6 +243,7 @@ namespace GoodbyeTray {
     if(session.Child.WaitForExit(profile>=Program.ZapretStart?2000:800)) throw new InvalidOperationException(L.T("GoodbyeDPI başlatılamadı: ").Replace("GoodbyeDPI",Program.MotorName(profile))+session.Read());
     NativeConsoleSession.FlushDns();
     Capture(); capture=new System.Threading.Timer(delegate { Tick(); },null,500,500);
+    QuicBlock.Apply();
    } catch { if(session!=null) session.Dispose(); session=null; throw; }
   }
   protected override void OnCustomCommand(int command) {
@@ -222,11 +254,17 @@ namespace GoodbyeTray {
       if(session!=null) { session.Dispose(); session=null; }
       pauseUntil=DateTime.UtcNow.AddMinutes(command==EngineRequest.Pause5?5:15);
       EngineConsole.Write(EngineConsole.Encode(profile,"paused",0,pauseUntil.Value.Ticks.ToString()));
-      NativeConsoleSession.FlushDns();
+      QuicBlock.Disable(); NativeConsoleSession.FlushDns();
      }
      return;
     }
     if(command==EngineRequest.AutoOn || command==EngineRequest.AutoOff) { EngineRequest.Apply(EngineRequest.SetStart,command==EngineRequest.AutoOn?"auto":"demand"); return; }
+    if(command==EngineRequest.QuicOn || command==EngineRequest.QuicOff) {
+     EngineRequest.Apply(EngineRequest.SetQuic,command==EngineRequest.QuicOn?"on":"off");
+     // A paused engine has no rule; it is applied again when the break ends.
+     lock(sync) if(!stopping && session!=null) QuicBlock.Apply();
+     return;
+    }
     int next=command-EngineRequest.ProfileBase; if(next<0 || next>=Program.Args.Length) return;
     lock(sync) {
      if(stopping) return;
@@ -277,7 +315,7 @@ namespace GoodbyeTray {
    lock(sync) {
     if(stopping) return; stopping=true; if(capture!=null) capture.Dispose();
     try { if(session!=null) { session.Stop(); Capture(); } pauseUntil=null; EngineConsole.Write(EngineConsole.Encode(profile,"stopped",0,output)); }
-    finally { if(session!=null) session.Dispose(); }
+    finally { if(session!=null) session.Dispose(); QuicBlock.Disable(); }
    }
   }
   protected override void OnShutdown() { OnStop(); }

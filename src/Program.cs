@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -134,6 +134,7 @@ namespace GoodbyeTray {
     catch { Configure(previous); if(wasRunning) Start(); throw; }
    } else if(action=="auto-on") Sc("config GoodbyeDPI start= auto");
    else if(action=="auto-off") Sc("config GoodbyeDPI start= demand");
+   else if(action=="quic-on" || action=="quic-off") { QuicBlock.Wanted=action=="quic-on"; using(var svc=new ServiceController(ServiceName)) if(svc.Status==ServiceControllerStatus.Running && EngineConsole.PauseUntil()==null) QuicBlock.Apply(); }
    else if(action=="remove") { Stop(); Sc("delete GoodbyeDPI"); }
    else throw new ArgumentException(L.T("Bilinmeyen işlem."));
   }

@@ -19,7 +19,10 @@ try {
  if(-not (Test-Path $keyPath) -or (Get-ItemProperty $keyPath).DisplayName -ne 'GoodbyeDPI Tray' -or -not (Test-Path $icon)) { throw 'Bildirim kaydı ya da simgesi yok' }
  [void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime]
  Start-Sleep -Milliseconds 800
- if(@([Windows.UI.Notifications.ToastNotificationManager]::History.GetHistory($appId)).Count -lt 1) { throw 'Bildirim bildirim merkezinde değil' }
+ # Someone may have turned this app's notifications off in Windows settings; then Windows drops them, as it should.
+ $allowed=[string][Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId).Setting -eq 'Enabled'
+ if($allowed -and @([Windows.UI.Notifications.ToastNotificationManager]::History.GetHistory($appId)).Count -lt 1) { throw 'Bildirim bildirim merkezinde değil' }
+ if(-not $allowed) { Write-Output 'NOT: Bu bilgisayarda GoodbyeDPI Tray bildirimleri Windows ayarlarından kapalı; bildirim merkezi denetimi atlandı.' }
  # Uninstall cleanup.
  $toast.GetMethod('Remove',$static).Invoke($null,$null) | Out-Null; Start-Sleep -Milliseconds 800
  if((Test-Path $keyPath) -or (Test-Path $icon)) { throw 'Kaldırınca bildirim kaydı silinmedi' }

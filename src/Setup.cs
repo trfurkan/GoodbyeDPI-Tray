@@ -191,7 +191,7 @@ namespace GoodbyeTray {
   static void Uninstall() {
    Report(5,L.T("Kaldırma hazırlanıyor…"));
    ValidateDirectory();
-   if(Program.ServicePath()!=null) { Program.RequireOwned(); Program.Stop(); Program.Sc("delete GoodbyeDPI"); }
+   if(Program.ServicePath()!=null) { Program.RequireOwned(); Program.Stop(); Program.Sc("delete GoodbyeDPI"); } QuicBlock.Disable(); QuicBlock.RemoveSettings();
    Report(20,L.T("Uygulama kapatılıyor…")); CloseOwnedUI();
    Report(30,L.T("Sürücü kaldırılıyor…")); RemoveOwnedDriver();
    int removed=0;
