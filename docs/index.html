@@ -31,8 +31,16 @@
  "screenshot": "https://trfurkan.github.io/GoodbyeDPI-Tray/images/main-dark.png",
  "license": "https://www.apache.org/licenses/LICENSE-2.0",
  "isAccessibleForFree": true,
- "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TRY" },
- "author": { "@type": "Person", "name": "Furkan", "url": "https://github.com/trfurkan" }
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "TRY"
+ },
+ "author": {
+  "@type": "Person",
+  "name": "Furkan",
+  "url": "https://github.com/trfurkan"
+ }
 }
 </script>
 <script type="application/ld+json">
@@ -40,14 +48,70 @@
  "@context": "https://schema.org",
  "@type": "FAQPage",
  "mainEntity": [
-  { "@type": "Question", "name": "GoodbyeDPI Tray bir VPN mi?", "acceptedAnswer": { "@type": "Answer", "text": "Hayır. Trafiğin başka bir sunucuya gitmez ve IP adresin değişmez. Uygulama yalnızca internet sağlayıcının DPI ve DNS engellerini atlatır, bu yüzden VPN'lerdeki gibi hız kaybı ya da ping artışı olmaz." } },
-  { "@type": "Question", "name": "Discord'a girmek için işe yarar mı?", "acceptedAnswer": { "@type": "Answer", "text": "Discord'un engeli DPI ve DNS üzerinden uygulandığı için çoğu internet sağlayıcısında işe yarar. Hangi profilin çalışacağı sağlayıcıya göre değişir; uygulamadaki Erişim testi bunu görmeni kolaylaştırır." } },
-  { "@type": "Question", "name": "Hangi profili seçmeliyim?", "acceptedAnswer": { "@type": "Answer", "text": "Önce Türkiye · Standart profilini dene. Bazı siteler açılmazsa ya da yavaşsa alternatiflere geç. Alternatif 2 ve 4 genelde yavaşlık sorununu çözer." } },
-  { "@type": "Question", "name": "Windows neden uyarı veriyor?", "acceptedAnswer": { "@type": "Answer", "text": "Kurulum dosyası dijital olarak imzalı olmadığı için Windows SmartScreen uyarı verebilir. Ek bilgi, ardından Yine de çalıştır ile devam edebilirsin. Uygulamanın tüm kaynak kodu GitHub'da açık." } },
-  { "@type": "Question", "name": "Chrome, Edge ya da Firefox indirirken neden uyarıyor?", "acceptedAnswer": { "@type": "Answer", "text": "Tarayıcılar imzasız ve az indirilmiş dosyalar için uyarı gösterir. Bu, dosyada bir sorun bulduklarını değil, dosyayı henüz tanımadıklarını gösterir. Chrome ve Edge'de indirilenler listesinden Sakla'yı, Firefox'ta İzin ver ve indir'i seçebilirsin. Kurucuyu yalnızca bu sayfadan ya da GitHub'daki Releases sayfasından indir." } },
-  { "@type": "Question", "name": "Uygulama güvenilir mi?", "acceptedAnswer": { "@type": "Answer", "text": "Tüm kaynak kodu GitHub'da açık. Kişisel bilgi toplamaz, internete yalnızca günde bir kez GitHub'a son sürümü sormak için bağlanır. Bazı antivirüsler GoodbyeDPI'ın kullandığı WinDivert ağ sürücüsü yüzünden uyarı verebilir; bu sık görülen bir yanlış alarmdır. Uygulama deneyseldir, kullanma kararı sana aittir." } },
-  { "@type": "Question", "name": "Daha önce GoodbyeDPI-Turkey kurduysam ne olur?", "acceptedAnswer": { "@type": "Answer", "text": "Kurucu eski GoodbyeDPI hizmetini bulur ve devralmak için onay ister. Onaylarsan seçtiğin profil korunur, eski klasörü sonra silebilirsin." } },
-  { "@type": "Question", "name": "Nasıl kaldırırım?", "acceptedAnswer": { "@type": "Answer", "text": "Uygulamadaki Uygulamayı kaldır düğmesine bas ya da Windows Ayarlar > Uygulamalar'dan kaldır. Uygulama ayarları ve günlükleriyle birlikte tamamen silinir." } }
+  {
+   "@type": "Question",
+   "name": "GoodbyeDPI Tray bir VPN mi?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Hayır. Trafiğin başka bir sunucudan geçmez ve IP adresin değişmez. Bağlantı sonucu ve hız, internet sağlayıcına, siteye ve seçtiğin profile bağlıdır."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Discord'a girmek için işe yarar mı?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Discord'un engeli DPI ve DNS üzerinden uygulandığı için çoğu internet sağlayıcısında işe yarar. Hangi profilin çalışacağı sağlayıcıya göre değişir; uygulamadaki Erişim testi bunu görmeni kolaylaştırır."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Hangi profili seçmeliyim?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Önce önerilen Arx profilini dene. Sonuç alamazsan Uygun profil bul ile diğer profilleri karşılaştır. DNS seçimi yalnızca DNS kullanan profillerde etkilidir."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Windows neden uyarı veriyor?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Kurulum dosyası dijital olarak imzalı olmadığı için Windows SmartScreen uyarı verebilir. Ek bilgi, ardından Yine de çalıştır ile devam edebilirsin. Uygulamanın tüm kaynak kodu GitHub'da açık."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Chrome, Edge ya da Firefox indirirken neden uyarıyor?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Tarayıcılar imzasız ve az indirilmiş dosyalar için uyarı gösterir. Bu, dosyada bir sorun bulduklarını değil, dosyayı henüz tanımadıklarını gösterir. Chrome ve Edge'de indirilenler listesinden Sakla'yı, Firefox'ta İzin ver ve indir'i seçebilirsin. Kurucuyu yalnızca bu sayfadan ya da GitHub'daki Releases sayfasından indir."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Uygulama güvenilir mi?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Kaynak kodu GitHub’da açık. Güncelleme denetimi GitHub’a, erişim testleri seçilen sitelere bağlanır. Dert yan bir hata kaydı taslağı açar; göndermeden önce içeriğini inceleyebilirsin. Uygulama deneyseldir ve her ağda çalışmayabilir."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Daha önce GoodbyeDPI-Turkey kurduysam ne olur?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Kurucu eski GoodbyeDPI hizmetini bulur ve devralmak için onay ister. Onaylarsan seçtiğin profil korunur, eski klasörü sonra silebilirsin."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Nasıl kaldırırım?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Uygulamadaki Uygulamayı kaldır düğmesine bas ya da Windows Ayarlar > Uygulamalar'dan kaldır. Uygulama ayarları ve günlükleriyle birlikte tamamen silinir."
+   }
+  }
  ]
 }
 </script>
@@ -93,7 +157,7 @@
     <p class="meta">Windows 10 / 11 · Ücretsiz ve açık kaynak · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Sürüm notları</a></p>
    </div>
    <div class="shot">
-    <img src="images/main-dark.png" data-dark="images/main-dark.png" data-light="images/main-light.png" width="900" height="840" alt="GoodbyeDPI Tray ana penceresi: GoodbyeDPI çalışıyor, Türkiye · Standart profili etkin">
+    <img src="images/main-dark.png" data-dark="images/main-dark.png" data-light="images/main-light.png" width="916" height="979" alt="GoodbyeDPI Tray 1.9.0: bağlantı profili, DNS seçimi, ayarlar ve hızlı erişim testi">
    </div>
   </div>
 
@@ -101,32 +165,34 @@
    <h2 id="ne-ise-yarar">Ne işe yarar?</h2>
    <p class="section-lead">Türkiye'de internet sağlayıcıları bazı siteleri DPI ve DNS üzerinden engelliyor. GoodbyeDPI bu engelleri bilgisayarının içinde atlatır; GoodbyeDPI Tray de onu kolayca yönetmeni sağlar.</p>
    <div class="cards">
-    <div class="card"><h3>VPN değil</h3><p>Trafiğin başka bir sunucuya gitmez, IP adresin değişmez. Hız kaybı ya da ping artışı olmaz.</p></div>
-    <div class="card"><h3>Sadece engeli aşar</h3><p>Diğer bağlantıların olduğu gibi çalışır. Oyunlar ve uygulamalar da engelsiz bağlantıyı kullanır.</p></div>
-    <div class="card"><h3>Sınırı var</h3><p>Doğrudan IP adresiyle engellenen siteleri açamaz. Bunu Erişim testinde görebilirsin.</p></div>
-   </div>
+<div class="card"><h3>VPN değil</h3><p>Hayır. Trafiğin başka bir sunucudan geçmez ve IP adresin değişmez. Bağlantı sonucu ve hız, internet sağlayıcına, siteye ve seçtiğin profile bağlıdır.</p></div>
+<div class="card"><h3>Kapsamı sen seç</h3><p>Yalnızca listedeki sitelere uygulama ayarını açabilir, site listesini düzenleyebilirsin.</p></div>
+<div class="card"><h3>Sınırları var</h3><p>Doğrudan IP adresiyle uygulanan engelleri aşamaz. Erişim testi bağlantı sonucunu gösterir; engellemenin nedenini kesin olarak belirlemez.</p></div>
+</div>
   </section>
 
   <section id="ozellikler" aria-labelledby="ozellikler-baslik">
    <h2 id="ozellikler-baslik">Özellikler</h2>
    <p class="section-lead">GoodbyeDPI-Turkey'deki ayarları kullanır, üstüne her gün işine yarayacak bir arayüz ekler.</p>
    <div class="cards">
-    <div class="card"><h3>Tek tıkla başlat</h3><p>Başlat, durdur, profil değiştir; yönetici izni istemez. Saatin yanındaki simgeden de yapabilirsin.</p></div>
-    <div class="card"><h3>Windows'la açılır</h3><p>Bilgisayar açılınca GoodbyeDPI da çalışır. İstersen kapatabilirsin.</p></div>
-    <div class="card"><h3>Yedi Türkiye profili</h3><p>Biri çalışmazsa diğerine tek tıkla geç. Seçtiğin profil güncellemelerde korunur.</p></div>
-    <div class="card"><h3>Erişim testi</h3><p>Engelli ve normal siteleri gerçek bağlantıyla dener, hangisinin açıldığını gösterir.</p></div>
-    <div class="card"><h3>Yedi tema</h3><p>Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android ve Şampanya. İstersen Windows'a uyar.</p></div>
-    <div class="card"><h3>Üç dil</h3><p>Türkçe, İngilizce ve Rusça. Dili tema düğmesinin yanındaki bayraktan değiştirirsin.</p></div>
+    <div class="card"><h3>Tek tıkla yönet</h3><p>Başlat, kapat, profil değiştir veya kısa bir mola ver. Saatin yanındaki simgeden de yönetebilirsin.</p></div>
+    <div class="card"><h3>DNS seçimi</h3><p>AdGuard filtresiz varsayılan. Yandex, AdGuard reklam engelli, Quad9, OpenDNS ve CleanBrowsing seçenekleri de var. DNS kullanmayan profillerde seçim pasifleşir.</p></div>
+    <div class="card"><h3>Düzenlenebilir site listesi</h3><p>Yalnızca listedeki sitelere uygula seçeneğiyle kapsamı belirle. Siteler ekranından adres ekleyip çıkar.</p></div>
+    <div class="card"><h3>Hızlı ve ayrıntılı test</h3><p>Discord, Roblox ve Wattpad için hızlı kontrol; aynı kartın içinde açılan 10 sitelik ayrıntılı test.</p></div>
+    <div class="card"><h3>Uygun profil bul</h3><p>Yedi profili dene, sonuçları karşılaştır. Arx önerilen başlangıç profili; bağlantına uygun olanı seç.</p></div>
+    <div class="card"><h3>Konsol ve sorun bildirimi</h3><p>Canlı motor çıktısını ana pencere içindeki konsoldan izle. Dert yan ile GitHub hata kaydı taslağı oluştur.</p></div>
+    <div class="card"><h3>Yedi tema, üç dil</h3><p>Aydınlık, Karanlık ve beş renkli tema; Türkçe, İngilizce ve Rusça. İstersen tema Windows’a uyar.</p></div>
+    <div class="card"><h3>Windows ile başlasın</h3><p>Otomatik başlangıcı ve saatin yanındaki simgeyi ayarlardan yönet.</p></div>
    </div>
   </section>
 
   <section aria-labelledby="temalar">
    <h2 id="temalar">Temalar ve diller</h2>
    <p class="section-lead">Aydınlık ve Karanlık'ın yanında beş renkli tema var. Dili de tema düğmesinin yanındaki bayraktan Türkçe, İngilizce ya da Rusça yapabilirsin.</p>
-   <img class="gallery" src="images/themes.png" width="932" height="576" alt="GoodbyeDPI Tray altı farklı temada: Okyanus, Sakura, Güneş Batımı, Android, Şampanya ve Aydınlık" loading="lazy">
+   <img class="gallery" src="images/themes.png" width="960" height="660" alt="GoodbyeDPI Tray altı farklı temada: Okyanus, Sakura, Güneş Batımı, Android, Şampanya ve Aydınlık" loading="lazy">
    <div class="menus">
-    <img src="images/menu-theme.png" width="316" height="422" alt="Tema menüsü: Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android, Şampanya ve Windows'a uy" loading="lazy">
-    <img src="images/menu-language.png" width="216" height="184" alt="Dil menüsü: Türkçe, English, Русский, yuvarlak bayraklarla" loading="lazy">
+    <img src="images/menu-theme.png" width="300" height="362" alt="Tema menüsü: Aydınlık, Karanlık, Okyanus, Sakura, Güneş Batımı, Android, Şampanya ve Windows'a uy" loading="lazy">
+    <img src="images/menu-language.png" width="200" height="124" alt="Dil menüsü: Türkçe, English, Русский, yuvarlak bayraklarla" loading="lazy">
    </div>
   </section>
 
@@ -134,10 +200,10 @@
    <div class="split">
     <div>
      <h2 id="erisim-testi">İşe yarıyor mu? Hemen gör</h2>
-     <p class="section-lead">Erişim testi Discord, Roblox, Wattpad gibi engelli sitelere ve Google gibi normal sitelere gerçek bir HTTPS bağlantısı açar. Engelliler açılmıyorsa başka bir profil denemeni, hiçbiri açılmıyorsa bağlantını kontrol etmeni söyler.</p>
+     <p class="section-lead">Hızlı test Discord, Roblox ve Wattpad’i kontrol eder. Ayrıntılı test, aynı kartın içinde 10 sitenin HTTPS sonucunu ve süresini gösterir. Başarısız bağlantı tek başına engel kanıtı değildir; DNS, zaman aşımı veya site kaynaklı olabilir. Liste modu açıksa yalnızca listedeki sitelere müdahale edilir.</p>
     </div>
     <div class="shot">
-     <img src="images/access-dark.png" data-dark="images/access-dark.png" data-light="images/access-light.png" width="720" height="548" alt="Erişim testi penceresi: engelli ve normal sitelerin bağlantı sonuçları" loading="lazy">
+     <img src="images/access-dark.png" data-dark="images/access-dark.png" data-light="images/access-light.png" width="916" height="979" alt="Ana pencere içinde açılan 10 sitelik ayrıntılı erişim testi; henüz test çalıştırılmadı" loading="lazy">
     </div>
    </div>
   </section>
@@ -163,9 +229,9 @@
    <div class="release-list" data-releases data-others="Diğer sürümler" data-prerelease="Ön sürüm" data-latest="Son sürüm" data-download="Bu sürümü indir" data-notes="Sürüm notları">
     <article class="release-card">
      <div class="release-meta"><span class="release-badge">Son sürüm</span><span>Windows 10 / 11</span></div>
-     <h3><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.8.0">v1.8.0</a></h3>
-     <ul class="release-highlights"><li>Uygun profil bul: Profilleri deneyip sonuçlarını tek ekranda karşılaştır.</li><li>Güncellemede neler değişti?: Yeni sürümün yeniliklerini uygulama içinden görüntüle.</li><li>Profil arama tamamlandığında önceki profil ve çalışma durumu geri yüklenir.</li><li>Türkçe metinler daha sade ve samimi hâle getirildi.</li><li>Bildirimler ve Windows entegrasyonundaki metinler yenilendi.</li><li>Hızlı profil değişimlerinde yaşanan takılma ve zaman aşımı sorunlarına yönelik iyileştirmeler yapıldı.</li></ul>
-     <div class="actions"><a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.8.0/GoodbyeDPI-Installer-1.8.0.exe">Bu sürümü indir</a><a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.8.0">GitHub</a></div>
+     <h3><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0">v1.9.0</a></h3>
+     <ul class="release-highlights"><li>Yenilenen arayüz, temalar ve kart animasyonları.</li><li>DNS seçimi ve varsayılan AdGuard filtresiz.</li><li>Düzenlenebilir site listesi ve yalnızca listedeki sitelere uygulama.</li><li>Kart içine gömülü ayrıntılı erişim testi ve konsol.</li><li>Dert yan ile GitHub sorun bildirimi.</li></ul>
+     <div class="actions"><a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.9.0/GoodbyeDPI-Installer-1.9.0.exe">Bu sürümü indir</a><a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0">GitHub</a></div>
     </article>
    </div>
    <p class="meta">Güncel sürüm notları GitHub’da yayımlandıkları dilde gösterilir.</p>
@@ -173,12 +239,12 @@
 
   <section id="sss" aria-labelledby="sss-baslik">
    <h2 id="sss-baslik">Sık sorulanlar</h2>
-   <details><summary>GoodbyeDPI Tray bir VPN mi?</summary><p>Hayır. Trafiğin başka bir sunucuya gitmez ve IP adresin değişmez. Uygulama yalnızca internet sağlayıcının DPI ve DNS engellerini atlatır, bu yüzden VPN'lerdeki gibi hız kaybı ya da ping artışı olmaz.</p></details>
+   <details><summary>GoodbyeDPI Tray bir VPN mi?</summary><p>Hayır. Trafiğin başka bir sunucudan geçmez ve IP adresin değişmez. Bağlantı sonucu ve hız, internet sağlayıcına, siteye ve seçtiğin profile bağlıdır.</p></details>
    <details><summary>Discord'a girmek için işe yarar mı?</summary><p>Discord'un engeli DPI ve DNS üzerinden uygulandığı için çoğu internet sağlayıcısında işe yarar. Hangi profilin çalışacağı sağlayıcıya göre değişir; uygulamadaki Erişim testi bunu görmeni kolaylaştırır.</p></details>
-   <details><summary>Hangi profili seçmeliyim?</summary><p>Önce <b>Türkiye · Standart</b>'ı dene. Bazı siteler açılmazsa ya da yavaşsa alternatiflere geç. Alternatif 2 ve 4 genelde yavaşlık sorununu çözer.</p></details>
+   <details><summary>Hangi profili seçmeliyim?</summary><p>Önce önerilen Arx profilini dene. Sonuç alamazsan Uygun profil bul ile diğer profilleri karşılaştır. DNS seçimi yalnızca DNS kullanan profillerde etkilidir.</p></details>
    <details><summary>Windows neden uyarı veriyor?</summary><p>Kurulum dosyası dijital olarak imzalı olmadığı için Windows SmartScreen uyarı verebilir. <b>Ek bilgi → Yine de çalıştır</b> ile devam edebilirsin. Uygulamanın tüm kaynak kodu <a href="https://github.com/trfurkan/GoodbyeDPI-Tray">GitHub'da</a> açık.</p></details>
    <details><summary>Chrome, Edge ya da Firefox indirirken neden uyarıyor?</summary><p>Tarayıcılar imzasız ve az indirilmiş dosyalar için "yaygın olarak indirilmiyor" ya da "zararlı olabilir" gibi uyarılar gösterir. Bu, dosyada bir sorun bulduklarını değil, dosyayı henüz tanımadıklarını gösterir. Chrome ve Edge'de indirilenler listesinde dosyanın yanındaki menüden <b>Sakla</b>'yı, Firefox'ta <b>İzin ver ve indir</b>'i seçebilirsin. Kurucuyu her zaman yalnızca bu sayfadan ya da GitHub'daki Releases sayfasından indir.</p></details>
-   <details><summary>Uygulama güvenilir mi?</summary><p>Uygulamanın tüm kaynak kodu GitHub'da açık; isteyen inceleyebilir ya da kendisi derleyebilir. Hiçbir kişisel bilgi toplamaz, internete yalnızca günde bir kez GitHub'a son sürümü sormak için bağlanır, bunu da Hakkında penceresinden kapatabilirsin. Bazı antivirüs programları, GoodbyeDPI'ın kullandığı ağ sürücüsü WinDivert yüzünden uyarı verebilir; bu sürücü ağ trafiğini değiştirebildiği için bu tür programlarda sık görülen bir yanlış alarmdır. Uygulama deneyseldir, kullanma kararı sana aittir.</p></details>
+   <details><summary>Uygulama güvenilir mi?</summary><p>Kaynak kodu GitHub’da açık. Güncelleme denetimi GitHub’a, erişim testleri seçilen sitelere bağlanır. Dert yan bir hata kaydı taslağı açar; göndermeden önce içeriğini inceleyebilirsin. Uygulama deneyseldir ve her ağda çalışmayabilir.</p></details>
    <details><summary>Daha önce GoodbyeDPI-Turkey kurduysam ne olur?</summary><p>Kurucu eski GoodbyeDPI hizmetini bulur ve devralmak için onay ister. Onaylarsan seçtiğin profil korunur, eski klasörü sonra silebilirsin.</p></details>
    <details><summary>Nasıl kaldırırım?</summary><p>Uygulamadaki <b>Uygulamayı kaldır</b> düğmesine bas ya da Windows Ayarlar &gt; Uygulamalar'dan kaldır. Uygulama ayarları ve günlükleriyle birlikte tamamen silinir.</p></details>
    <p>Daha fazlası için <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/docs/KULLANIM.md">kullanım rehberine</a> bakabilirsin.</p>

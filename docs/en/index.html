@@ -31,8 +31,16 @@
  "screenshot": "https://trfurkan.github.io/GoodbyeDPI-Tray/images/en/main-dark.png",
  "license": "https://www.apache.org/licenses/LICENSE-2.0",
  "isAccessibleForFree": true,
- "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
- "author": { "@type": "Person", "name": "Furkan", "url": "https://github.com/trfurkan" }
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ },
+ "author": {
+  "@type": "Person",
+  "name": "Furkan",
+  "url": "https://github.com/trfurkan"
+ }
 }
 </script>
 <script type="application/ld+json">
@@ -40,14 +48,70 @@
  "@context": "https://schema.org",
  "@type": "FAQPage",
  "mainEntity": [
-  { "@type": "Question", "name": "Is GoodbyeDPI Tray a VPN?", "acceptedAnswer": { "@type": "Answer", "text": "No. Your traffic doesn't go through another server and your IP address stays the same. The app only gets around your provider's DPI and DNS blocks, so there's no speed loss or extra ping like with a VPN." } },
-  { "@type": "Question", "name": "Does it work for Discord?", "acceptedAnswer": { "@type": "Answer", "text": "Discord is blocked through DPI and DNS, so it works with most providers in Turkey. Which profile works depends on your provider; the app's Access test makes that easy to see." } },
-  { "@type": "Question", "name": "Which profile should I pick?", "acceptedAnswer": { "@type": "Answer", "text": "Start with Turkey · Standard. If some sites don't open or are slow, try the alternatives. Alternatives 2 and 4 usually fix slowness." } },
-  { "@type": "Question", "name": "Why does Windows show a warning?", "acceptedAnswer": { "@type": "Answer", "text": "The installer isn't digitally signed, so Windows SmartScreen may warn you. Choose More info, then Run anyway. All of the app's source code is open on GitHub." } },
-  { "@type": "Question", "name": "Why do Chrome, Edge or Firefox warn me when downloading?", "acceptedAnswer": { "@type": "Answer", "text": "Browsers warn about unsigned files that few people have downloaded yet. That means they don't recognise the file yet, not that they found a problem. In Chrome and Edge choose Keep from the downloads list; in Firefox choose Allow download. Only download the installer from this page or the GitHub Releases page." } },
-  { "@type": "Question", "name": "Can I trust the app?", "acceptedAnswer": { "@type": "Answer", "text": "All of its source code is open on GitHub. It collects no personal data and only connects to GitHub once a day to check for a new version. Some antivirus programs may flag WinDivert, the network driver GoodbyeDPI uses; this is a common false alarm. The app is experimental and using it is your call." } },
-  { "@type": "Question", "name": "What if I already installed GoodbyeDPI-Turkey?", "acceptedAnswer": { "@type": "Answer", "text": "The installer finds the old GoodbyeDPI service and asks before taking it over. If you agree, your profile is kept and you can delete the old folder afterwards." } },
-  { "@type": "Question", "name": "How do I uninstall it?", "acceptedAnswer": { "@type": "Answer", "text": "Press Uninstall in the app or remove it from Windows Settings > Apps. The app is removed completely, including its settings and logs." } }
+  {
+   "@type": "Question",
+   "name": "Is GoodbyeDPI Tray a VPN?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. Traffic is not routed through another server and your IP address stays the same. Connection results and speed depend on your provider, the site and the selected profile."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Does it work for Discord?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Discord is blocked through DPI and DNS, so it works with most providers in Turkey. Which profile works depends on your provider; the app's Access test makes that easy to see."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Which profile should I pick?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Start with the recommended Arx profile. If it does not work, use Find a suitable profile to compare alternatives. DNS selection only affects profiles that use DNS."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Why does Windows show a warning?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "The installer isn't digitally signed, so Windows SmartScreen may warn you. Choose More info, then Run anyway. All of the app's source code is open on GitHub."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Why do Chrome, Edge or Firefox warn me when downloading?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Browsers warn about unsigned files that few people have downloaded yet. That means they don't recognise the file yet, not that they found a problem. In Chrome and Edge choose Keep from the downloads list; in Firefox choose Allow download. Only download the installer from this page or the GitHub Releases page."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can I trust the app?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "The source code is open on GitHub. Update checks connect to GitHub; access tests connect to the selected sites. Report a problem opens an issue draft that you can review before submitting. The app is experimental and may not work on every network."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What if I already installed GoodbyeDPI-Turkey?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "The installer finds the old GoodbyeDPI service and asks before taking it over. If you agree, your profile is kept and you can delete the old folder afterwards."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How do I uninstall it?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Press Uninstall in the app or remove it from Windows Settings > Apps. The app is removed completely, including its settings and logs."
+   }
+  }
  ]
 }
 </script>
@@ -95,7 +159,7 @@
     <p class="meta">Windows 10 / 11 · Free and open source · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Release notes</a></p>
    </div>
    <div class="shot">
-    <img src="../images/en/main-dark.png" data-dark="../images/en/main-dark.png" data-light="../images/en/main-light.png" width="900" height="840" alt="GoodbyeDPI Tray main window: GoodbyeDPI is running with the Turkey · Standard profile">
+    <img src="../images/en/main-dark.png" data-dark="../images/en/main-dark.png" data-light="../images/en/main-light.png" width="916" height="979" alt="GoodbyeDPI Tray 1.9.0: connection profile, DNS selector, settings and quick access test">
    </div>
   </div>
 
@@ -103,32 +167,34 @@
    <h2 id="what">What does it do?</h2>
    <p class="section-lead">Internet providers in Turkey block some sites through DPI and DNS. GoodbyeDPI gets around these blocks right on your computer, and GoodbyeDPI Tray makes it easy to manage.</p>
    <div class="cards">
-    <div class="card"><h3>Not a VPN</h3><p>Your traffic doesn't go through another server and your IP address stays the same. No speed loss, no extra ping.</p></div>
-    <div class="card"><h3>Only gets past the block</h3><p>Your other connections work as usual. Games and apps use the unblocked connection too.</p></div>
-    <div class="card"><h3>It has limits</h3><p>It can't open sites blocked directly by IP address. The Access test shows you this.</p></div>
-   </div>
+<div class="card"><h3>Not a VPN</h3><p>No. Traffic is not routed through another server and your IP address stays the same. Connection results and speed depend on your provider, the site and the selected profile.</p></div>
+<div class="card"><h3>Choose the scope</h3><p>Enable listed-sites-only mode and edit the site list to choose where changes apply.</p></div>
+<div class="card"><h3>It has limits</h3><p>It cannot bypass direct IP blocks. Access tests show connection results, not definitive proof of why a connection failed.</p></div>
+</div>
   </section>
 
   <section id="features" aria-labelledby="features-title">
    <h2 id="features-title">Features</h2>
    <p class="section-lead">It uses the settings from GoodbyeDPI-Turkey and adds an interface you'll actually enjoy using every day.</p>
    <div class="cards">
-    <div class="card"><h3>One-click start</h3><p>Start, stop, switch profiles; no administrator prompt. You can do it from the icon next to the clock too.</p></div>
-    <div class="card"><h3>Starts with Windows</h3><p>GoodbyeDPI runs as soon as your computer starts. You can turn this off.</p></div>
-    <div class="card"><h3>Seven Turkey profiles</h3><p>If one doesn't work, switch to another in one click. Your profile is kept across updates.</p></div>
-    <div class="card"><h3>Access test</h3><p>Tries blocked and regular sites with real connections and shows which ones open.</p></div>
-    <div class="card"><h3>Seven themes</h3><p>Light, Dark, Ocean, Sakura, Sunset, Android and Champagne. It can follow Windows too.</p></div>
-    <div class="card"><h3>Three languages</h3><p>Turkish, English and Russian. Change the language from the flag next to the theme button.</p></div>
+    <div class="card"><h3>One-click controls</h3><p>Start, stop, switch profiles or take a short break. Manage the app from the tray icon too.</p></div>
+    <div class="card"><h3>Choose your DNS</h3><p>Unfiltered AdGuard is the default. Yandex, ad-blocking AdGuard, Quad9, OpenDNS and CleanBrowsing are also available. Profiles that do not use DNS disable this selector.</p></div>
+    <div class="card"><h3>Editable site list</h3><p>Apply changes only to listed sites. Add or remove addresses in the Sites screen.</p></div>
+    <div class="card"><h3>Quick and detailed tests</h3><p>Quick checks for Discord, Roblox and Wattpad; a 10-site detailed test expands inside the same card.</p></div>
+    <div class="card"><h3>Find a suitable profile</h3><p>Compare seven profiles. Start with the recommended Arx profile and choose what works for your connection.</p></div>
+    <div class="card"><h3>Console and issue reports</h3><p>Read live engine output inside the main window. Report a problem opens a GitHub issue draft.</p></div>
+    <div class="card"><h3>Seven themes, three languages</h3><p>Light, Dark and five colour themes; Turkish, English and Russian. The theme can also follow Windows.</p></div>
+    <div class="card"><h3>Start with Windows</h3><p>Control automatic startup and the tray icon from Settings.</p></div>
    </div>
   </section>
 
   <section aria-labelledby="themes">
    <h2 id="themes">Themes and languages</h2>
    <p class="section-lead">Besides Light and Dark there are five colour themes. You can switch the language to Turkish, English or Russian from the flag next to the theme button.</p>
-   <img class="gallery" src="../images/en/themes.png" width="932" height="576" alt="GoodbyeDPI Tray in six themes: Ocean, Sakura, Sunset, Android, Champagne and Light" loading="lazy">
+   <img class="gallery" src="../images/en/themes.png" width="960" height="660" alt="GoodbyeDPI Tray in six themes: Ocean, Sakura, Sunset, Android, Champagne and Light" loading="lazy">
    <div class="menus">
-    <img src="../images/en/menu-theme.png" width="316" height="422" alt="Theme menu: Light, Dark, Ocean, Sakura, Sunset, Android, Champagne and Follow Windows" loading="lazy">
-    <img src="../images/en/menu-language.png" width="216" height="184" alt="Language menu with round flags: Türkçe, English, Русский" loading="lazy">
+    <img src="../images/en/menu-theme.png" width="300" height="362" alt="Theme menu: Light, Dark, Ocean, Sakura, Sunset, Android, Champagne and Follow Windows" loading="lazy">
+    <img src="../images/en/menu-language.png" width="200" height="124" alt="Language menu with round flags: Türkçe, English, Русский" loading="lazy">
    </div>
   </section>
 
@@ -136,10 +202,10 @@
    <div class="split">
     <div>
      <h2 id="access-test">Does it work? See for yourself</h2>
-     <p class="section-lead">The Access test opens a real HTTPS connection to blocked sites like Discord, Roblox and Wattpad and to regular sites like Google. If the blocked ones don't open, it suggests another profile; if none open, it tells you to check your connection.</p>
+     <p class="section-lead">The quick test checks Discord, Roblox and Wattpad. The detailed test expands inside the same card and shows HTTPS results and timings for 10 sites. A failed connection alone does not prove blocking: DNS, a timeout or the site itself may be responsible. When list mode is enabled, only listed sites are affected.</p>
     </div>
     <div class="shot">
-     <img src="../images/en/access-dark.png" data-dark="../images/en/access-dark.png" data-light="../images/en/access-light.png" width="720" height="548" alt="Access test window: connection results for blocked and regular sites" loading="lazy">
+     <img src="../images/en/access-dark.png" data-dark="../images/en/access-dark.png" data-light="../images/en/access-light.png" width="916" height="979" alt="The embedded 10-site detailed access test, before running a test" loading="lazy">
     </div>
    </div>
   </section>
@@ -165,9 +231,9 @@
    <div class="release-list" data-releases data-others="Other releases" data-prerelease="Pre-release" data-latest="Latest release" data-download="Download this version" data-notes="Release notes">
     <article class="release-card">
      <div class="release-meta"><span class="release-badge">Latest release</span><span>Windows 10 / 11</span></div>
-     <h3><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.8.0">v1.8.0</a></h3>
-     <ul class="release-highlights"><li>Find a suitable profile: Try profiles and compare results on one screen.</li><li>What’s new: Read release highlights inside the app.</li><li>Profile search restores the previous profile and running state when it finishes.</li><li>Turkish text is simpler and friendlier.</li><li>Notification and Windows integration text has been refreshed.</li><li>Improved handling of freezes and timeouts during rapid profile changes.</li></ul>
-     <div class="actions"><a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.8.0/GoodbyeDPI-Installer-1.8.0.exe">Download this version</a><a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.8.0">GitHub</a></div>
+     <h3><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0">v1.9.0</a></h3>
+     <ul class="release-highlights"><li>Refreshed interface, themes and card animations.</li><li>DNS selection with unfiltered AdGuard as the default.</li><li>Editable site list and optional listed-sites-only mode.</li><li>Embedded detailed access test and console.</li><li>GitHub issue drafts from inside the app.</li></ul>
+     <div class="actions"><a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.9.0/GoodbyeDPI-Installer-1.9.0.exe">Download this version</a><a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0">GitHub</a></div>
     </article>
    </div>
    <p class="meta">Live release notes appear in the language used on GitHub.</p>
@@ -175,12 +241,12 @@
 
   <section id="faq" aria-labelledby="faq-title">
    <h2 id="faq-title">FAQ</h2>
-   <details><summary>Is GoodbyeDPI Tray a VPN?</summary><p>No. Your traffic doesn't go through another server and your IP address stays the same. The app only gets around your provider's DPI and DNS blocks, so there's no speed loss or extra ping like with a VPN.</p></details>
+   <details><summary>Is GoodbyeDPI Tray a VPN?</summary><p>No. Traffic is not routed through another server and your IP address stays the same. Connection results and speed depend on your provider, the site and the selected profile.</p></details>
    <details><summary>Does it work for Discord?</summary><p>Discord is blocked through DPI and DNS, so it works with most providers in Turkey. Which profile works depends on your provider; the app's Access test makes that easy to see.</p></details>
-   <details><summary>Which profile should I pick?</summary><p>Start with <b>Turkey · Standard</b>. If some sites don't open or are slow, try the alternatives. Alternatives 2 and 4 usually fix slowness.</p></details>
+   <details><summary>Which profile should I pick?</summary><p>Start with the recommended Arx profile. If it does not work, use Find a suitable profile to compare alternatives. DNS selection only affects profiles that use DNS.</p></details>
    <details><summary>Why does Windows show a warning?</summary><p>The installer isn't digitally signed, so Windows SmartScreen may warn you. Choose <b>More info → Run anyway</b> to continue. All of the app's source code is open on <a href="https://github.com/trfurkan/GoodbyeDPI-Tray">GitHub</a>.</p></details>
    <details><summary>Why do Chrome, Edge or Firefox warn me when downloading?</summary><p>Browsers show warnings like "not commonly downloaded" or "may be harmful" for unsigned files that few people have downloaded yet. That means they don't recognise the file yet, not that they found a problem. In Chrome and Edge choose <b>Keep</b> from the menu next to the file in the downloads list; in Firefox choose <b>Allow download</b>. Always download the installer only from this page or the GitHub Releases page.</p></details>
-   <details><summary>Can I trust the app?</summary><p>All of the app's source code is open on GitHub; anyone can read it or build it themselves. It collects no personal data and only connects to GitHub once a day to check for a new version, which you can turn off in the About window. Some antivirus programs may flag WinDivert, the network driver GoodbyeDPI uses; because the driver can change network traffic, this is a common false alarm for tools like this. The app is experimental and using it is your call.</p></details>
+   <details><summary>Can I trust the app?</summary><p>The source code is open on GitHub. Update checks connect to GitHub; access tests connect to the selected sites. Report a problem opens an issue draft that you can review before submitting. The app is experimental and may not work on every network.</p></details>
    <details><summary>What if I already installed GoodbyeDPI-Turkey?</summary><p>The installer finds the old GoodbyeDPI service and asks before taking it over. If you agree, your profile is kept and you can delete the old folder afterwards.</p></details>
    <details><summary>How do I uninstall it?</summary><p>Press <b>Uninstall</b> in the app or remove it from Windows Settings &gt; Apps. The app is removed completely, including its settings and logs.</p></details>
    <p>For more, see the <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/docs/KULLANIM.md">user guide</a> (in Turkish).</p>

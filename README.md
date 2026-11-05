@@ -14,18 +14,27 @@
 
 <img src="docs/images/main-dark.png" width="640" alt="GoodbyeDPI Tray ana penceresi">
 
+**[1.9.0’da yeni](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0)**
+
 ## Özellikler
 
-- GoodbyeDPI'ı bir Windows hizmeti olarak çalıştırır; başlatma, durdurma ve profil değiştirme **yönetici izni istemez**.
-- GoodbyeDPI-Turkey'deki yedi profil, aynı parametrelerle.
-- Sistem tepsisi simgesi, görev çubuğu atlama listesi ve Windows açılışında otomatik başlama.
-- **Erişim testi:** Engelli ve normal sitelere gerçek HTTPS bağlantısı açıp sonucu gösterir.
-- Motorun canlı çıktısını gösteren konsol penceresi.
-- Türkçe, İngilizce ve Rusça arayüz; yedi tema.
-- Tek dosyalık kurucu; kaldırınca iz bırakmaz.
+- **Tek tıkla yönet:** Başlat, kapat, profil değiştir veya kısa bir mola ver. Saatin yanındaki simgeden de yönetebilirsin.
+- **DNS seçimi:** AdGuard filtresiz varsayılan. Yandex, AdGuard reklam engelli, Quad9, OpenDNS ve CleanBrowsing seçenekleri de var. DNS kullanmayan profillerde seçim pasifleşir.
+- **Düzenlenebilir site listesi:** Yalnızca listedeki sitelere uygula seçeneğiyle kapsamı belirle. Siteler ekranından adres ekleyip çıkar.
+- **Hızlı ve ayrıntılı test:** Discord, Roblox ve Wattpad için hızlı kontrol; aynı kartın içinde açılan 10 sitelik ayrıntılı test.
+- **Uygun profil bul:** Yedi profili dene, sonuçları karşılaştır. Arx önerilen başlangıç profili; bağlantına uygun olanı seç.
+- **Konsol ve sorun bildirimi:** Canlı motor çıktısını ana pencere içindeki konsoldan izle. Dert yan ile GitHub hata kaydı taslağı oluştur.
+- **Yedi tema, üç dil:** Aydınlık, Karanlık ve beş renkli tema; Türkçe, İngilizce ve Rusça. İstersen tema Windows’a uyar.
+- **Windows ile başlasın:** Otomatik başlangıcı ve saatin yanındaki simgeyi ayarlardan yönet.
 
 > [!NOTE]
 > GoodbyeDPI Tray bir VPN değildir. Trafik başka bir sunucudan geçmez; yalnızca internet sağlayıcının DPI ve DNS engelleri bilgisayarın içinde atlatılır. Doğrudan IP adresiyle engellenen siteleri açamaz.
+
+## Erişim sonuçlarını okuma
+
+Hızlı test Discord, Roblox ve Wattpad’i kontrol eder. Ayrıntılı test, aynı kartın içinde 10 sitenin HTTPS sonucunu ve süresini gösterir. Başarısız bağlantı tek başına engel kanıtı değildir; DNS, zaman aşımı veya site kaynaklı olabilir. Liste modu açıksa yalnızca listedeki sitelere müdahale edilir.
+
+<img src="docs/images/access-dark.png" width="640" alt="Ana pencere içinde açılan 10 sitelik ayrıntılı erişim testi; henüz test çalıştırılmadı">
 
 ## Kurulum
 

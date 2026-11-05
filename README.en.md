@@ -12,20 +12,29 @@ A Windows application for [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI). 
 
 **[⬇️ Download the latest version](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)** · [Website (English)](https://trfurkan.github.io/GoodbyeDPI-Tray/en/) · [User guide (Turkish)](docs/KULLANIM.md)
 
-<img src="docs/images/main-dark.png" width="640" alt="GoodbyeDPI Tray main window (Turkish interface)">
+<img src="docs/images/en/main-dark.png" width="640" alt="GoodbyeDPI Tray main window (English interface)">
+
+**[New in 1.9.0](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0)**
 
 ## Features
 
-- Runs GoodbyeDPI as a Windows service; starting, stopping and switching profiles **do not require administrator permission**.
-- All seven GoodbyeDPI-Turkey profiles, with the same parameters.
-- System tray icon, taskbar jump list and automatic startup with Windows.
-- **Access test:** opens real HTTPS connections to blocked and regular websites and displays the results.
-- Console window showing live engine output.
-- Turkish, English and Russian interface; seven themes.
-- Single-file installer with clean uninstallation.
+- **One-click controls:** Start, stop, switch profiles or take a short break. Manage the app from the tray icon too.
+- **Choose your DNS:** Unfiltered AdGuard is the default. Yandex, ad-blocking AdGuard, Quad9, OpenDNS and CleanBrowsing are also available. Profiles that do not use DNS disable this selector.
+- **Editable site list:** Apply changes only to listed sites. Add or remove addresses in the Sites screen.
+- **Quick and detailed tests:** Quick checks for Discord, Roblox and Wattpad; a 10-site detailed test expands inside the same card.
+- **Find a suitable profile:** Compare seven profiles. Start with the recommended Arx profile and choose what works for your connection.
+- **Console and issue reports:** Read live engine output inside the main window. Report a problem opens a GitHub issue draft.
+- **Seven themes, three languages:** Light, Dark and five colour themes; Turkish, English and Russian. The theme can also follow Windows.
+- **Start with Windows:** Control automatic startup and the tray icon from Settings.
 
 > [!NOTE]
 > GoodbyeDPI Tray is not a VPN. Traffic is not routed through another server; it works locally to bypass your internet provider’s DPI and DNS restrictions. It cannot unblock websites blocked directly by IP address.
+
+## Reading access results
+
+The quick test checks Discord, Roblox and Wattpad. The detailed test expands inside the same card and shows HTTPS results and timings for 10 sites. A failed connection alone does not prove blocking: DNS, a timeout or the site itself may be responsible. When list mode is enabled, only listed sites are affected.
+
+<img src="docs/images/en/access-dark.png" width="640" alt="The embedded 10-site detailed access test, before running a test">
 
 ## Installation
 
