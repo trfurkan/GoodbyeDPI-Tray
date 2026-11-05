@@ -29,10 +29,11 @@ try {
   for($cycle=0;$cycle -lt 3;$cycle++) {
    $pause=$type.GetMethod('PreparePauseMenu',$flags).Invoke($form,[object[]]@($false))
    Save-Menu $pause ('pause-menu-'+$mode)
-   if($pause.IsDisposed -or $pause.Items.Count -ne 2) { throw 'Pause menu lifetime/rebuild failed' }
+   # A title row and the two choices.
+   if($pause.IsDisposed -or $pause.Items.Count -ne 3 -or $pause.Items[0] -isnot [Windows.Forms.ToolStripLabel]) { throw 'Pause menu lifetime/rebuild failed' }
   }
   $pause=$type.GetMethod('PreparePauseMenu',$flags).Invoke($form,[object[]]@($true))
-  if($pause.Items.Count -ne 2 -or $pause.Items[0].Height -lt 38) { throw 'Resume actions missing' }
+  if($pause.Items.Count -ne 3 -or $pause.Items[1].Height -lt 38) { throw 'Resume actions missing' }
  }
 } finally { $type.GetField('quitting',$flags).SetValue($form,$true); $form.Dispose() }
 Write-Output 'PASS: Tray/pause menu sizes, recursive theme, resume actions, repeated opening and previews. No service commands sent.'

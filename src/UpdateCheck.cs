@@ -55,16 +55,19 @@ namespace GoodbyeTray {
     if(!match.Success) throw new InvalidDataException("Invalid release version");
     string notes=ExtractNotes(json);
     DownloadUrl=InstallerUrl(json) ?? ReleaseUrl;
-    DownloadAsset=null;
+    DownloadAsset=null; string signatureUrl=null;
     var data=new JavaScriptSerializer().DeserializeObject(json) as Dictionary<string,object>;
     object assets;
     if(data!=null && data.TryGetValue("assets",out assets) && assets is object[]) foreach(object entry in (object[])assets) {
      var asset=entry as Dictionary<string,object>; object url,size,digest;
-     if(asset!=null && asset.TryGetValue("browser_download_url",out url) && Convert.ToString(url)==DownloadUrl && UpdateDownload.ValidUrl(DownloadUrl) && asset.TryGetValue("size",out size)) {
-      long bytes; if(Int64.TryParse(Convert.ToString(size),out bytes) && bytes>0 && bytes<=200*1024*1024) DownloadAsset=new UpdateAsset { Url=DownloadUrl,Size=bytes,Digest=asset.TryGetValue("digest",out digest)?digest as string:null };
-      break;
+     if(asset==null || !asset.TryGetValue("browser_download_url",out url)) continue;
+     // The installer's signature is published next to it as <installer>.sig.
+     if(Convert.ToString(url)==DownloadUrl+".sig" && UpdateSignature.ValidUrl(DownloadUrl+".sig")) { signatureUrl=DownloadUrl+".sig"; continue; }
+     if(DownloadAsset==null && Convert.ToString(url)==DownloadUrl && UpdateDownload.ValidUrl(DownloadUrl) && asset.TryGetValue("size",out size)) {
+      long bytes; if(Int64.TryParse(Convert.ToString(size),out bytes) && bytes>0 && bytes<=200*1024*1024) DownloadAsset=new UpdateAsset { Url=DownloadUrl,Size=bytes,Digest=asset.TryGetValue("digest",out digest)?digest as string:null,Version=match.Groups[1].Value };
      }
     }
+    if(DownloadAsset!=null) DownloadAsset.SignatureUrl=signatureUrl;
     ReleaseNotes=notes; NotesVersion=match.Groups[1].Value;
     return IsNewer(NotesVersion,AppInfo.Version)?NotesVersion:null;
   }

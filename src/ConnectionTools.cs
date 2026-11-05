@@ -15,11 +15,13 @@ namespace GoodbyeTray {
    if(busy || !available) return;
    bool paused=EngineConsole.PauseUntil()!=null;
    if(!paused && !running) return;
-   PreparePauseMenu(paused).Show(pauseButton,new Point(0,pauseButton.Height+4));
+   var popup=PreparePauseMenu(paused);
+   popup.Show(toggle,new Point(0,toggle.Height+6));
   }
   internal ContextMenuStrip PreparePauseMenu(bool paused) {
    var menu=pauseMenu;
    while(menu.Items.Count>0) { var item=menu.Items[0]; menu.Items.RemoveAt(0); item.Dispose(); }
+   menu.Items.Add(new ToolStripLabel(L.T(paused?"Molayı yönet":"Geçici durdur")));
    if(paused) {
     menu.Items.Add(L.T("Şimdi devam et"),null,delegate { Execute("start",0); });
     menu.Items.Add(L.T("Molayı iptal et, kapalı kalsın"),null,delegate { Execute("stop",0); });
@@ -28,7 +30,16 @@ namespace GoodbyeTray {
     menu.Items.Add(L.T("15 dakika durdur"),null,delegate { Execute("pause15",0); });
     foreach(ToolStripItem item in menu.Items) item.AccessibleDescription=L.T("Süre bitince kendiliğinden devam eder.");
    }
-   MenuAppearance.Apply(menu,surface,foreground,border,320);
+   MenuAppearance.Apply(menu,surface,foreground,border,Math.Max(300,toggle.Width));
+   menu.ShowCheckMargin=false;
+   menu.Padding=new Padding(8);
+   menu.DropShadowEnabled=true;
+   menu.Renderer=new PauseMenuRenderer(surface,foreground,border,paused);
+   foreach(ToolStripItem item in menu.Items) {
+    item.Size=new Size(menu.MinimumSize.Width-16,item is ToolStripLabel?(paused?32:66):46);
+    item.Margin=new Padding(0,2,0,2);
+    item.Padding=new Padding(10,4,10,4);
+   }
    return menu;
   }
   static void SearchCommand(string action,int profile) {
@@ -86,6 +97,36 @@ namespace GoodbyeTray {
     };
     if(dialog.ShowDialog(this)==DialogResult.OK && result.Profile>=0) Execute("profile",result.Profile);
    }
+  }
+ }
+ // Keep native menu keyboard navigation and dismissal, with a single explanatory header.
+ sealed class PauseMenuRenderer : MenuRenderer {
+  readonly Color ink,muted,accent;
+  readonly bool paused;
+  internal PauseMenuRenderer(Color bg,Color fg,Color border,bool isPaused) : base(bg,fg,border) {
+   Rounded=true; paused=isPaused; ink=fg;
+   bool dark=bg.GetBrightness()<0.5f;
+   muted=SystemInformation.HighContrast?fg:AppPalette.Muted(dark);
+   accent=SystemInformation.HighContrast?fg:dark?AppPalette.Mint:AppPalette.Accent;
+  }
+  protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) {
+   if(e.Item is ToolStripLabel) {
+    int width=e.Item.Width-24;
+    var title=Fonts.Get(e.TextFont,FontStyle.Bold);
+    TextRenderer.DrawText(e.Graphics,e.Text,title,new Rectangle(12,4,width,24),ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
+    if(!paused) TextRenderer.DrawText(e.Graphics,L.T("Süre bitince kendiliğinden devam eder."),e.TextFont,new Rectangle(12,30,width,36),muted,TextFormatFlags.Left|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix);
+    return;
+   }
+   bool selected=e.Item.Selected && e.Item.Enabled;
+   Color color=SystemInformation.HighContrast && selected?SystemColors.HighlightText:ink;
+   Color icon=SystemInformation.HighContrast && selected?SystemColors.HighlightText:accent;
+   e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+   using(var pen=new Pen(icon,1.6f)) {
+    int y=e.Item.Height/2;
+    e.Graphics.DrawEllipse(pen,14,y-8,16,16);
+    e.Graphics.DrawLines(pen,new[]{new Point(22,y-5),new Point(22,y),new Point(26,y+2)});
+   }
+   TextRenderer.DrawText(e.Graphics,e.Text,e.TextFont,new Rectangle(42,0,e.Item.Width-54,e.Item.Height),color,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
   }
  }
 }

@@ -31,24 +31,26 @@ try {
  if ($combo.Items.Count -ne 7 -or $combo.SelectedIndex -lt 0) { throw 'Profil seçimi oluşturulamadı.' }
  $stateMethod = $formType.GetMethod('SetServiceState',$instanceFlags)
  $toggle = $formType.GetField('toggle',$instanceFlags).GetValue($form)
- $apply = $formType.GetField('apply',$instanceFlags).GetValue($form)
  $restart = $formType.GetField('restart',$instanceFlags).GetValue($form)
  $notice = $formType.GetField('notice',$instanceFlags).GetValue($form)
  $stateMethod.Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Stopped)) | Out-Null
- if ($toggle.Text -ne 'Başlat' -or -not $toggle.Enabled -or $restart.Enabled -or $apply.Enabled) { throw 'Durdurulmuş hizmet düğmeleri yanlış.' }
- $combo.SelectedIndex = 4
- if (-not $apply.Enabled) { throw 'Uygulanmamış profil etkinleştirilemiyor.' }
+ if ($toggle.Text -ne 'Aç' -or -not $toggle.Enabled -or $restart.Enabled) { throw 'Durdurulmuş hizmet düğmeleri yanlış.' }
+ # The picker lists profiles in display order; select profile 4 by its position.
+ $position = [Array]::IndexOf($assembly.GetType('GoodbyeTray.Program').GetMethod('MotorProfiles',[Reflection.BindingFlags]'NonPublic,Static').Invoke($null,@(0)),4)
+ $combo.SelectedIndex = $position
+ $pending = $formType.GetField('pending',$instanceFlags).GetValue($form)
+ if ($pending.Text -notlike '*henüz*') { throw 'Uygulanmamış profil gösterilmiyor.' }
  $notice.Text = 'Kalıcı işlem sonucu'
  $stateMethod.Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
- if ($toggle.Text -ne 'Durdur' -or -not $restart.Enabled -or $combo.SelectedIndex -ne 4 -or $notice.Text -ne 'Kalıcı işlem sonucu') { throw 'Çalışan hizmet veya bekleyen seçim durumu yanlış.' }
+ if ($toggle.Text -ne 'Kapat' -or -not $restart.Enabled -or $combo.SelectedIndex -ne $position -or $notice.Text -ne 'Kalıcı işlem sonucu') { throw 'Çalışan hizmet veya bekleyen seçim durumu yanlış.' }
  $stateMethod.Invoke($form,[object[]]@(4,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
- if ($apply.Enabled) { throw 'Zaten etkin olan profil tekrar uygulanabiliyor.' }
+ if ($pending.Text) { throw 'Etkin profil için uyarı gösteriliyor.' }
  $formType.GetField('busy',$instanceFlags).SetValue($form,$true)
  $stateMethod.Invoke($form,[object[]]@(4,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
- if ($toggle.Enabled -or $apply.Enabled -or $restart.Enabled -or $combo.Enabled) { throw 'İşlem sırasında kontroller kilitlenmedi.' }
+ if ($toggle.Enabled -or $restart.Enabled -or $combo.Enabled) { throw 'İşlem sırasında kontroller kilitlenmedi.' }
  $formType.GetField('busy',$instanceFlags).SetValue($form,$false)
  $stateMethod.Invoke($form,[object[]]@(-1,[ServiceProcess.ServiceControllerStatus]::Stopped)) | Out-Null
- if ($toggle.Enabled -or $apply.Enabled -or $restart.Enabled) { throw 'Kurulum yokken hizmet düğmeleri etkin.' }
+ if ($toggle.Enabled -or $restart.Enabled) { throw 'Kurulum yokken hizmet düğmeleri etkin.' }
  $setTheme = $formType.GetMethod('SetThemePreference',$instanceFlags)
  $setTheme.Invoke($form,[object[]]@('light',$false)) | Out-Null
  $lightColor = $form.BackColor

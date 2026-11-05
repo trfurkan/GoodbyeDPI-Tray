@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference='Stop'
+$ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 # Compile the actual search and service implementations against fake engine dependencies.
 # No Windows service, network request or installed application is changed.
@@ -40,10 +40,17 @@ namespace GoodbyeTray {
   internal static bool Uses(int p) { return p==0; }
   internal static string EngineArgs(int p) { return Program.Args[p]+(Uses(p)?"#dns"+Selected:""); }
  }
+ static class SiteList {
+  internal static bool Wanted;
+  internal static bool Uses(int p) { return p<Program.ZapretStart; }
+  internal static string EngineArgs(int p,string args) { return args+(Wanted && Uses(p)?"#sites":""); }
+  internal const int MaxCustom=50; internal static string[] Custom=new string[0]; internal static string[] All { get { return Custom; } }
+  internal static string Normalize(string s) { return s; } internal static void Add(string s) {} internal static void Remove(string s) {}
+ }
  static class EngineRequest {
-  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, DnsBase=154, Pause5=160, Pause15=161;
-  internal const string SetStart="start",SetProfile="profile",SetQuic="quic",SetDns="dns";
-  internal static void Apply(string name,string value) { if(name==SetProfile) Program.Selected=Int32.Parse(value); if(name==SetDns) DnsChoice.Selected=Int32.Parse(value); }
+  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, DnsBase=170, SitesOn=157, SitesOff=158, Pause5=160, Pause15=161;
+  internal const string SetStart="start",SetProfile="profile",SetQuic="quic",SetDns="dns",SetSites="sites",AddSite="add-site",RemoveSite="remove-site";
+  internal static void Apply(string name,string value) { if(name==SetProfile) Program.Selected=Int32.Parse(value); if(name==SetDns) DnsChoice.Selected=Int32.Parse(value); if(name==SetSites) SiteList.Wanted=value=="on"; }
  }
  static class EngineConsole {
   internal static string Last,Error;
@@ -130,13 +137,18 @@ namespace GoodbyeTray {
     call("OnCustomCommand",new object[]{128});
     Check(Program.Selected==0 && NativeConsoleSession.LastEngine=="fake","switch back to GoodbyeDPI");
     int before=NativeConsoleSession.Starts;
-    call("OnCustomCommand",new object[]{155});
+    call("OnCustomCommand",new object[]{171});
     Check(DnsChoice.Selected==1 && NativeConsoleSession.Starts==before+1 && NativeConsoleSession.LastArgs=="a#dns1" && EngineConsole.Last.StartsWith("running|"),"DNS change restarts a DNS profile with the new server");
     call("OnCustomCommand",new object[]{129}); before=NativeConsoleSession.Starts;
-    call("OnCustomCommand",new object[]{156});
+    call("OnCustomCommand",new object[]{172});
     Check(DnsChoice.Selected==2 && NativeConsoleSession.Starts==before,"DNS change leaves a profile without DNS running");
     call("OnCustomCommand",new object[]{128});
     Check(NativeConsoleSession.LastArgs=="a#dns2","next start uses the saved DNS server");
+    before=NativeConsoleSession.Starts;
+    call("OnCustomCommand",new object[]{157});
+    Check(SiteList.Wanted && NativeConsoleSession.Starts==before+1 && NativeConsoleSession.LastArgs=="a#dns2#sites" && EngineConsole.Last.StartsWith("running|"),"site list restarts GoodbyeDPI with the list");
+    call("OnCustomCommand",new object[]{158});
+    Check(!SiteList.Wanted && NativeConsoleSession.LastArgs=="a#dns2","turning the site list off restarts without it");
     call("OnCustomCommand",new object[]{160});
     var until=(DateTime?)type.GetField("pauseUntil",flags).GetValue(engine);
     Check(until.HasValue && (until.Value-DateTime.UtcNow).TotalMinutes>4.9,"five minute deadline");
@@ -173,6 +185,10 @@ $uses=$dns.GetMethod('Uses',$static); $engineArgs=$dns.GetMethod('EngineArgs',$s
 $real=$assembly.GetType('GoodbyeTray.Program').GetField('Args',$static).GetValue($null)
 foreach($p in 0..6) { $expected=$real[$p].EndsWith(' --dns-addr 77.88.8.8 --dns-port 1253 --dnsv6-addr 2a02:6b8::feed:0ff --dnsv6-port 1253'); if($uses.Invoke($null,@($p)) -ne $expected) { throw "DNS profile detection wrong: $p" } }
 $argsField=$dns.GetField('Arguments',$static).GetValue($null)
-if($argsField.Count -ne 3 -or $argsField[1] -notmatch '94\.140\.14\.14 --dns-port 5353' -or $argsField[2] -notmatch '94\.140\.14\.140 --dns-port 5353') { throw 'AdGuard DNS arguments wrong' }
+if($argsField.Count -ne 6 -or $argsField[1] -notmatch '94\.140\.14\.14 --dns-port 5353' -or $argsField[2] -notmatch '94\.140\.14\.140 --dns-port 5353' -or $argsField[3] -notmatch '9\.9\.9\.9 --dns-port 9953' -or $argsField[4] -notmatch '208\.67\.222\.222 --dns-port 5353' -or $argsField[5] -notmatch '185\.228\.168\.9 --dns-port 5353') { throw 'DNS arguments wrong' }
+$request=$assembly.GetType('GoodbyeTray.EngineRequest'); $base=$request.GetField('DnsBase',$static).GetValue($null)
+$used=@(150,151,152,153,157,158,160,161) | Where-Object { $_ -ge $base -and $_ -lt $base+6 }
+if($used) { throw "DNS commands overlap other service commands: $used" }
 if($engineArgs.Invoke($null,@(1)) -ne $real[1]) { throw 'Profile without DNS must keep its arguments' }
+if($dns.GetField('Default',$static).GetValue($null) -ne 2 -or $dns.GetField('Names',$static).GetValue($null)[2] -notlike 'AdGuard*filtresiz') { throw 'Default DNS must be unfiltered AdGuard (Yandex breaks Roblox images)' }
 Write-Output 'PASS: Profile ranking, ties, offline results, cancellation/failure rollback; 5/15 minute pause, deadline resume and manual stop cancellation. Fake engine only.'

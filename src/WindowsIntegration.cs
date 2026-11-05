@@ -41,7 +41,7 @@ namespace GoodbyeTray {
    Sakura={0x130F14,0x221A24,0xFCE7F3,0xC9A9BC,0x3E2E41,0x4A2033,0x0B080C,0xF43F5E,0xFFFFFF},                      // Sakura
    Sunset={0x16120F,0x261E19,0xFFEDD5,0xC9AE96,0x433429,0x4A2A12,0x0D0A08,0xF97316,0x1A0E05},                      // Güneş Batımı
    Android={0x0D1610,0x16261D,0xECFDF5,0x9CC7B0,0x2A4535,0x123D2C,0x070D09,0x10B981,0x04140C},                     // Android
-   Champagne={0xF7F5F0,0xFFFFFF,0x292524,0x78716C,0xE7E2D8,0xFDF0DC,0xFBFAF7,0xD97706,0x1C1917};                   // Şampanya (light)
+   Champagne={0xF7F5F0,0xFFFFFF,0x292524,0x6B645F,0xE7E2D8,0xFDF0DC,0xFBFAF7,0xD97706,0x1C1917};                   // Şampanya (light)
   static int[] Set(bool dark) { if(!dark) return Variant=="champagne"?Champagne:Light; switch(Variant) { case "ocean": return Ocean; case "sakura": return Sakura; case "sunset": return Sunset; case "android": return Android; default: return Black; } }
   static Color Pick(bool dark,int slot) { return Color.FromArgb(unchecked((int)0xFF000000)|Set(dark)[slot]); }
   internal static Color Background(bool dark) { return Pick(dark,0); }
@@ -94,7 +94,8 @@ namespace GoodbyeTray {
   internal static int LastCaptionResult;
   internal static string ShellStatus=L.T("Henüz oluşturulmadı");
   internal static void ThemeCaption(Form form,bool dark,Color background,Color foreground) {
-   if(!form.IsHandleCreated) return;
+   // A form shown as a page inside the main window has no title bar of its own.
+   if(!form.IsHandleCreated || !form.TopLevel) return;
    try {
     int mode=dark && !SystemInformation.HighContrast?1:0;
     int corners=2; DwmSetWindowAttribute(form.Handle,33,ref corners,4);
@@ -208,21 +209,28 @@ namespace GoodbyeTray {
  // One shared renderer keeps profile, theme and tray menus consistent.
  class MenuRenderer : ToolStripProfessionalRenderer {
   readonly Color background,foreground,selection,accent,border;
+  // Rounded corners for the window of the menu (the drop-down pickers); the tray menus stay square.
+  internal bool Rounded;
+  protected override void Initialize(ToolStrip toolStrip) { base.Initialize(toolStrip); if(Rounded) toolStrip.SizeChanged+=delegate { Shape(toolStrip); }; }
+  static void Shape(ToolStrip strip) { if(strip.Width<20 || strip.Height<20) return; using(var path=SoftButton.Round(new Rectangle(0,0,strip.Width,strip.Height),16)) strip.Region=new Region(path); }
   internal MenuRenderer(Color bg,Color fg,Color selected) { background=bg; foreground=fg; bool dark=bg.GetBrightness()<0.5f; selection=SystemInformation.HighContrast?SystemColors.Highlight:AppPalette.Selection(dark); accent=SystemInformation.HighContrast?SystemColors.HighlightText:dark?AppPalette.Mint:AppPalette.Accent; border=SystemInformation.HighContrast?SystemColors.WindowText:AppPalette.Border(dark); RoundedEdges=false; }
   protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e) { e.Graphics.Clear(background); }
   protected override void OnRenderImageMargin(ToolStripRenderEventArgs e) { using(var brush=new SolidBrush(background)) e.Graphics.FillRectangle(brush,e.AffectedBounds); }
-  protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawRectangle(pen,0,0,e.ToolStrip.Width-1,e.ToolStrip.Height-1); }
+  protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e) {
+   if(Rounded) { Shape(e.ToolStrip); e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; using(var path=SoftButton.Round(new Rectangle(0,0,e.ToolStrip.Width-1,e.ToolStrip.Height-1),16)) using(var pen=new Pen(border)) e.Graphics.DrawPath(pen,path); return; }
+   using(var pen=new Pen(border)) e.Graphics.DrawRectangle(pen,0,0,e.ToolStrip.Width-1,e.ToolStrip.Height-1);
+  }
   protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; bool active=(e.Item.Enabled && e.Item.Selected) || (item!=null && item.Checked); if(active) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; using(var path=SoftButton.Round(new Rectangle(3,1,e.Item.Width-6,e.Item.Height-2),10)) using(var brush=new SolidBrush(selection)) e.Graphics.FillPath(brush,path); } }
   protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; var r=e.ImageRectangle; using(var pen=new Pen(accent,2)) e.Graphics.DrawLines(pen,new[]{new Point(r.Left+3,r.Top+r.Height/2),new Point(r.Left+7,r.Top+r.Height/2+4),new Point(r.Right-2,r.Top+3)}); }
   protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e) { e.ArrowColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:foreground; base.OnRenderArrow(e); }
   protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,12,e.Item.Height/2,e.Item.Width-12,e.Item.Height/2); }
-  protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; e.TextColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:item!=null && item.Checked?accent:foreground;
+  protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; e.TextColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:item!=null && (item.Checked || Convert.ToString(item.Tag)=="accent")?accent:foreground;
    // An item with a description (AccessibleDescription) shows it as a smaller, muted second line under its name.
    string hint=e.Item.AccessibleDescription;
    if(String.IsNullOrEmpty(hint) || e.Item.Height<52) { base.OnRenderItemText(e); return; }
    int x=e.TextRectangle.X, width=Math.Min(e.Item.Width,e.ToolStrip.ClientSize.Width)-x-14;
    TextRenderer.DrawText(e.Graphics,e.Text,e.TextFont,new Rectangle(x,8,width,22),e.TextColor,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
-   using(var small=new Font(e.TextFont.FontFamily,8.5f)) TextRenderer.DrawText(e.Graphics,hint,small,new Rectangle(x,30,width,e.Item.Height-34),Blend(foreground,background,0.62f),TextFormatFlags.Left|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix);
+   { var small=Fonts.Get(e.TextFont.FontFamily,8.5f); TextRenderer.DrawText(e.Graphics,hint,small,new Rectangle(x,30,width,e.Item.Height-34),Blend(foreground,background,0.62f),TextFormatFlags.Left|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix); }
   }
   static Color Blend(Color a,Color b,float share) { return Color.FromArgb((int)(a.R*share+b.R*(1-share)),(int)(a.G*share+b.G*(1-share)),(int)(a.B*share+b.B*(1-share))); }
  }

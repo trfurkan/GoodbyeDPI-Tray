@@ -19,7 +19,7 @@ foreach ($dark in @($false,$true)) {
   $formType.GetMethod('SetServiceState',$flags).Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
   [Windows.Forms.Application]::DoEvents()
   $mode = if ($dark) { 'dark' } else { 'light' }
-  foreach ($fieldName in @('toggle','profiles','engineStartup','startup','restart','apply','findProfile','pauseButton','themeButton')) {
+  foreach ($fieldName in @('toggle','profiles','engineStartup','startup','themeButton')) {
    $control = $formType.GetField($fieldName,$flags).GetValue($form)
    if (-not $control.Visible) { throw "Ana panelde görünmeyen kontrol: $fieldName" }
    $rect = $form.RectangleToClient($control.RectangleToScreen($control.ClientRectangle))
@@ -42,8 +42,9 @@ foreach ($dark in @($false,$true)) {
   $button = $formType.GetField('toggle',$flags).GetValue($form)
   foreach ($state in @('normal','hover','pressed','disabled')) {
    $button.Enabled = $state -ne 'disabled'
-   $button.GetType().GetField('hovered',$flags).SetValue($button,($state -eq 'hover'))
-   $button.GetType().GetField('pressed',$flags).SetValue($button,($state -eq 'pressed'))
+   # The pill marks its hovered and pressed part by index (1 is the main part).
+   $button.GetType().GetField('hot',$flags).SetValue($button,[int]$(if($state -eq 'hover'){1}else{-1}))
+   $button.GetType().GetField('pressed',$flags).SetValue($button,[int]$(if($state -eq 'pressed'){1}else{-1}))
    $bitmap = [Drawing.Bitmap]::new($button.Width,$button.Height)
    try {
     $button.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$button.Width,$button.Height))
@@ -53,8 +54,8 @@ foreach ($dark in @($false,$true)) {
    } finally { $bitmap.Dispose() }
   }
   $button.Enabled=$true
-  $button.GetType().GetField('hovered',$flags).SetValue($button,$false)
-  $button.GetType().GetField('pressed',$flags).SetValue($button,$false)
+  $button.GetType().GetField('hot',$flags).SetValue($button,[int]-1)
+  $button.GetType().GetField('pressed',$flags).SetValue($button,[int]-1)
   $bitmap = [Drawing.Bitmap]::new($form.Width,$form.Height)
   try { $form.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$form.Width,$form.Height)); $bitmap.Save((Join-Path $previewDir "single-panel-$mode.png")) } finally { $bitmap.Dispose() }
   $formType.GetMethod('ShowDiagnostics',$flags).Invoke($form,$null) | Out-Null

@@ -136,32 +136,100 @@ namespace GoodbyeTray {
   }
  }
  // DNS server the GoodbyeDPI profiles with DNS redirection use. Each answers on a non-standard port, which the
- // operator's port 53 interception does not catch. Stored under HKLM next to BlockQuic; Yandex when missing.
+ // operator's port 53 interception does not catch. Stored under HKLM next to BlockQuic; unfiltered AdGuard when missing:
+ // Yandex answers tr.rbxcdn.com (Roblox avatars and thumbnails) with a bare CNAME and no address, so its images never load.
  static class DnsChoice {
   const string SettingsKey=@"SOFTWARE\GoodbyeDPITray";
-  internal static readonly string[] Names={"Yandex","AdGuard · reklam engelli","AdGuard · filtresiz"};
+  internal static readonly string[] Names={"Yandex","AdGuard · reklamsız","AdGuard · filtresiz","Quad9 · güvenli","OpenDNS","CleanBrowsing · güvenli"};
+  // OpenDNS also answers on 443, but the QUIC rule blocks outbound UDP 443, so 5353 is used.
   static readonly string[] Arguments={Program.Dns,
    " --dns-addr 94.140.14.14 --dns-port 5353 --dnsv6-addr 2a10:50c0::ad1:ff --dnsv6-port 5353",
-   " --dns-addr 94.140.14.140 --dns-port 5353 --dnsv6-addr 2a10:50c0::1:ff --dnsv6-port 5353"};
+   " --dns-addr 94.140.14.140 --dns-port 5353 --dnsv6-addr 2a10:50c0::1:ff --dnsv6-port 5353",
+   " --dns-addr 9.9.9.9 --dns-port 9953 --dnsv6-addr 2620:fe::fe --dnsv6-port 9953",
+   " --dns-addr 208.67.222.222 --dns-port 5353 --dnsv6-addr 2620:119:35::35 --dnsv6-port 5353",
+   " --dns-addr 185.228.168.9 --dns-port 5353 --dnsv6-addr 2a0d:2a00:1::2 --dnsv6-port 5353"};
+  internal const int Default=2;
+  // The order the menu shows them in: the default first, Yandex last. The stored numbers above never change, so a saved choice survives.
+  internal static readonly int[] Order={2,1,3,4,5,0};
+  internal static int Position { get { return Array.IndexOf(Order,Selected); } }
   internal static int Selected {
-   get { try { using(var key=Microsoft.Win32.Registry.LocalMachine.OpenSubKey(SettingsKey)) { int value=key==null?0:Convert.ToInt32(key.GetValue("Dns",0)); return value>=0 && value<Arguments.Length?value:0; } } catch(Exception) { return 0; } }
+   get { try { using(var key=Microsoft.Win32.Registry.LocalMachine.OpenSubKey(SettingsKey)) { int value=key==null?Default:Convert.ToInt32(key.GetValue("Dns",Default)); return value>=0 && value<Arguments.Length?value:Default; } } catch(Exception) { return Default; } }
    set { if(value<0 || value>=Arguments.Length) throw new ArgumentOutOfRangeException("value"); using(var key=Microsoft.Win32.Registry.LocalMachine.CreateSubKey(SettingsKey)) key.SetValue("Dns",value,Microsoft.Win32.RegistryValueKind.DWord); }
   }
   internal static bool Uses(int profile) { return profile>=0 && profile<Program.ZapretStart && Program.Args[profile].EndsWith(Program.Dns); }
   // The arguments the engine runs with; the stored profile arguments keep Yandex so older service paths still match.
   internal static string EngineArgs(int profile) { string args=Program.Args[profile]; return Uses(profile)?args.Substring(0,args.Length-Program.Dns.Length)+Arguments[Selected]:args; }
  }
+ // With "only blocked sites" on, GoodbyeDPI applies its tricks only to these hosts and their subdomains (--blacklist),
+ // so banks, games and every other site are left untouched. Zapret profiles ignore it. The service writes the list
+ // into the install folder, which only admins can change. Off when missing.
+ static class SiteList {
+  const string SettingsKey=@"SOFTWARE\GoodbyeDPITray";
+  internal const string FileName="sites.txt";
+  internal static readonly string[] Hosts={"discord.com","discord.gg","discordapp.com","discordapp.net","discord.media","discordcdn.com","discord.dev","discord.new","discord.gift","discordstatus.com","discord.co","dis.gd","roblox.com","rbxcdn.com","rbx.com","robloxlabs.com","wattpad.com"};
+  internal static bool Wanted {
+   get { try { using(var key=Microsoft.Win32.Registry.LocalMachine.OpenSubKey(SettingsKey)) return key!=null && Convert.ToInt32(key.GetValue("SitesOnly",0))!=0; } catch(Exception) { return false; } }
+   set { using(var key=Microsoft.Win32.Registry.LocalMachine.CreateSubKey(SettingsKey)) key.SetValue("SitesOnly",value?1:0,Microsoft.Win32.RegistryValueKind.DWord); }
+  }
+  internal static bool Uses(int profile) { return profile>=0 && profile<Program.ZapretStart; }
+  // Sites the user added. Kept in HKLM, which only the service and admins can write; users change it through a fixed
+  // service request, and every entry is checked again when it is read.
+  internal const int MaxCustom=50;
+  internal static string[] Custom {
+   get {
+    try {
+     using(var key=Microsoft.Win32.Registry.LocalMachine.OpenSubKey(SettingsKey)) {
+      var stored=key==null?null:key.GetValue("Sites") as string[]; var list=new System.Collections.Generic.List<string>();
+      if(stored!=null) foreach(string item in stored) { string host=Normalize(item); if(host!=null && Array.IndexOf(Hosts,host)<0 && !list.Contains(host) && list.Count<MaxCustom) list.Add(host); }
+      return list.ToArray();
+     }
+    } catch(Exception) { return new string[0]; }
+   }
+  }
+  internal static string[] All { get { var list=new System.Collections.Generic.List<string>(Hosts); list.AddRange(Custom); return list.ToArray(); } }
+  // Accepts what people paste ("https://www.site.com/path") and returns the bare host name, or null when it is not one.
+  // Only letters, digits, dots and dashes get through, so nothing else can reach the list file or the command line.
+  internal static string Normalize(string input) {
+   if(input==null) return null;
+   string host=input.Trim().ToLowerInvariant();
+   int scheme=host.IndexOf("://",StringComparison.Ordinal); if(scheme>=0) host=host.Substring(scheme+3);
+   int cut=host.IndexOfAny(new[]{'/','?','#',':'}); if(cut>=0) host=host.Substring(0,cut);
+   if(host.StartsWith("www.",StringComparison.Ordinal)) host=host.Substring(4);
+   host=host.TrimEnd('.');
+   if(host.Length<4 || host.Length>100) return null;
+   return System.Text.RegularExpressions.Regex.IsMatch(host,@"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$")?host:null;
+  }
+  internal static void Add(string input) {
+   string host=Normalize(input); if(host==null) throw new ArgumentException(L.T("Bu bir site adresi gibi görünmüyor."));
+   if(Array.IndexOf(Hosts,host)>=0) return;
+   var list=new System.Collections.Generic.List<string>(Custom); if(list.Contains(host)) return;
+   if(list.Count>=MaxCustom) throw new InvalidOperationException(L.T("En fazla 50 site ekleyebilirsin."));
+   list.Add(host); Save(list.ToArray());
+  }
+  internal static void Remove(string input) { string host=Normalize(input); var list=new System.Collections.Generic.List<string>(Custom); if(host!=null && list.Remove(host)) Save(list.ToArray()); }
+  static void Save(string[] list) { using(var key=Microsoft.Win32.Registry.LocalMachine.CreateSubKey(SettingsKey)) key.SetValue("Sites",list,Microsoft.Win32.RegistryValueKind.MultiString); }
+  internal static string PathName { get { return Path.Combine(Program.InstallDir,FileName); } }
+  internal static string EngineArgs(int profile,string args) {
+   if(!Uses(profile) || !Wanted) return args;
+   if(File.Exists(PathName) && (File.GetAttributes(PathName)&FileAttributes.ReparsePoint)!=0) throw new IOException(L.T("Site listesi bağlantı noktası olamaz."));
+   File.WriteAllText(PathName,String.Join("\n",All)+"\n",new UTF8Encoding(false));
+   return args+" --blacklist \""+PathName+"\"";
+  }
+ }
  // Requests a signed-in user may send without admin rights (the installer grants start, stop and user-defined control).
  // The service applies them itself, so users never get the right to change the service configuration.
  static class EngineRequest {
-  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, DnsBase=154, Pause5=160, Pause15=161;
-  internal const string SetProfile="--set-profile", SetStart="--set-start", SetQuic="--set-quic", SetDns="--set-dns";
+  internal const int ProfileBase=128, AutoOn=150, AutoOff=151, QuicOn=152, QuicOff=153, DnsBase=170, SitesOn=157, SitesOff=158, Pause5=160, Pause15=161;
+  internal const string SetProfile="--set-profile", SetStart="--set-start", SetQuic="--set-quic", SetDns="--set-dns", SetSites="--set-sites", AddSite="--add-site", RemoveSite="--remove-site";
   // Applies a configuration request as the service. Only these fixed changes are possible.
   internal static void Apply(string name,string value) {
    int profile;
    if(name==SetProfile && Int32.TryParse(value,out profile) && profile>=0 && profile<Program.Args.Length) Program.Configure(profile);
    else if(name==SetStart && (value=="auto" || value=="demand")) Program.Sc("config GoodbyeDPI start= "+value);
    else if(name==SetQuic && (value=="on" || value=="off")) QuicBlock.Wanted=value=="on";
+   else if(name==SetSites && (value=="on" || value=="off")) SiteList.Wanted=value=="on";
+   else if(name==AddSite) SiteList.Add(value);
+   else if(name==RemoveSite) SiteList.Remove(value);
    else if(name==SetDns && Int32.TryParse(value,out profile) && profile>=0 && profile<DnsChoice.Names.Length) DnsChoice.Selected=profile;
    else throw new ArgumentException(L.T("Bilinmeyen hizmet isteği."));
   }
@@ -201,10 +269,37 @@ namespace GoodbyeTray {
      if(profile<0 || profile>=DnsChoice.Names.Length) throw new ArgumentOutOfRangeException("profile");
      if(DnsChoice.Selected==profile) return;
      Request(service,EngineRequest.DnsBase+profile,new[]{EngineRequest.SetDns,profile.ToString()},delegate { return DnsChoice.Selected==profile; });
+    } else if(action=="sites-on" || action=="sites-off") {
+     bool on=action=="sites-on";
+     if(SiteList.Wanted==on) return;
+     Request(service,on?EngineRequest.SitesOn:EngineRequest.SitesOff,new[]{EngineRequest.SetSites,on?"on":"off"},delegate { return SiteList.Wanted==on; });
     } else if(action=="auto-on" || action=="auto-off") {
      bool auto=action=="auto-on";
      Request(service,auto?EngineRequest.AutoOn:EngineRequest.AutoOff,new[]{EngineRequest.SetStart,auto?"auto":"demand"},delegate { return StartsWithWindows()==auto; });
     } else throw new ArgumentException(L.T("Bilinmeyen işlem."));
+   }
+  }
+  // Adds or removes a site. A running service only takes numbered commands, so the host name travels as a start
+  // argument: GoodbyeDPI stops for a moment, the service saves the checked name and stops, then GoodbyeDPI starts again.
+  internal static bool TryEditSite(bool add,string input) {
+   string host=SiteList.Normalize(input); if(host==null) throw new ArgumentException(L.T("Bu bir site adresi gibi görünmüyor."));
+   try { lock(operation) EditSite(add,host); return true; }
+   catch(InvalidOperationException ex) { var native=ex.InnerException as Win32Exception; if(native!=null && native.NativeErrorCode==5) return false; throw; }
+  }
+  static void EditSite(bool add,string host) {
+   Func<bool> applied=delegate { return Array.IndexOf(SiteList.All,host)>=0==add; };
+   if(applied()) return;
+   if(add && SiteList.Custom.Length>=SiteList.MaxCustom) throw new InvalidOperationException(L.T("En fazla 50 site ekleyebilirsin."));
+   using(var service=new ServiceController(Program.ServiceName)) {
+    WaitUntilStable(service);
+    bool wasRunning=service.Status==ServiceControllerStatus.Running;
+    if(wasRunning) StopAndWait(service);
+    Program.WaitForServiceHostExit(); service.Start(new[]{add?EngineRequest.AddSite:EngineRequest.RemoveSite,host});
+    var deadline=DateTime.UtcNow+Wait;
+    while(!applied() && DateTime.UtcNow<deadline) Thread.Sleep(200);
+    service.WaitForStatus(ServiceControllerStatus.Stopped,Wait);
+    if(wasRunning) Program.Start();
+    if(!applied()) throw new InvalidOperationException(L.T("Site listesi güncellenemedi. Kurulum dosyasıyla uygulamayı güncellemeyi dene."));
    }
   }
   static void StopAndWait(ServiceController service) {
@@ -261,7 +356,7 @@ namespace GoodbyeTray {
     Program.ValidateEngine(profile); Program.CheckOtherEngines();
     last=""; output="";
     EngineConsole.Write(EngineConsole.Encode(profile,"starting",0,""));
-    session=new NativeConsoleSession(); session.Start(Program.EngineFor(profile),DnsChoice.EngineArgs(profile));
+    session=new NativeConsoleSession(); session.Start(Program.EngineFor(profile),SiteList.EngineArgs(profile,DnsChoice.EngineArgs(profile)));
     if(session.Child.WaitForExit(profile>=Program.ZapretStart?2000:800)) throw new InvalidOperationException(L.T("GoodbyeDPI başlatılamadı: ").Replace("GoodbyeDPI",Program.MotorName(profile))+session.Read());
     NativeConsoleSession.FlushDns();
     Capture(); capture=new System.Threading.Timer(delegate { Tick(); },null,500,500);
@@ -292,6 +387,11 @@ namespace GoodbyeTray {
      EngineRequest.Apply(EngineRequest.SetDns,(command-EngineRequest.DnsBase).ToString());
      // A profile with DNS redirection restarts with the new server; the switch below does that in place.
      lock(sync) if(stopping || session==null || !DnsChoice.Uses(profile)) return;
+     next=profile;
+    } else if(command==EngineRequest.SitesOn || command==EngineRequest.SitesOff) {
+     EngineRequest.Apply(EngineRequest.SetSites,command==EngineRequest.SitesOn?"on":"off");
+     // A running GoodbyeDPI profile restarts with or without the list.
+     lock(sync) if(stopping || session==null || !SiteList.Uses(profile)) return;
      next=profile;
     } else next=command-EngineRequest.ProfileBase;
     if(next<0 || next>=Program.Args.Length) return;

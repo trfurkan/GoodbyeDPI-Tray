@@ -31,8 +31,9 @@ foreach($theme in @('light','black')) {
   $type.GetMethod('SetThemePreference',$flags).Invoke($form,[object[]]@($theme,$false))|Out-Null
   $form.Show(); [Windows.Forms.Application]::DoEvents()
   for($cycle=0;$cycle -lt 5;$cycle++) {foreach($size in @([Drawing.Size]::new(640,640),[Drawing.Size]::new(1420,1000),[Drawing.Size]::new(800,720),[Drawing.Size]::new(1100,680))) {$form.Size=$size; [Windows.Forms.Application]::DoEvents()
-    foreach($name in @('toggle','profiles','engineStartup','startup','restart','apply','findProfile','pauseButton','themeButton','detail')) {
+    foreach($name in @('toggle','profiles','engineStartup','startup','themeButton','detail')) {
      $control=$type.GetField($name,$flags).GetValue($form)
+     if($name -eq 'detail' -and -not $control.Text){continue}
      if(-not $control.Visible -or $control.Height -lt $control.Font.Height){throw "Clipped control: $name"}
      $bounds=$form.RectangleToClient($control.RectangleToScreen($control.ClientRectangle))
      if($bounds.Bottom -gt $form.ClientSize.Height -or $bounds.Right -gt $form.ClientSize.Width){throw "Outside viewport: $name"}

@@ -11,12 +11,25 @@ using Microsoft.Win32;
 namespace GoodbyeTray {
  static class Program {
   internal static readonly Icon AppIcon=LoadIcon();
+  // The logo at an exact pixel size, for drawing inside the window. Graphics.DrawIcon shrinks the 128 px frame with
+  // nearest-neighbor sampling, which looks jagged; this takes the closest frame of the .ico and scales it smoothly.
+  static readonly System.Collections.Generic.Dictionary<int,Bitmap> logos=new System.Collections.Generic.Dictionary<int,Bitmap>();
+  internal static Bitmap Logo(int size) {
+   size=Math.Max(8,Math.Min(256,size)); Bitmap cached;
+   if(logos.TryGetValue(size,out cached)) return cached;
+   var bitmap=new Bitmap(size,size,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+   using(var stream=typeof(Program).Assembly.GetManifestResourceStream("GoodbyeTray.AppIcon")) using(var icon=new Icon(stream,size,size)) using(var frame=icon.ToBitmap()) using(var g=Graphics.FromImage(bitmap)) {
+    g.InterpolationMode=System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic; g.PixelOffsetMode=System.Drawing.Drawing2D.PixelOffsetMode.HighQuality; g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+    g.DrawImage(frame,new Rectangle(0,0,size,size));
+   }
+   logos[size]=bitmap; return bitmap;
+  }
   static Icon LoadIcon() { using(var stream=typeof(Program).Assembly.GetManifestResourceStream("GoodbyeTray.AppIcon")) using(var icon=new Icon(stream,128,128)) return (Icon)icon.Clone(); }
   internal const string ServiceName = "GoodbyeDPI";
   internal const string Dns = " --dns-addr 77.88.8.8 --dns-port 1253 --dnsv6-addr 2a02:6b8::feed:0ff --dnsv6-port 1253";
   // IDs 0..6 are persisted by older installations; never reorder them.
   internal const int ZapretStart=7;
-  static readonly string[] AllNames = {L.T("Türkiye · Standart"), L.T("Alternatif 1 · TTL 3"), L.T("Alternatif 2 · TTL yok"), L.T("Alternatif 3 · TTL 3 + DNS"), L.T("Alternatif 4 · TTL yok + DNS"), L.T("Alternatif 5 · Mod 9 + DNS"), L.T("Alternatif 6 · Mod 9"), "Zapret 2 · Split", "Zapret 2 · Disorder", "Zapret 2 · Fake + Split", "Zapret 2 · Superonline", "Zapret 2 · Superonline TCP"};
+  static readonly string[] AllNames = {L.T("Arx · önerilen"), L.T("Nyx · DNS'siz"), L.T("Kitsune · DNS'siz"), L.T("Nyx · DNS ile"), L.T("Kitsune · DNS ile"), L.T("Raijin · DNS ile"), L.T("Raijin · DNS'siz"), "Zapret 2 · Split", "Zapret 2 · Disorder", "Zapret 2 · Fake + Split", "Zapret 2 · Superonline", "Zapret 2 · Superonline TCP"};
   const string ZapretCommon="--wf-tcp-out=80,443 --wf-tcp-in=80,443 --lua-init=@zapret-lib.lua --lua-init=@zapret-antidpi.lua --filter-tcp=80 --filter-l7=http --lua-desync=http_hostcase --new --filter-tcp=443 --filter-l7=tls ";
   // Carrier preset used by zapret-win-turkey; effectiveness still depends on the line.
   const string Superonline="--payload=tls_client_hello --lua-desync=multidisorder:pos=2:seqovl=1";
@@ -37,7 +50,18 @@ namespace GoodbyeTray {
   static string[] Available(string[] catalog) { if(ZapretEnabled) return catalog; var result=new string[ZapretStart]; Array.Copy(catalog,result,result.Length); return result; }
   internal static int UpgradeProfile(int profile) { return profile>=0 && profile<Args.Length?profile:0; }
   internal static string MotorName(int profile) { return profile>=ZapretStart?"Zapret 2":"GoodbyeDPI"; }
-  internal static int[] MotorProfiles(int profile) { int start=profile>=ZapretStart?ZapretStart:0,count=profile>=ZapretStart?Args.Length-ZapretStart:ZapretStart; var ids=new int[count]; for(int i=0;i<count;i++) ids[i]=start+i; return ids; }
+  // GoodbyeDPI profiles are shown light to strong, each with DNS first. The ids themselves never change (see above).
+  static readonly int[] GoodbyeOrder={0,3,1,4,2,5,6};
+  internal static int[] MotorProfiles(int profile) { if(profile<ZapretStart) return (int[])GoodbyeOrder.Clone(); int count=Args.Length-ZapretStart; var ids=new int[count]; for(int i=0;i<count;i++) ids[i]=ZapretStart+i; return ids; }
+  // The hover text for a GoodbyeDPI profile: where its name comes from, what it does and how it treats DNS. Null for Zapret.
+  internal static string Describe(int profile) {
+   if(profile<0 || profile>=ZapretStart) return null;
+   string name=profile==0?L.T("Arx: Latince \"kale\"."):profile==1 || profile==3?L.T("Nyx: Yunan gece tanrıçası."):profile==2 || profile==4?L.T("Kitsune: Japon dokuz kuyruklu tilki ruhu."):L.T("Raijin: Japon gök gürültüsü tanrısı.");
+   string work=profile==0?L.T("GoodbyeDPI-Turkey'nin standart ayarı (Mod 5, TTL 5). Önce bunu dene."):profile==1 || profile==3?L.T("Sahte paketleri kısa ömürlü gönderir (TTL 3)."):profile==2 || profile==4?L.T("TTL kullanmaz (Mod 5). Sayfalar yavaş açılıyorsa dene."):L.T("En kapsamlı ayar (Mod 9). Diğerleri işe yaramazsa dene.");
+   return name+"\n"+work+"\n"+(Args[profile].EndsWith(Dns)?L.T("DNS'i kendisi yönlendirir."):L.T("DNS'e dokunmaz."));
+  }
+  // Every profile in the order menus show them.
+  internal static int[] DisplayOrder() { var list=new System.Collections.Generic.List<int>(GoodbyeOrder); if(Args.Length>ZapretStart) list.AddRange(MotorProfiles(ZapretStart)); return list.ToArray(); }
   internal static string EngineFor(int profile) { if(profile<0 || profile>=Args.Length) throw new ArgumentOutOfRangeException("profile"); return profile<ZapretStart?Engine:Path.Combine(InstallDir,"zapret2",Environment.Is64BitOperatingSystem?"x86_64":"x86","winws2.exe"); }
   internal static void ValidateEngine(int profile) { string path=EngineFor(profile); if(!File.Exists(path)) throw new FileNotFoundException(L.T("Motor dosyaları eksik. Güncel kurucuyla uygulamayı onar."),path); if(profile>=ZapretStart) foreach(string file in new[]{"cygwin1.dll","WinDivert.dll",Environment.Is64BitOperatingSystem?"WinDivert64.sys":"WinDivert32.sys","zapret-lib.lua","zapret-antidpi.lua"}) if(!File.Exists(Path.Combine(Path.GetDirectoryName(path),file))) throw new FileNotFoundException(L.T("Motor dosyaları eksik. Güncel kurucuyla uygulamayı onar."),file); }
   internal static void CheckOtherEngines() { foreach(string name in new[]{"goodbyedpi","winws","winws2"}) foreach(var process in Process.GetProcessesByName(name)) using(process) { if(!process.HasExited) throw new InvalidOperationException(L.T("Başka bir DPI motoru çalışıyor. Önce onu kapatıp tekrar dene.")); } }
@@ -139,6 +163,11 @@ namespace GoodbyeTray {
     if(profile<0 || profile>=DnsChoice.Names.Length) throw new ArgumentOutOfRangeException("profile");
     DnsChoice.Selected=profile;
     bool restart; using(var svc=new ServiceController(ServiceName)) restart=svc.Status==ServiceControllerStatus.Running && EngineConsole.PauseUntil()==null && DnsChoice.Uses(Profile());
+    if(restart) { Stop(); Start(); }
+   }
+   else if(action=="sites-on" || action=="sites-off") {
+    SiteList.Wanted=action=="sites-on";
+    bool restart; using(var svc=new ServiceController(ServiceName)) restart=svc.Status==ServiceControllerStatus.Running && EngineConsole.PauseUntil()==null && SiteList.Uses(Profile());
     if(restart) { Stop(); Start(); }
    }
    else if(action=="remove") { Stop(); Sc("delete GoodbyeDPI"); }

@@ -5,7 +5,7 @@ if (-not (Test-Path -LiteralPath $compiler)) { $compiler = Join-Path $env:WINDIR
 $root = Split-Path $PSScriptRoot -Parent
 $sourceDir = Join-Path $root 'src'
 $icon = Join-Path $root 'assets\app.ico'
-if (-not (Test-Path -LiteralPath $icon)) { & (Join-Path $PSScriptRoot 'create-icon.ps1') }
+if (-not (Test-Path -LiteralPath $icon)) { & (Join-Path $PSScriptRoot 'make-icon.ps1') }
 $branding = @("/win32icon:$icon", "/resource:$icon,GoodbyeTray.AppIcon")
 $version = [regex]::Match([IO.File]::ReadAllText((Join-Path $sourceDir 'AppInfo.cs')), 'Version="([0-9.]+)"').Groups[1].Value
 $notes = Join-Path $root "docs/RELEASE-v$version.md"
@@ -16,7 +16,7 @@ $appDir = Join-Path $root $(if($IncludeZapret) { 'build\experimental\app' } else
 $features = @()
 if($IncludeZapret) { $features += '/define:ENABLE_ZAPRET' }
 New-Item -ItemType Directory -Path $appDir -Force | Out-Null
-$shared = @("$sourceDir\AppInfo.cs", "$sourceDir\WindowsIntegration.cs", "$sourceDir\AppCommands.cs", "$sourceDir\EngineService.cs", "$sourceDir\EngineConsoleForm.cs", "$sourceDir\AccessTestForm.cs", "$sourceDir\UpdateCheck.cs", "$sourceDir\LicenseForm.cs", "$sourceDir\Lang.cs", "$sourceDir\LangTable.cs", "$sourceDir\LangKanka.cs", "$sourceDir\ProfileSearch.cs", "$sourceDir\ConnectionTools.cs", "$sourceDir\ProfileSearchForm.cs", "$sourceDir\ReleaseNotesForm.cs", "$sourceDir\UpdateDownloadForm.cs", "$sourceDir\Toast.cs")
+$shared = @("$sourceDir\AppInfo.cs", "$sourceDir\WindowsIntegration.cs", "$sourceDir\AppCommands.cs", "$sourceDir\EngineService.cs", "$sourceDir\EngineConsoleForm.cs", "$sourceDir\AccessTestForm.cs", "$sourceDir\UpdateCheck.cs", "$sourceDir\LicenseForm.cs", "$sourceDir\Lang.cs", "$sourceDir\LangTable.cs", "$sourceDir\LangKanka.cs", "$sourceDir\ProfileSearch.cs", "$sourceDir\ConnectionTools.cs", "$sourceDir\ProfileSearchForm.cs", "$sourceDir\ReleaseNotesForm.cs", "$sourceDir\UpdateDownloadForm.cs", "$sourceDir\Toast.cs", "$sourceDir\Motion.cs","$sourceDir\ReportForm.cs", "$sourceDir\SiteListForm.cs", "$sourceDir\AccessPanel.cs", "$sourceDir\UpdateSignature.cs")
 $wpf = Join-Path (Split-Path $compiler -Parent) 'WPF'
 $references = @("/reference:System.Web.Extensions.dll", "/reference:$wpf\PresentationFramework.dll", "/reference:$wpf\PresentationCore.dll", "/reference:$wpf\WindowsBase.dll")
 # Windows notifications come from the Windows Runtime metadata that ships with Windows 10/11.
