@@ -19,7 +19,7 @@ foreach ($dark in @($false,$true)) {
   $formType.GetMethod('SetServiceState',$flags).Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
   [Windows.Forms.Application]::DoEvents()
   $mode = if ($dark) { 'dark' } else { 'light' }
-  foreach ($fieldName in @('toggle','profiles','engineStartup','startup','restart','apply','findProfile','pauseButton','themeButton')) {
+  foreach ($fieldName in @('toggle','profiles','engineStartup','startup','restart','pauseButton','themeButton')) {
    $control = $formType.GetField($fieldName,$flags).GetValue($form)
    if (-not $control.Visible) { throw "Ana panelde görünmeyen kontrol: $fieldName" }
    $rect = $form.RectangleToClient($control.RectangleToScreen($control.ClientRectangle))

@@ -14,16 +14,16 @@ foreach($profile in 0..6){
  if(-not $parser.Invoke($null,$parameters) -or $parameters[1] -ne $profile -or $parameters[3] -ne 'real output'){throw 'Console frame parsing changed output or profile'}
 }
 foreach($frame in @('GDC1|7|running|1',"GDC1|8|running|1`nwrong","GDC1|0|bogus|1`nwrong")){$parameters=[object[]]@($frame,0,'',''); if($parser.Invoke($null,$parameters)){throw 'Malformed frame accepted'}}
-$logPath=$asm.GetType('GoodbyeTray.EngineConsole').GetProperty('PathName',$static).GetValue($null)
-$frame=[IO.File]::ReadAllText($logPath)
+$frame="GDC1|0|running|123"+[Environment]::NewLine+"fixture motor output`r`nsecond line"
 $expected=$frame.Substring($frame.IndexOf("`n")+1)
 foreach($dark in @($false,$true)){
  $form=[Activator]::CreateInstance($type,[Reflection.BindingFlags]'NonPublic,Instance',$null,[object[]]@($dark),$null)
  try{
-  $form.Show()
+  $null=$form.Handle
+  $type.GetMethod('ApplyFrame',$flags).Invoke($form,[object[]]@($frame,$true)) | Out-Null
   $terminal=$type.GetField('terminal',$flags).GetValue($form)
   for($i=0;$i -lt 80 -and $terminal.Text.Length -eq 0;$i++){[Windows.Forms.Application]::DoEvents(); Start-Sleep -Milliseconds 25}
-  if($terminal.Text -ne $expected){throw 'Viewer does not show the exact real motor output'}
+  if($terminal.Text -ne $expected){throw 'Viewer does not show the exact fixture motor output'}
   if($form.Text -notlike '*Konsol'){throw 'Console title missing'}
   $follow=$type.GetField('follow',$flags).GetValue($form); $follow.Checked=$false; if($follow.Checked){throw 'Live follow did not pause'}
   $mode=if($dark){'dark'}else{'light'}
@@ -31,4 +31,4 @@ foreach($dark in @($false,$true)){
   try{$form.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$form.Width,$form.Height)); $bitmap.Save((Join-Path $root "build\previews\engine-console-$mode.png"))}finally{$bitmap.Dispose()}
  }finally{$form.Dispose()}
 }
-Write-Output 'PASS: Seven profile frame mappings, invalid-frame rejection, exact real motor text in light/dark console viewer and pause control.'
+Write-Output 'PASS: Seven profile frame mappings, invalid-frame rejection, exact fixture motor text in light/dark console viewer and pause control.'

@@ -39,7 +39,9 @@ foreach($dark in @($false,$true)) {
   if(-not $primary.Visible) { throw 'Successful result has no apply action' }
   $rows=$type.GetField('rows',$flags).GetValue($form)
   if($rows.Controls.Count -ne 16) { throw 'Profile results missing' }
-  if($rows.GetControlFromPosition(1,3).Text -notlike '*Önerilen*') { throw 'Recommendation missing' }
+  # Rows follow the display order, so find where profile 2 is listed.
+  $row=[Array]::IndexOf($asm.GetType('GoodbyeTray.Program').GetMethod('MotorProfiles',$static).Invoke($null,@(0)),2)+1
+  if($rows.GetControlFromPosition(1,$row).Text -notlike '*Önerilen*') { throw 'Recommendation missing' }
   Save-View 'results'
   $form.Size=$form.MinimumSize; [Windows.Forms.Application]::DoEvents()
   foreach($control in @($primary,$type.GetField('secondary',$flags).GetValue($form),$rows)) {

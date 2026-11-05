@@ -7,7 +7,7 @@ namespace GoodbyeTray {
   readonly Label heading=new Label(),description=new Label(),phase=new Label();
   readonly TableLayoutPanel rows=new TableLayoutPanel();
   readonly SoftButton primary=new SoftButton(),secondary=new SoftButton();
-  readonly Panel track=new Panel(),fill=new Panel();
+  readonly PaletteProgressBar bar=new PaletteProgressBar();
   readonly Color surface,ink,muted,edge,accent;
   bool testing,finished,cancelling; int completed;
   internal event Action StartRequested,CancelRequested;
@@ -27,7 +27,7 @@ namespace GoodbyeTray {
    heading.Text=L.T("Sana uygun profili bulalım"); heading.Font=new Font(Font.FontFamily,20,FontStyle.Bold); heading.Dock=DockStyle.Fill; layout.Controls.Add(heading);
    description.Text=L.T("Seçtiğin motorun profilleriyle Discord, Roblox ve Wattpad erişimini deneyeceğiz. Google ile bağlantını kontrol edeceğiz. Test sonunda eski motorun ve profilin geri yüklenir."); description.Dock=DockStyle.Fill; description.ForeColor=muted; layout.Controls.Add(description);
    phase.Text=L.T("Hazırsan başlayalım. Bu işlem birkaç dakika sürebilir."); phase.Dock=DockStyle.Fill; phase.ForeColor=muted; layout.Controls.Add(phase);
-   track.Dock=DockStyle.Top; track.Height=5; track.BackColor=edge; fill.Dock=DockStyle.Left; fill.Width=0; fill.BackColor=accent; track.Controls.Add(fill); track.SizeChanged+=delegate { UpdateBar(); }; layout.Controls.Add(track);
+   bar.Dock=DockStyle.Top; bar.Height=6; bar.Margin=new Padding(0,4,0,0); bar.Maximum=candidates.Length; bar.Style=ProgressBarStyle.Continuous; bar.BackColor=BackColor; bar.ForeColor=accent; bar.Track=edge; layout.Controls.Add(bar);
    var card=new SoftPanel { Dock=DockStyle.Fill,Padding=new Padding(14),Margin=new Padding(0,12,0,10),Fill=surface,Edge=edge,BackColor=BackColor };
    rows.Dock=DockStyle.Fill; rows.BackColor=surface; rows.ColumnCount=2; rows.RowCount=candidates.Length+1;
    rows.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,65)); rows.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,35));
@@ -44,7 +44,7 @@ namespace GoodbyeTray {
    HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ink); };
   }
   void CancelTest() { if(cancelling) return; cancelling=true; secondary.Enabled=false; phase.Text=L.T("Testi bitirip eski ayarlarına dönüyoruz. Biraz sürebilir."); if(CancelRequested!=null) CancelRequested(); }
-  void UpdateBar() { fill.Width=track.ClientSize.Width*completed/candidates.Length; }
+  void UpdateBar() { bar.Value=Math.Max(0,Math.Min(candidates.Length,completed)); }
   internal void BeginTest() { testing=true; heading.Text=L.T("Profilleri deniyoruz"); primary.Visible=false; secondary.Text=L.T("Testi durdur"); }
   internal void SetProgress(int step,int profile) {
    if(IsDisposed || finished || cancelling) return;

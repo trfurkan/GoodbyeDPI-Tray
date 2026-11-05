@@ -43,7 +43,7 @@ namespace GoodbyeTray {
     if(parent.Exists && (parent.Attributes & FileAttributes.ReparsePoint)!=0) throw new IOException(L.T("Bağlantılı klasöre kurulum yapılamaz."));
     if(File.Exists(path) && (File.GetAttributes(path)&FileAttributes.ReparsePoint)!=0) throw new IOException(L.T("Bağlantılı dosyaya yazılamaz."));
    }
-   foreach(string file in new[]{SetupName,LegacySetupName,UninstallShortcut,"uninstall.ps1","engine-console.txt","engine-console.log"}) if(File.Exists(Target(file)) && (File.GetAttributes(Target(file))&FileAttributes.ReparsePoint)!=0) throw new IOException(L.T("Bağlantılı kurulum dosyası bulundu."));
+   foreach(string file in new[]{SetupName,LegacySetupName,UninstallShortcut,"uninstall.ps1","engine-console.txt","engine-console.log",SiteList.FileName}) if(File.Exists(Target(file)) && (File.GetAttributes(Target(file))&FileAttributes.ReparsePoint)!=0) throw new IOException(L.T("Bağlantılı kurulum dosyası bulundu."));
   }
   static bool Inside(string path,string parent) { if(String.IsNullOrEmpty(parent)) return false; parent=parent.TrimEnd('\\'); return String.Equals(path,parent,StringComparison.OrdinalIgnoreCase) || path.StartsWith(parent+"\\",StringComparison.OrdinalIgnoreCase); }
   static bool UnderProgramFiles(string dir) { return Inside(dir,Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)) || Inside(dir,Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)); }
@@ -196,7 +196,7 @@ namespace GoodbyeTray {
    Report(30,L.T("Sürücü kaldırılıyor…")); RemoveOwnedDriver();
    int removed=0;
    foreach(string file in Files) { DeleteOrSchedule(Target(file)); Report(35+45*(++removed)/Files.Length,L.T("Uygulama dosyaları kaldırılıyor…")); }
-   DeleteOrSchedule(Target("uninstall.ps1")); DeleteOrSchedule(Target("engine-console.txt")); DeleteOrSchedule(Target("engine-console.log")); DeleteOrSchedule(Target("engine-request-error.log")); DeleteOrSchedule(Target(SetupName)); DeleteOrSchedule(Target(LegacySetupName)); DeleteOrSchedule(Target(UninstallShortcut));
+   DeleteOrSchedule(Target("uninstall.ps1")); DeleteOrSchedule(Target("engine-console.txt")); DeleteOrSchedule(Target("engine-console.log")); DeleteOrSchedule(Target("engine-request-error.log")); DeleteOrSchedule(Target(SiteList.FileName)); DeleteOrSchedule(Target(SetupName)); DeleteOrSchedule(Target(LegacySetupName)); DeleteOrSchedule(Target(UninstallShortcut));
    foreach(string folder in new[]{"x86","x86_64","licenses","zapret2/x86","zapret2/x86_64","zapret2/licenses","zapret2"}) { string path=Target(folder); if(Directory.Exists(path) && Directory.GetFileSystemEntries(path).Length==0) Directory.Delete(path); }
    Registry.LocalMachine.DeleteSubKeyTree(UninstallKey,false);
    // Never recursively delete an installation directory: preserve unknown user files.
@@ -315,14 +315,37 @@ namespace GoodbyeTray {
   }
  }
  // Thin rounded progress track in the theme colors.
+ // The fill glides to each new value instead of jumping, and a soft light sweeps across it while work is in progress.
  class PaletteProgressBar : ProgressBar {
   public PaletteProgressBar() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true); }
   internal Color Track;
+  float shown; int lastFrame;
+  public new int Value { get { return base.Value; } set { if(value<shown) shown=value; base.Value=value; Kick(); } }
+  void Kick() { lastFrame=Motion.Now; if(!Motion.Enabled) shown=base.Value; Motion.Loop(this,Motion.Enabled && Visible); Invalidate(); }
+  protected override void OnVisibleChanged(EventArgs e) { Kick(); base.OnVisibleChanged(e); }
   protected override void OnPaint(PaintEventArgs e) {
    var g=e.Graphics; g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.Clear(BackColor);
+   int now=Motion.Now; float dt=Math.Min(100,Math.Max(0,now-lastFrame)); lastFrame=now;
+   float target=base.Value;
+   shown=!Motion.Enabled || Math.Abs(target-shown)<0.05f?target:shown+(target-shown)*Math.Min(1,dt/140f);
+   bool working=target>Minimum && target<Maximum;
+   // The loop stops once the fill has arrived and nothing is in progress; a new Value starts it again.
+   if(!working && shown==target) Motion.Loop(this,false);
    using(var path=SoftButton.Round(new Rectangle(0,0,Width-1,Height-1),Height)) using(var brush=new SolidBrush(Track)) g.FillPath(brush,path);
-   int filled=(Width-1)*(Value-Minimum)/Math.Max(1,Maximum-Minimum);
-   if(filled>=Height) using(var path=SoftButton.Round(new Rectangle(0,0,filled,Height-1),Height)) using(var brush=new SolidBrush(ForeColor)) g.FillPath(brush,path);
+   float filled=(Width-1)*(shown-Minimum)/Math.Max(1,Maximum-Minimum);
+   if(filled<Height) return;
+   var bounds=new RectangleF(0,0,filled,Height-1);
+   using(var path=SoftButton.RoundF(bounds,Height)) {
+    using(var brush=new SolidBrush(ForeColor)) g.FillPath(brush,path);
+    if(working && Motion.Enabled) {
+     float band=Math.Max(40,Width/5f), x=-band+((now%1600)/1600f)*(Width+band*2);
+     var light=new RectangleF(x,0,band,Height);
+     using(var glow=new System.Drawing.Drawing2D.LinearGradientBrush(light,Color.Transparent,Color.Transparent,0f)) {
+      var blend=new System.Drawing.Drawing2D.ColorBlend { Colors=new[]{Color.FromArgb(0,255,255,255),Color.FromArgb(90,255,255,255),Color.FromArgb(0,255,255,255)},Positions=new[]{0f,0.5f,1f} };
+      glow.InterpolationColors=blend; var clip=g.Clip; g.SetClip(path); g.FillRectangle(glow,light); g.Clip=clip;
+     }
+    }
+   }
   }
  }
  // A check box drawn like the rest of the app: rounded box, accent fill and a check mark in the accent's text color.
@@ -386,7 +409,7 @@ namespace GoodbyeTray {
    Text=remove?L.T("GoodbyeDPI — Kaldır"):L.T("GoodbyeDPI — Kurulum"); ClientSize=new Size(width,height); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; MinimizeBox=true; StartPosition=FormStartPosition.CenterScreen;
    Font=new Font("Segoe UI",10); BackColor=background; ForeColor=text; Icon=Program.AppIcon; DoubleBuffered=true;
    // Header: icon, name and version.
-   var logo=new Panel { Bounds=new Rectangle(30,26,52,52),BackColor=background }; logo.Paint+=delegate(object sender,PaintEventArgs e) { e.Graphics.DrawIcon(Program.AppIcon,new Rectangle(0,0,52,52)); }; Controls.Add(logo);
+   var logo=new Panel { Bounds=new Rectangle(30,26,52,52),BackColor=background }; logo.Paint+=delegate(object sender,PaintEventArgs e) { e.Graphics.DrawImageUnscaled(Program.Logo(52),0,0); }; Controls.Add(logo);
    Controls.Add(new Label { Text="GoodbyeDPI Tray",Font=new Font("Segoe UI",19,FontStyle.Bold),Bounds=new Rectangle(94,24,width-124,38),ForeColor=text });
    Controls.Add(new Label { Text=L.T("Sürüm ")+AppInfo.Version+L.T("  ·  Geliştirici: Furkan"),Bounds=new Rectangle(96,62,width-126,22),ForeColor=muted,Font=new Font("Segoe UI",9.5f) });
    var pages=new Rectangle(0,104,width,bottom-112);

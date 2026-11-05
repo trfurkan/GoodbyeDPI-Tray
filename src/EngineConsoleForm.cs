@@ -58,6 +58,11 @@ namespace GoodbyeTray {
       using(var reader=new StreamReader(stream,Encoding.UTF8,true)) return reader.ReadToEnd();
      }
     });
+    ApplyFrame(frame,serviceRunning);
+   } catch(IOException) { } catch(UnauthorizedAccessException) { if(!disposed) state.Text=L.T("Çıktı okunamadı. Kurulum dosyasıyla güncellemeyi dene."); }
+   finally { reading=false; }
+  }
+  internal void ApplyFrame(string frame,bool serviceRunning) {
     if(disposed || IsDisposed || !follow.Checked || (frame==lastFrame && serviceRunning==lastRunning)) return;
     if(frame==null) { state.Text=L.T("Henüz çıktı yok. Motoru başlatınca burada görünecek."); return; }
     int profile; string status,output; if(!TryParse(frame,out profile,out status,out output)) return;
@@ -68,8 +73,6 @@ namespace GoodbyeTray {
     Text=Program.MotorName(profile)+" — "+Program.Names[profile]+L.T(" — Konsol");
     state.Text=status=="switching"?L.T("Profil değişiyor, motorun hazır olmasını bekliyoruz…"):status=="paused"?L.T("GoodbyeDPI molada. Süre bitince geri gelecek."):status=="running"?L.T("Canlı çıktı · Bu pencereyi kapatmak motoru durdurmaz."):status=="starting"?L.T("Motor başlatılıyor…"):"";
     if(output!=terminal.Text) { terminal.Text=output; terminal.ScrollToEnd(); }
-   } catch(IOException) { } catch(UnauthorizedAccessException) { if(!disposed) state.Text=L.T("Çıktı okunamadı. Kurulum dosyasıyla güncellemeyi dene."); }
-   finally { reading=false; }
   }
   protected override void Dispose(bool disposing) { if(disposing && !disposed) { disposed=true; timer.Dispose(); } base.Dispose(disposing); }
  }

@@ -13,6 +13,9 @@ $form = [Activator]::CreateInstance($formType,[object[]]@($false))
 $menu = $null
 try {
  $form.Show()
+ # A drop-down closes at once when its window is not the active one (another app in front during the test run),
+ # so bring the test window forward first; TopMost briefly lets it take the foreground.
+ $form.TopMost=$true; $form.Activate(); [Windows.Forms.Application]::DoEvents(); $form.TopMost=$false; $form.Activate(); [Windows.Forms.Application]::DoEvents()
  $formType.GetMethod('SetServiceState',$flags).Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
  $picker = $formType.GetField('profiles',$flags).GetValue($form)
  $menu = $picker.GetType().GetField('menu',$flags).GetValue($picker)
@@ -31,7 +34,8 @@ try {
   if (-not $menu.Items[$index].Checked) { throw 'Seçili profil işareti güncellenmedi.' }
   $menu.Close([Windows.Forms.ToolStripDropDownCloseReason]::Keyboard)
   [Windows.Forms.Application]::DoEvents()
-  if ($menu.Items.Count -ne 7) { throw 'Menü öğeleri çoğaldı.' }
+  # Seven profiles, a separator and the find-a-profile entry.
+  if ($menu.Items.Count -ne 9 -or $menu.Items[7] -isnot [Windows.Forms.ToolStripSeparator] -or $menu.Items[8].Text -notlike '*Uygun profil bul*') { throw 'Menü öğeleri çoğaldı.' }
  }
  $open.Invoke($picker,$null) | Out-Null
  $form.Dispose()
