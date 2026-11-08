@@ -845,7 +845,8 @@ namespace GoodbyeTray {
   }
   void Reveal() {
    // Coming back from the tray, the window is drawn while cloaked and appears complete.
-   bool hidden=!Visible; if(hidden) Cloak(true);
+   // Turning the taskbar button on recreates the window, so it happens first, while hidden, and the new window is cloaked.
+   bool hidden=!Visible; if(hidden) { ShowInTaskbar=true; Cloak(true); }
    Show(); ShowInTaskbar=true; WindowState=FormWindowState.Normal;
    if(hidden) { PaintNow(); Cloak(false); }
    Activate();
@@ -1008,7 +1009,10 @@ namespace GoodbyeTray {
   // black. The window stays cloaked (present but not drawn) until then, and the same when it comes back from the tray.
   [System.Runtime.InteropServices.DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr window,int attribute,ref int value,int size);
   [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool RedrawWindow(IntPtr window,IntPtr rect,IntPtr region,int flags);
-  void Cloak(bool hidden) { if(!IsHandleCreated) return; try { int value=hidden?1:0; DwmSetWindowAttribute(Handle,13,ref value,4); } catch(DllNotFoundException) { } } // DWMWA_CLOAK
+  bool cloaked,cloakedOnce;
+  void Cloak(bool hidden) { if(!IsHandleCreated) return; try { int value=hidden?1:0; DwmSetWindowAttribute(Handle,13,ref value,4); cloaked=hidden; } catch(DllNotFoundException) { } } // DWMWA_CLOAK
+  // A safety net: a window that comes to the front while still cloaked is drawn and shown at once.
+  protected override void OnActivated(EventArgs e) { base.OnActivated(e); if(cloaked) { PaintNow(); Cloak(false); } }
   void PaintNow() { if(IsHandleCreated) RedrawWindow(Handle,IntPtr.Zero,IntPtr.Zero,0x0185); } // RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW
   protected override void OnShown(EventArgs e) { base.OnShown(e); PaintNow(); Cloak(false); }
   void FitDashboard() {
@@ -1137,7 +1141,9 @@ namespace GoodbyeTray {
   // The color behind a control: the card's surface inside a SoftPanel, else the window background.
   Color HostColor(Control control) { for(Control parent=control.Parent;parent!=null;parent=parent.Parent) if(parent is SoftPanel) return surface; return background; }
   void PaintButton(SoftButton button,bool primary) { button.Fill=primary?AppPalette.Accent:surface; button.Ink=primary?AppPalette.AccentInk:foreground; button.Edge=primary?button.Fill:border; if(SystemInformation.HighContrast) { button.Fill=primary?foreground:background; button.Ink=primary?background:foreground; } Color host=background; for(Control parent=button.Parent;parent!=null;parent=parent.Parent) { if(parent is SoftPanel) { host=surface; break; } } button.BackColor=host; button.ForeColor=button.Ink; button.Invalidate(); }
-  protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); Cloak(true); SetWindowPos(Handle,IntPtr.Zero,0,0,0,0,0x0037); ApplyTheme(true); } // SWP_FRAMECHANGED|NOMOVE|NOSIZE|NOZORDER|NOACTIVATE: recompute the frame without the caption.
+  // Only the first window is cloaked: WinForms recreates the window (e.g. when the taskbar button is turned on or off),
+  // and a recreated window must not stay hidden; Reveal cloaks on its own when it brings the window back.
+  protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); if(!cloakedOnce) { cloakedOnce=true; Cloak(true); } SetWindowPos(Handle,IntPtr.Zero,0,0,0,0,0x0037); ApplyTheme(true); } // SWP_FRAMECHANGED|NOMOVE|NOSIZE|NOZORDER|NOACTIVATE: recompute the frame without the caption.
   void PaintControls(Control parent) {
    foreach(Control control in parent.Controls) {
     var panel=control as SoftPanel; var button=control as SoftButton;
