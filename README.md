@@ -1,116 +1,115 @@
-[Türkçe](README.md) | [English](README.en.md)
+[Türkçe](README.md) · [English](README.en.md)
 
 # GoodbyeDPI Tray
+
+**GoodbyeDPI için Windows arayüzü ve hizmet yöneticisi.**
 
 [![Sürüm](https://img.shields.io/github/v/release/trfurkan/GoodbyeDPI-Tray?label=s%C3%BCr%C3%BCm)](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)
 [![İndirme](https://img.shields.io/github/downloads/trfurkan/GoodbyeDPI-Tray/total?label=indirme&color=2ea44f)](https://github.com/trfurkan/GoodbyeDPI-Tray/releases)
 [![Lisans](https://img.shields.io/github/license/trfurkan/GoodbyeDPI-Tray?label=lisans)](LICENSE)
-![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)
-![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-512BD4)
+![Windows 10 / 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)
 
-[GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) için Windows uygulaması. [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) profillerini komut satırı ya da CMD dosyası olmadan başlatır, durdurur ve Windows'la birlikte çalıştırır.
+GoodbyeDPI Tray, [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) motorunu ve [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) profillerini tek pencereden yönetmeni sağlar. Bağlantıyı başlatma, DNS seçimi, site listesi ve erişim testlerini günlük kullanım için bir araya getirir.
 
-**[⬇️ Son sürümü indir](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)** · [Tanıtım sayfası](https://trfurkan.github.io/GoodbyeDPI-Tray/) · [Kullanım rehberi](docs/KULLANIM.md)
+**[Son sürümü indir](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)** · [Web sitesi](https://trfurkan.github.io/GoodbyeDPI-Tray/) · [Kullanım rehberi](docs/KULLANIM.md) · [Sürüm notları](https://github.com/trfurkan/GoodbyeDPI-Tray/releases)
 
-<img src="docs/images/main-dark.png" width="640" alt="GoodbyeDPI Tray ana penceresi">
+<img src="docs/images/main-dark.png" width="720" alt="GoodbyeDPI Tray ana penceresi">
 
-**[1.9.0’da yeni](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0)**
+> [!NOTE]
+> Bu bir VPN değildir. IP adresini değiştirmez ve VPN’in gizlilik özelliklerini sağlamaz. Erişim sonucu internet sağlayıcına, uygulanan engele ve seçili profile bağlıdır; her ağda çalışması garanti edilmez.
+
+## Kurulum ve ilk kullanım
+
+**Gereksinimler:** Windows 10 veya 11 (x86/x64), .NET Framework 4.8.
+
+1. [Son sürümden](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest) `GoodbyeDPI-Installer-<sürüm>.exe` dosyasını indir.
+2. Kurucuyu aç, kurulum notunu oku ve **Kur** düğmesine bas. Windows’un yönetici izni isteğini onayla.
+3. Uygulamayı açıp önerilen **Arx** profiliyle başlat.
+4. **Erişim testi** ile bağlantını kontrol et. Sonuç alamazsan **Uygun profil bul** ile diğer seçenekleri karşılaştır.
+
+İmzasız veya az indirilen dosyalarda Windows ve tarayıcı uyarıları görülebilir. Uyarının ayrıntısını ve dosyanın bu deponun Releases sayfasından geldiğini kontrol et; uyarı tek başına güvenli ya da zararlı olduğu anlamına gelmez.
+
+Mevcut bir GoodbyeDPI hizmeti bulunursa kurucu, hizmeti devralmak için onay ister. Kaldırmak için uygulamanın kaldırma seçeneğini veya **Windows Ayarlar → Uygulamalar** bölümünü kullanabilirsin.
 
 ## Özellikler
 
-- **Tek tıkla yönet:** Başlat, kapat, profil değiştir veya kısa bir mola ver. Saatin yanındaki simgeden de yönetebilirsin.
-- **DNS seçimi:** AdGuard filtresiz varsayılan. Yandex, AdGuard reklam engelli, Quad9, OpenDNS ve CleanBrowsing seçenekleri de var. DNS kullanmayan profillerde seçim pasifleşir.
-- **Düzenlenebilir site listesi:** Yalnızca listedeki sitelere uygula seçeneğiyle kapsamı belirle. Siteler ekranından adres ekleyip çıkar.
-- **Hızlı ve ayrıntılı test:** Discord, Roblox ve Wattpad için hızlı kontrol; aynı kartın içinde açılan 10 sitelik ayrıntılı test.
-- **Uygun profil bul:** Yedi profili dene, sonuçları karşılaştır. Arx önerilen başlangıç profili; bağlantına uygun olanı seç.
-- **Konsol ve sorun bildirimi:** Canlı motor çıktısını ana pencere içindeki konsoldan izle. Dert yan ile GitHub hata kaydı taslağı oluştur.
-- **Yedi tema, üç dil:** Aydınlık, Karanlık ve beş renkli tema; Türkçe, İngilizce ve Rusça. İstersen tema Windows’a uyar.
-- **Windows ile başlasın:** Otomatik başlangıcı ve saatin yanındaki simgeyi ayarlardan yönet.
+| Özellik | Ne sağlar? |
+| --- | --- |
+| **Bağlantı yönetimi** | Başlatma, durdurma ve süreli mola; ana pencereden veya tepsi simgesinden kontrol. |
+| **Profil seçimi** | Arx, Nyx, Kitsune ve Raijin seçenekleri; yedi GoodbyeDPI profilini karşılaştırma. |
+| **DNS seçimi** | AdGuard, Quad9, OpenDNS, CleanBrowsing ve Yandex. Varsayılan seçenek AdGuard filtresizdir. |
+| **Reklam filtreleme** | AdGuard’ın reklam filtreleyen DNS seçeneği. DNS kullanmayan profillerde uygulanmaz; tüm reklamları engellemez. |
+| **Site listesi** | Hazır Discord, Roblox ve Wattpad alan adlarına kendi adreslerini ekleme; müdahaleyi listedeki sitelerle sınırlama. |
+| **Erişim testi** | Hızlı ve ayrıntılı bağlantı kontrolleri; yanıt sürelerini karşılaştırma. |
+| **Konsol ve sorun bildirimi** | Motor çıktısını izleme ve göndermeden önce düzenlenebilen GitHub sorun taslağı hazırlama. |
+| **Görünüm ve başlangıç** | Tema seçenekleri, Türkçe/İngilizce/Rusça arayüz ve Windows ile otomatik başlangıç. |
 
-> [!NOTE]
-> GoodbyeDPI Tray bir VPN değildir. Trafik başka bir sunucudan geçmez; yalnızca internet sağlayıcının DPI ve DNS engelleri bilgisayarın içinde atlatılır. Doğrudan IP adresiyle engellenen siteleri açamaz.
-
-## Erişim sonuçlarını okuma
-
-Hızlı test Discord, Roblox ve Wattpad’i kontrol eder. Ayrıntılı test, aynı kartın içinde 10 sitenin HTTPS sonucunu ve süresini gösterir. Başarısız bağlantı tek başına engel kanıtı değildir; DNS, zaman aşımı veya site kaynaklı olabilir. Liste modu açıksa yalnızca listedeki sitelere müdahale edilir.
-
-<img src="docs/images/access-dark.png" width="640" alt="Ana pencere içinde açılan 10 sitelik ayrıntılı erişim testi; henüz test çalıştırılmadı">
-
-## Kurulum
-
-1. [Releases](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest) sayfasından `GoodbyeDPI-Installer-<sürüm>.exe` dosyasını indir.
-2. Çalıştır. Windows SmartScreen uyarırsa **Ek bilgi → Yine de çalıştır**. Kurucu imzasız olduğu için bu uyarı çıkıyor.
-3. Notu onayla ve **Kur**'a bas. Yönetici izni yalnızca kurulumda ve kaldırırken istenir.
-
-Gereksinimler: Windows 10 / 11 (x86 ya da x64), .NET Framework 4.8.
-
-Daha önce GoodbyeDPI-Turkey'in hizmet betiğini kullandıysan kurucu eski hizmeti bulur ve devralmak için onay ister. Kaldırmak için uygulamadaki **Uygulamayı kaldır** ya da Windows Ayarlar > Uygulamalar yeterli.
+DNS seçimi yalnızca DNS yönlendirmesi kullanan profillerde etkilidir. Site listesi **alan adına** göre çalışır; uygulama adına göre seçim yapmaz. DNS ve QUIC engelleme ayarları site listesiyle sınırlanmaz.
 
 ## Nasıl çalışır?
 
-| Parça | Ne yapar? |
-| --- | --- |
-| **Hizmet** (`GoodbyeDPI`) | `GoodbyeDPI.Tray.exe --engine-service <profil>` olarak SYSTEM yetkisiyle çalışır, `goodbyedpi.exe`'yi başlatır ve çıktısını `engine-console.log`'a yazar. |
-| **Tepsi uygulaması** | Normal kullanıcı yetkisiyle çalışır. Hizmeti başlatır/durdurur; profil ve başlangıç isteklerini hizmete özel komut olarak gönderir, değişikliği hizmet kendisi uygular. |
-| **İzinler** | Kurucu, oturum açmış kullanıcılara hizmet için yalnızca başlatma, durdurma ve istek gönderme izni verir. Hizmet ayarlarını değiştirme izni yöneticide kalır. |
-| **Kurulum klasörü** | `Program Files` dışına kurulursa klasörü yalnızca yöneticiler ve SYSTEM değiştirebilir. |
-| **Güncelleme denetimi** | Günde bir kez GitHub API'den son sürümü sorar; başka bilgi göndermez. Hakkında penceresinden kapatılabilir. |
+GoodbyeDPI, trafik incelemesine dayanan bazı erişim engellerini aşmak için bağlantı verilerinin iletilme biçimini değiştirir. Engeli aşmaya çalışan motor GoodbyeDPI’dır; Tray, bu motorun kurulumunu ve günlük kullanımını kolaylaştırır.
 
-## Kaynaktan derleme
+- **Windows hizmeti:** `GoodbyeDPI` hizmeti SYSTEM yetkisiyle çalışır ve motor sürecini yönetir.
+- **Masaüstü arayüzü:** Normal kullanıcı yetkisiyle çalışır; başlatma, durdurma ve ayar isteklerini hizmete iletir.
+- **Bağlantı:** Trafik bir VPN sunucusuna yönlendirilmez. Doğrudan IP engelleri gibi bazı engelleme yöntemleri aşılamaz.
+- **Güncellemeler:** Yeni sürüm bilgisi GitHub üzerinden alınır. Güncelleme denetimi ile kurulum ayrı işlemlerdir.
 
-Visual Studio gerekmez; Windows'la gelen .NET Framework derleyicisi (`csc.exe`) kullanılır.
+Bu proje, GoodbyeDPI ve GoodbyeDPI-Turkey’den bağımsızdır; bu projelerin resmî dağıtımı değildir.
+
+## Sorun giderme
+
+Bir site açılmıyorsa önce uygulamayı durdurup bağlantıyı karşılaştır. Ardından erişim testini çalıştır ve gerekirse farklı bir profil veya DNS seçeneğini dene. Başarısız test tek başına engel kanıtı değildir; site, DNS veya zaman aşımı kaynaklı olabilir.
+
+Liste modu açıksa ulaşmaya çalıştığın alan adının listede olduğundan emin ol. Sorun devam ederse [hata bildirimi aç](https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new) ve şunları ekle:
+
+- Uygulama ve Windows sürümü.
+- Seçili profil, DNS ve ilgili bağlantı ayarları.
+- Sorunu tekrar oluşturmak için izlediğin adımlar ve beklediğin sonuç.
+- Varsa ilgili günlük bölümü veya ekran görüntüsü; paylaşmadan önce kişisel bilgileri çıkar.
+
+Uygulama günlüğü: `%LOCALAPPDATA%\GoodbyeDPI Tray\Logs\application.log`. Daha fazla bilgi için [kullanım rehberine](docs/KULLANIM.md) bakabilirsin.
+
+## Geliştirme
+
+Proje C#, WinForms ve .NET Framework 4.8 kullanır. Derleme betiği .NET Framework derleyicisini (`csc.exe`) çağırır; Visual Studio gerekmez. Komutları Windows’ta, depo kökünde çalıştır:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1
 ```
 
-| Çıktı | Açıklama |
+| Çıktı | İçerik |
 | --- | --- |
-| `build\app\GoodbyeDPI.Tray.exe` | Uygulama, hizmet ve kaldırıcı tek dosyada |
-| `dist\GoodbyeDPI-Installer.exe` | Bütün dosyaları içinde taşıyan tek dosyalık kurucu |
+| `build\app\GoodbyeDPI.Tray.exe` | Arayüz, hizmet ve kaldırıcı |
+| `dist\GoodbyeDPI-Installer.exe` | Kurulum dosyası |
 
-### Testler
+Derlemenin ardından temel doğrulama:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tests\verify.ps1
 ```
 
-`tests\` altındaki diğer betikler pencereleri, kurulum akışını, tepsi davranışını ve çevirileri dener. `tests\system\` altındakiler gerçek kurulumu ve hizmeti değiştirir; yalnızca deneme makinesinde çalıştır.
-
-### Proje yapısı
+Diğer test betikleri `tests/` altında bulunur. `tests/system/` betikleri gerçek kurulumu ve Windows hizmetini değiştirir; bunları yalnızca bu amaçla ayrılmış bir test ortamında çalıştır.
 
 ```text
-src/                 C# kaynakları (WinForms, .NET Framework 4.8)
-  Program.cs         Giriş noktası, hizmet yönetimi
-  MainForm.cs        Ana pencere ve tepsi
-  EngineService.cs   Windows hizmeti ve motor konsolu
-  Setup.cs           Kurucu ve kaldırıcı
-  Lang*.cs           Türkçe / İngilizce / Rusça metinler
-scripts/             Derleme betikleri
-tests/               Test betikleri
-vendor/goodbyedpi/   GoodbyeDPI-Turkey 0.2.3rc3 ikili dosyaları ve lisansları
-docs/                Kullanım rehberi, sürüm notları, tanıtım sayfası (GitHub Pages)
+src/                 Uygulama, hizmet, kurulum ve arayüz kodu
+assets/              Uygulama simgeleri ve görsel kaynaklar
+scripts/             Derleme ve paketleme betikleri
+tests/               Doğrulama ve davranış testleri
+vendor/goodbyedpi/    Motor, sürücüler ve üçüncü taraf lisansları
+docs/                Web sitesi, kullanım rehberi ve sürüm notları
 ```
 
-## Katkı ve geri bildirim
+## Katkı
 
-Hata ya da öneri için [issue aç](https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new). Hata bildirirken uygulama günlüğünü (`%LOCALAPPDATA%\GoodbyeDPI Tray\Logs\application.log`) eklemen sorunu bulmayı kolaylaştırır.
+Hata bildirimleri, kullanım geri bildirimleri ve pull request’ler kabul edilir. Kapsamlı bir değişiklik düşünüyorsan önce [issue açarak](https://github.com/trfurkan/GoodbyeDPI-Tray/issues) yaklaşımını paylaş. Pull request’inde değişikliğin amacını ve yaptığın kontrolleri belirt.
 
-Proje işine yaradıysa ⭐ vererek destek olabilirsin.
+Projeyi [Furkan](https://github.com/trfurkan) geliştiriyor. İşine yarıyorsa GitHub’da yıldız vererek destek olabilirsin.
 
-## Hakkımda
+## Lisans ve kaynak projeler
 
-<a href="https://github.com/trfurkan"><img src="https://avatars.githubusercontent.com/u/47176772?s=96&v=4" width="48" height="48" align="left" alt="trfurkan"></a>
+Uygulama kodu [Apache License 2.0](LICENSE) ile yayımlanır. Üçüncü taraf bileşenlerin lisansları ayrıdır; ayrıntılar [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) dosyasındadır.
 
-Merhaba, ben Furkan. Boş vakitlerimde hobi olarak hayatı kolaylaştıran, sade ve kullanıcı dostu projeler geliştiriyorum. Profesyonel bir iddiam yok; ürettiğim çözümler işinize yaradıysa ne mutlu bana. İlginiz ve desteğiniz için teşekkürler!
-
-## Lisans ve teşekkürler
-
-Uygulama kodu [Apache 2.0](LICENSE) lisanslıdır. Paketteki üçüncü taraf bileşenler kendi lisanslarını korur; ayrıntılar [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) dosyasında.
-
-- [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) — ValdikSS
-- [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) — cagritaskn
-- [WinDivert](https://github.com/basil00/WinDivert) — basil00
-
-> [!WARNING]
-> Uygulama tamamen deneyseldir ve herhangi bir garanti sunmaz. Her internet ağında çalışmayabilir veya bağlantını etkileyebilir. Kullanma kararı ve doğabilecek tüm sorumluluk kullanıcıya aittir. GoodbyeDPI Tray bağımsız bir projedir; ValdikSS/GoodbyeDPI ya da cagritaskn/GoodbyeDPI-Turkey'in resmî sürümü değildir.
+- [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) — ValdikSS, bağlantı motoru.
+- [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) — cagritaskn, Türkiye profilleri ve temel dağıtım.
+- [WinDivert](https://github.com/basil00/WinDivert) — basil00, ağ paketi yakalama ve yönlendirme.

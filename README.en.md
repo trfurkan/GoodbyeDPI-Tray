@@ -1,112 +1,115 @@
-[Türkçe](README.md) | [English](README.en.md)
+[Türkçe](README.md) · [English](README.en.md)
 
 # GoodbyeDPI Tray
+
+**A Windows interface and service manager for GoodbyeDPI.**
 
 [![Version](https://img.shields.io/github/v/release/trfurkan/GoodbyeDPI-Tray?label=version)](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/trfurkan/GoodbyeDPI-Tray/total?label=downloads&color=2ea44f)](https://github.com/trfurkan/GoodbyeDPI-Tray/releases)
 [![License](https://img.shields.io/github/license/trfurkan/GoodbyeDPI-Tray?label=license)](LICENSE)
-![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)
-![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-512BD4)
+![Windows 10 / 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows)
 
-A Windows application for [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI). Start and stop [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) profiles and run them at Windows startup without a command line or CMD files.
+GoodbyeDPI Tray brings the [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) engine and [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) profiles into one window. It combines connection controls, DNS selection, a site list and access tests for everyday use.
 
-**[⬇️ Download the latest version](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)** · [Website (English)](https://trfurkan.github.io/GoodbyeDPI-Tray/en/) · [User guide (Turkish)](docs/KULLANIM.md)
+**[Download the latest version](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest)** · [Website](https://trfurkan.github.io/GoodbyeDPI-Tray/en/) · [User guide (Turkish)](docs/KULLANIM.md) · [Release notes](https://github.com/trfurkan/GoodbyeDPI-Tray/releases)
 
-<img src="docs/images/en/main-dark.png" width="640" alt="GoodbyeDPI Tray main window (English interface)">
+<img src="docs/images/en/main-dark.png" width="720" alt="GoodbyeDPI Tray main window">
 
-**[New in 1.9.0](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0)**
+> [!NOTE]
+> This is not a VPN. It does not change your IP address or provide VPN privacy features. Results depend on your provider, the blocking method and the selected profile; it is not guaranteed to work on every network.
+
+## Installation and first use
+
+**Requirements:** Windows 10 or 11 (x86/x64), .NET Framework 4.8.
+
+1. Download `GoodbyeDPI-Installer-<version>.exe` from the [latest release](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest).
+2. Open the installer, read the installation notice and click **Install**. Approve the Windows administrator permission prompt.
+3. Open the app and start with the recommended **Arx** profile.
+4. Run the **Access test**. If it cannot connect, use **Find a suitable profile** to compare alternatives.
+
+Windows and browsers may warn about unsigned or uncommon downloads. Read the warning and check that the file came from this repository’s Releases page. A warning alone does not establish that a file is safe or harmful.
+
+If an existing GoodbyeDPI service is found, the installer asks before taking it over. To uninstall, use the app’s uninstall option or **Windows Settings → Apps**.
 
 ## Features
 
-- **One-click controls:** Start, stop, switch profiles or take a short break. Manage the app from the tray icon too.
-- **Choose your DNS:** Unfiltered AdGuard is the default. Yandex, ad-blocking AdGuard, Quad9, OpenDNS and CleanBrowsing are also available. Profiles that do not use DNS disable this selector.
-- **Editable site list:** Apply changes only to listed sites. Add or remove addresses in the Sites screen.
-- **Quick and detailed tests:** Quick checks for Discord, Roblox and Wattpad; a 10-site detailed test expands inside the same card.
-- **Find a suitable profile:** Compare seven profiles. Start with the recommended Arx profile and choose what works for your connection.
-- **Console and issue reports:** Read live engine output inside the main window. Report a problem opens a GitHub issue draft.
-- **Seven themes, three languages:** Light, Dark and five colour themes; Turkish, English and Russian. The theme can also follow Windows.
-- **Start with Windows:** Control automatic startup and the tray icon from Settings.
+| Feature | What it provides |
+| --- | --- |
+| **Connection controls** | Start, stop and timed pauses from the main window or system tray. |
+| **Profile selection** | Arx, Nyx, Kitsune and Raijin options; comparison of seven GoodbyeDPI profiles. |
+| **DNS selection** | AdGuard, Quad9, OpenDNS, CleanBrowsing and Yandex. Unfiltered AdGuard is the default. |
+| **Ad filtering** | AdGuard’s ad-filtering DNS option. It requires a profile that uses DNS and does not block every ad. |
+| **Site list** | Built-in Discord, Roblox and Wattpad domains, custom addresses and processing limited to listed sites. |
+| **Access tests** | Quick and detailed connection checks with response times. |
+| **Console and issue reports** | Engine output and a GitHub issue draft you can edit before submitting. |
+| **Appearance and startup** | Themes, Turkish/English/Russian interfaces and automatic startup with Windows. |
 
-> [!NOTE]
-> GoodbyeDPI Tray is not a VPN. Traffic is not routed through another server; it works locally to bypass your internet provider’s DPI and DNS restrictions. It cannot unblock websites blocked directly by IP address.
-
-## Reading access results
-
-The quick test checks Discord, Roblox and Wattpad. The detailed test expands inside the same card and shows HTTPS results and timings for 10 sites. A failed connection alone does not prove blocking: DNS, a timeout or the site itself may be responsible. When list mode is enabled, only listed sites are affected.
-
-<img src="docs/images/en/access-dark.png" width="640" alt="The embedded 10-site detailed access test, before running a test">
-
-## Installation
-
-1. Download `GoodbyeDPI-Installer-<version>.exe` from [Releases](https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest).
-2. Run it. If Windows SmartScreen displays a warning, choose **More info → Run anyway**. This warning appears because the installer is unsigned.
-3. Acknowledge the notice and click **Install**. Administrator permission is required only for installation and uninstallation.
-
-Requirements: Windows 10 / 11 (x86 or x64), .NET Framework 4.8.
-
-If you previously used the GoodbyeDPI-Turkey service script, the installer detects the existing service and asks for permission to take it over. To uninstall, use **Uninstall application** in the app or Windows Settings > Apps.
+DNS selection applies only to profiles that redirect DNS. The site list selects **domains**, not applications by name. DNS and QUIC blocking settings are not restricted to the site list.
 
 ## How it works
 
-| Component | What it does |
-| --- | --- |
-| **Service** (`GoodbyeDPI`) | Runs as SYSTEM using `GoodbyeDPI.Tray.exe --engine-service <profile>`, starts `goodbyedpi.exe` and writes its output to `engine-console.log`. |
-| **Tray application** | Runs with normal user privileges. Starts/stops the service and sends profile and startup requests as service-specific commands; the service applies the changes itself. |
-| **Permissions** | The installer grants signed-in users only permission to start, stop and send requests to the service. Changing service settings remains restricted to administrators. |
-| **Installation folder** | When installed outside `Program Files`, only administrators and SYSTEM can modify the folder. |
-| **Update check** | Queries the GitHub API for the latest release once a day; sends no other information. Can be disabled in the About window. |
+GoodbyeDPI changes how connection data is transmitted to help bypass some restrictions based on traffic inspection. GoodbyeDPI is the engine that attempts to bypass restrictions; Tray simplifies its installation and everyday use.
 
-## Building from source
+- **Windows service:** The `GoodbyeDPI` service runs as SYSTEM and manages the engine process.
+- **Desktop interface:** Runs with normal user privileges and sends start, stop and configuration requests to the service.
+- **Connection:** Traffic is not routed through a VPN server. Some restrictions, such as direct IP blocks, cannot be bypassed.
+- **Updates:** New release information is retrieved from GitHub. Checking for updates and installing them are separate operations.
 
-Visual Studio is not required; the .NET Framework compiler (`csc.exe`) included with Windows is used.
+This is an independent project, not an official distribution of GoodbyeDPI or GoodbyeDPI-Turkey.
+
+## Troubleshooting
+
+If a site does not open, stop the app and compare the connection. Then run an access test and, if needed, try another profile or DNS option. A failed test alone does not prove blocking; the site, DNS or a timeout may be responsible.
+
+With list mode enabled, check that the relevant domain is included. If the problem persists, [open a bug report](https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new) with:
+
+- Your application and Windows versions.
+- Selected profile, DNS and relevant connection settings.
+- Steps to reproduce the problem and the expected result.
+- Relevant log excerpts or screenshots, with personal information removed before sharing.
+
+Application log: `%LOCALAPPDATA%\GoodbyeDPI Tray\Logs\application.log`. See the [user guide (Turkish)](docs/KULLANIM.md) for more details.
+
+## Development
+
+The project uses C#, WinForms and .NET Framework 4.8. The build script calls the .NET Framework compiler (`csc.exe`); Visual Studio is not required. Run these commands on Windows from the repository root:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1
 ```
 
-| Output | Description |
+| Output | Contents |
 | --- | --- |
-| `build\app\GoodbyeDPI.Tray.exe` | Application, service and uninstaller in one file |
-| `dist\GoodbyeDPI-Installer.exe` | Single-file installer containing all required files |
+| `build\app\GoodbyeDPI.Tray.exe` | Interface, service and uninstaller |
+| `dist\GoodbyeDPI-Installer.exe` | Installer |
 
-### Tests
+After building, run the basic verification:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tests\verify.ps1
 ```
 
-Other scripts under `tests\` check windows, installation flows, tray behavior and translations. Scripts under `tests\system\` modify the actual installation and service; run them only on a test machine.
-
-### Project structure
+Other test scripts are in `tests/`. Scripts in `tests/system/` modify the actual installation and Windows service; run them only in a dedicated test environment.
 
 ```text
-src/                 C# source (WinForms, .NET Framework 4.8)
-  Program.cs         Entry point, service management
-  MainForm.cs        Main window and system tray
-  EngineService.cs   Windows service and engine console
-  Setup.cs           Installer and uninstaller
-  Lang*.cs           Turkish / English / Russian strings
-scripts/             Build scripts
-tests/               Test scripts
-vendor/goodbyedpi/   GoodbyeDPI-Turkey 0.2.3rc3 binaries and licenses
-docs/                User guide, release notes, website (GitHub Pages)
+src/                 Application, service, setup and interface code
+assets/              Application icons and visual resources
+scripts/             Build and packaging scripts
+tests/               Verification and behavior tests
+vendor/goodbyedpi/    Engine, drivers and third-party licenses
+docs/                Website, user guide and release notes
 ```
 
-## Contributions and feedback
+## Contributing
 
-[Open an issue](https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new) to report a bug or suggest an improvement. Including the application log (`%LOCALAPPDATA%\GoodbyeDPI Tray\Logs\application.log`) helps diagnose bugs. If you find the project useful, you can support it with a ⭐.
+Bug reports, feedback and pull requests are welcome. For a substantial change, [open an issue](https://github.com/trfurkan/GoodbyeDPI-Tray/issues) first to discuss your approach. Describe the purpose of your change and the checks you performed in your pull request.
 
-## About me
+Developed by [Furkan](https://github.com/trfurkan). If the project is useful to you, a GitHub star is a welcome way to support it.
 
-Hi, I’m Furkan. In my spare time, I build simple, user-friendly projects as a hobby to make everyday life easier. I make no claim to professional expertise; I’m happy if something I’ve built is useful to you. Thank you for your interest and support!
+## License and upstream projects
 
-## License and acknowledgments
+The application code is released under the [Apache License 2.0](LICENSE). Third-party components have separate licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-The application code is licensed under [Apache 2.0](LICENSE). Bundled third-party components retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details.
-
-- [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) — ValdikSS
-- [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) — cagritaskn
-- [WinDivert](https://github.com/basil00/WinDivert) — basil00
-
-> [!WARNING]
-> This application is entirely experimental and comes with no warranty. It may not work on every network and may affect your connection. You use it at your own discretion and assume all responsibility. GoodbyeDPI Tray is an independent project, not an official release of ValdikSS/GoodbyeDPI or cagritaskn/GoodbyeDPI-Turkey.
+- [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) — ValdikSS, connection engine.
+- [GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey) — cagritaskn, Turkey profiles and base distribution.
+- [WinDivert](https://github.com/basil00/WinDivert) — basil00, packet capture and diversion.
