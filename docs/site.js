@@ -1,6 +1,21 @@
 // Shared by the Turkish, English and Russian pages.
 (function () {
  var root = document.documentElement;
+ var languagePicker = document.querySelector('.language-picker');
+ if (languagePicker) {
+  document.addEventListener('click', function (event) {
+   if (!languagePicker.contains(event.target)) languagePicker.open = false;
+  });
+  languagePicker.addEventListener('keydown', function (event) {
+   if (event.key === 'Escape' && languagePicker.open) {
+    languagePicker.open = false;
+    languagePicker.querySelector('summary').focus();
+   }
+  });
+  languagePicker.addEventListener('focusout', function (event) {
+   if (!languagePicker.contains(event.relatedTarget)) languagePicker.open = false;
+  });
+ }
  function current() { return root.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
  // Screenshots come in a light and a dark version; show the one that matches the page.
  function swapImages() {
@@ -16,6 +31,41 @@
  });
  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { if (!root.getAttribute("data-theme")) swapImages(); });
  swapImages();
+
+ var calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+ var watch = "IntersectionObserver" in window;
+ // Highlight the last navigation target above the reading line.
+ var navigation = Array.prototype.slice.call(document.querySelectorAll('header.top nav a[href^="#"]'));
+ var targets = navigation.map(function (link) { return { link: link, node: document.getElementById(link.hash.slice(1)) }; }).filter(function (item) { return item.node; });
+ var scheduled = false;
+ function updateNavigation() {
+  scheduled = false;
+  var selected = null;
+  var header = document.querySelector('header.top');
+  var line = (header ? header.getBoundingClientRect().height : 64) + 80;
+  targets.forEach(function (item) { if (item.node.getBoundingClientRect().top <= line) selected = item.link; });
+  navigation.forEach(function (link) { if (link === selected) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current'); });
+ }
+ function scheduleNavigation() { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNavigation); } }
+ window.addEventListener('scroll', scheduleNavigation, { passive: true });
+ window.addEventListener('resize', scheduleNavigation);
+ updateNavigation();
+
+ // Sections fade up once as they come into view. Without the observer (or with reduced motion) nothing is hidden.
+ if (watch && !calm) {
+  var reveal = new IntersectionObserver(function (entries) {
+   entries.forEach(function (entry) { if (entry.isIntersecting) { entry.target.classList.add("in"); reveal.unobserve(entry.target); } });
+  }, { rootMargin: "0px 0px -8% 0px" });
+  document.querySelectorAll("main > section").forEach(function (section) { section.classList.add("reveal"); reveal.observe(section); });
+ }
+
+ // Animate the status shield only while the preview is visible.
+ var demo = document.querySelector('[data-demo]');
+ if (demo && watch && !calm) {
+  new IntersectionObserver(function (entries) {
+   demo.classList.toggle('is-visible', entries[0].isIntersecting);
+  }, { threshold: .25 }).observe(demo);
+ }
 
  // Fetch every page so older published releases are not omitted.
  // Static release content remains usable without JavaScript or if GitHub is unavailable.
@@ -53,6 +103,9 @@
    var stable = releases.filter(function (r) { return !r.prerelease; })[0];
    var asset = stable && installer(stable);
    if (asset) document.querySelectorAll("a[data-installer]").forEach(function (a) { a.href = asset.browser_download_url; });
+   // The version badge in the hero follows the latest release.
+   if (stable && stable.tag_name) document.querySelectorAll("[data-version]").forEach(function (node) { node.textContent = stable.tag_name; });
+   if (stable) document.querySelectorAll("a[data-latest]").forEach(function (a) { a.href = stable.html_url; });
    var list = document.querySelector("[data-releases]");
    if (!list) return;
    var fragment = document.createDocumentFragment();
@@ -73,7 +126,15 @@
     card.appendChild(meta);
     var title = element("h3"); title.appendChild(link(release.tag_name || release.name, release.html_url)); card.appendChild(title);
     if (release.body && release.body.trim()) {
-     var details = element("details"); details.open = release === primary;
+     var highlights = release.body.split(/\r?\n/).filter(function (line) { return /^\s*[-*+]\s+\S/.test(line); }).slice(0, 3);
+     if (highlights.length) {
+      var bullets = element('ul', 'release-highlights');
+      highlights.forEach(function (line) {
+       bullets.appendChild(element('li', '', line.replace(/^\s*[-*+]\s+/, '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')));
+      });
+      card.appendChild(bullets);
+     }
+     var details = element("details");
      details.appendChild(element("summary", "", list.dataset.notes));
      // Release text is untrusted: never insert it as HTML or execute Markdown HTML.
      var text = release.body.replace(/^#{1,6}\s+/gm, "").replace(/\*\*([^*]+)\*\*/g, "$1");
