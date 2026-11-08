@@ -164,7 +164,6 @@ namespace GoodbyeTray {
    {"Başlat",new[]{"Start","Запустить"}},
    {"Durdur",new[]{"Stop","Остановить"}},
    {"Yeniden başlat",new[]{"Restart","Перезапустить"}},
-   {"Profil seçimi",new[]{"Profile","Профиль"}},
    {"Ayarlar",new[]{"Settings","Настройки"}},
    {"Yeni sürümü indir",new[]{"Download the new version","Скачать новую версию"}},
    {"Arayüzden çık",new[]{"Quit the app","Выйти из приложения"}},

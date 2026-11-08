@@ -24,7 +24,8 @@ try {
   if($menu.Font.Size -lt 10 -or $menu.Items[0].Height -gt 32 -or $menu.Items[0].Height -lt $menu.Font.Height) { throw 'Tray row spacing is incorrect' }
   Save-Menu $menu ('tray-menu-'+$mode)
   $sub=$type.GetField('trayPause',$flags).GetValue($form).DropDown
-  if($sub.BackColor -ne $menu.BackColor -or $sub.Items[0].Height -lt 60) { throw 'Pause submenu style missing' }
+  # The break submenu matches the tray menu: same colors, one plain row per duration.
+  if($sub.BackColor -ne $menu.BackColor -or $sub.Items.Count -ne 2 -or $sub.Items[0].Height -lt $sub.Font.Height) { throw 'Pause submenu style missing' }
   Save-Menu $sub ('tray-pause-'+$mode)
   for($cycle=0;$cycle -lt 3;$cycle++) {
    $pause=$type.GetMethod('PreparePauseMenu',$flags).Invoke($form,[object[]]@($false))

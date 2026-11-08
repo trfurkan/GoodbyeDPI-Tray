@@ -48,12 +48,12 @@ try {
  }
  foreach($state in @([ServiceProcess.ServiceControllerStatus]::Running,[ServiceProcess.ServiceControllerStatus]::Stopped)) {
   $type.GetMethod('SetServiceState',$instance).Invoke($trayForm,[object[]]@(0,$state)) | Out-Null
-  $start=$type.GetField('trayToggle',$instance).GetValue($trayForm)
-  $stop=$type.GetField('trayStop',$instance).GetValue($trayForm)
-  if($start.Enabled -ne ($state -eq 'Stopped') -or $stop.Enabled -ne ($state -eq 'Running')) { throw 'Tepsi etkinlik durumu yanlış' }
+  # One tray item starts or stops, following the state; the menu holds only the everyday actions.
+  $toggle=$type.GetField('trayToggle',$instance).GetValue($trayForm)
+  if(-not $toggle.Enabled -or $toggle.Text -ne $(if($state -eq 'Running'){'Durdur'}else{'Başlat'})) { throw 'Tepsi başlat/durdur öğesi yanlış' }
  }
- $profiles=$type.GetField('trayProfiles',$instance).GetValue($trayForm)
- if($profiles.DropDownItems.Count -ne 7) { throw 'Tepside profil eksik' }
+ $menu=$type.GetField('tray',$instance).GetValue($trayForm).ContextMenuStrip
+ if(@($menu.Items | Where-Object { $_ -isnot [Windows.Forms.ToolStripSeparator] }).Count -ne 4) { throw 'Tepsi menüsü sade değil' }
  foreach($action in @('show','profiles','settings')) { $type.GetMethod('DispatchCommand',$instance).Invoke($trayForm,[object[]]@($action)) | Out-Null; if(-not $trayForm.Visible) { throw 'Pencere açılmadı' } }
  $setTray=$type.GetMethod('SetTrayVisible',$instance); $tray=$type.GetField('tray',$instance).GetValue($trayForm)
  $setTray.Invoke($trayForm,[object[]]@($true)) | Out-Null

@@ -70,7 +70,6 @@ namespace GoodbyeTray {
    {"GoodbyeDPI • Kurulum gerekiyor","GoodbyeDPI • Kurulum lazım"},
    {"Bağlantı profili","Bağlantı profili"},
    {"Profil seç  ▾","Profil seç  ▾"},
-   {"Profil seçimi","Profil seç"},
    {"Bu profil DNS'e dokunmaz; gerekirse Windows'tan DNS ayarla.","Bu profil DNS'e karışmaz; lazımsa DNS'i Windows'tan ayarla."},
    {"Seçtiğin profil henüz uygulanmadı.","Seçtiğin profil henüz devreye girmedi."},
    {"Windows açıldığında GoodbyeDPI'ı başlat","Windows açılınca başlat"},

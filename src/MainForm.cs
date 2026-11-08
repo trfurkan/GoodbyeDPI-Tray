@@ -260,7 +260,6 @@ namespace GoodbyeTray {
   internal const string RevealEvent=@"Local\GoodbyeDPI.Tray.Reveal";
   readonly NotifyIcon tray;
   readonly ToolStripMenuItem trayToggle;
-  readonly ToolStripMenuItem trayStop,trayRestart,trayProfiles;
   readonly AppCommands commands;
   int refreshTicks;
   readonly EventWaitHandle reveal;
@@ -471,16 +470,12 @@ namespace GoodbyeTray {
     commands=new AppCommands();
     reveal=new EventWaitHandle(false,EventResetMode.AutoReset,RevealEvent);
     var menu=new ContextMenuStrip(); menu.Items.Add(L.T("GoodbyeDPI'ı aç"),null,delegate { Reveal(); }); menu.Items.Add(new ToolStripSeparator());
-    trayToggle=new ToolStripMenuItem(L.T("Başlat"),null,delegate { Execute("start",0); }); menu.Items.Add(trayToggle);
-    trayStop=new ToolStripMenuItem(L.T("Durdur"),null,delegate { Execute("stop",0); }); menu.Items.Add(trayStop);
-    trayRestart=new ToolStripMenuItem(L.T("Yeniden başlat"),null,delegate { Execute("restart",0); }); menu.Items.Add(trayRestart);
+    // A short menu for the everyday actions: one item that starts, stops or resumes, the break, and quitting.
+    // Profiles, DNS and settings live in the window, which the first item opens.
+    trayToggle=new ToolStripMenuItem(L.T("Başlat"),null,delegate { Execute(running?"stop":"start",0); }); menu.Items.Add(trayToggle);
+    trayPause.Text=L.T("Mola ver");
     trayPause.DropDownItems.Add(L.T("5 dakika durdur"),null,delegate { Execute("pause5",0); });
     trayPause.DropDownItems.Add(L.T("15 dakika durdur"),null,delegate { Execute("pause15",0); }); menu.Items.Add(trayPause);
-    foreach(ToolStripItem item in trayPause.DropDownItems) item.AccessibleDescription=L.T("Süre bitince kendiliğinden devam eder.");
-    menu.Items.Add(new ToolStripSeparator());
-    trayProfiles=new ToolStripMenuItem(L.T("Profil seçimi"));
-    foreach(int id in Program.DisplayOrder()) { int index=id; trayProfiles.DropDownItems.Add(new ToolStripMenuItem(Program.Names[id],null,delegate { Execute("profile",index); }) { Tag=id,ToolTipText=Program.Describe(id) }); } trayProfiles.DropDown.ShowItemToolTips=true; menu.Items.Add(trayProfiles);
-    menu.Items.Add(L.T("Ayarlar"),null,delegate { DispatchCommand("settings"); });
     menu.Items.Add(new ToolStripSeparator());
     menu.Items.Add(L.T("Arayüzden çık"),null,delegate { DispatchCommand("exit"); });
     bool showTray=true; try { showTray=WindowsIntegration.TrayStartupEnabled(); } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
@@ -889,8 +884,7 @@ namespace GoodbyeTray {
    if(tray!=null) {
     tray.Text=available?(running?L.T("GoodbyeDPI • Çalışıyor"):L.T("GoodbyeDPI • Durduruldu")):L.T("GoodbyeDPI • Kurulum gerekiyor");
     if(available) tray.Text=tray.Text.Replace("GoodbyeDPI",Program.MotorName(activeProfile));
-    trayToggle.Enabled=available && !running && !busy && !transition; trayStop.Enabled=(running || paused) && !busy && !transition; trayRestart.Enabled=restart.Enabled; trayProfiles.Enabled=available && !busy && !transition;
-    for(int i=0;i<trayProfiles.DropDownItems.Count;i++) { var item=(ToolStripMenuItem)trayProfiles.DropDownItems[i]; int id=(int)item.Tag; item.Checked=id==activeProfile; item.Enabled=id!=activeProfile; }
+    trayToggle.Text=paused?L.T("Devam et"):running?L.T("Durdur"):L.T("Başlat"); trayToggle.Enabled=available && !busy && !transition;
    }
   }
   // Only the real app (with its tray icon) changes the service; previews and tests never do.
