@@ -142,6 +142,9 @@ namespace GoodbyeTray {
  // starting or switching, an amber shield during a break and a grey one when stopped.
  sealed class StatusLabel : Label {
   internal enum Mark { None, Stopped, Running, Busy, Paused }
+  // How much larger than the 30 px base the mark is drawn (the status card uses a bigger one); the text moves aside with it.
+  float markScale=1f;
+  internal float MarkScale { get { return markScale; } set { markScale=Math.Max(1f,value); Padding=new Padding((int)Math.Round(54*markScale),0,0,0); Invalidate(); } }
   Mark mark=Mark.None;
   readonly Tween appear;
   internal static readonly Color Green=Color.FromArgb(31,153,92),Amber=Color.FromArgb(214,148,30),Grey=Color.FromArgb(128,140,160);
@@ -162,7 +165,7 @@ namespace GoodbyeTray {
    if(mark==Mark.None) return;
    var g=e.Graphics; g.SmoothingMode=SmoothingMode.AntiAlias;
    // The mark is drawn at 100 % and grows with the status text on a scaled screen (its line is 27 px at 100 %).
-   float grow=Math.Max(1f,Font.Height/27f);
+   float grow=Math.Max(1f,Font.Height/27f)*markScale;
    if(grow>1.01f) { g.TranslateTransform(0,Height/2f); g.ScaleTransform(grow,grow); g.TranslateTransform(0,-Height/2f); }
    float cx=23, cy=Height/2f, pop=appear.Value;
    // Overshoot: 0.35 → about 1.12 → 1, so the mark settles instead of stopping dead.

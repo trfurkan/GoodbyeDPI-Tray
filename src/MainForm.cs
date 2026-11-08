@@ -406,7 +406,7 @@ namespace GoodbyeTray {
    var scroll=dashboardHost; scroll.Dock=DockStyle.Fill; scroll.AutoScroll=false; Controls.Add(scroll); BuildPageHost();
    var layout=dashboard; layout.Dock=DockStyle.Fill; layout.AutoSize=false; layout.Padding=new Padding(20,10,20,8); layout.ColumnCount=1; layout.RowCount=8;
    // Rows: (unused, the menus moved to the title bar), status card, notice (no height), connection card, settings, access, action buttons, footer.
-   foreach(int height in new[]{0,116,0,ChoicesHeight,SettingsHeight,72,ActionRowHeight}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
+   foreach(int height in new[]{0,HeroHeight,0,ChoicesHeight,SettingsHeight,72,ActionRowHeight}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
    layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); scroll.Controls.Add(layout);
    // Title bar: Windows' caption is folded into the window (see WndProc), so the app draws the icon and name,
    // the language and theme menus and the minimize, maximize and close buttons in one strip. Dragging, double-click,
@@ -430,13 +430,13 @@ namespace GoodbyeTray {
    // and on the right the break menu and the main button.
    var hero=heroCard; hero.Dock=DockStyle.Fill; hero.Margin=new Padding(0,0,0,12); hero.Padding=new Padding(22,16,22,14); layout.Controls.Add(hero,0,1);
    var heroLayout=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,BackColor=Color.Transparent };
-   heroRows=heroLayout; heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,286)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,50)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); hero.Controls.Add(heroLayout);
-   status.Dock=DockStyle.Fill; status.Font=new Font(Font.FontFamily,15,FontStyle.Bold); status.TextAlign=ContentAlignment.MiddleLeft; status.Margin=Padding.Empty; heroLayout.Controls.Add(status,0,0);
-   detail.Dock=DockStyle.Fill; detail.Tag="muted"; detail.AutoEllipsis=true; detail.Font=new Font("Segoe UI",9.5f); detail.Margin=new Padding(54,0,0,0); heroLayout.Controls.Add(detail,0,1);
+   heroRows=heroLayout; heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,330)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,62)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); hero.Controls.Add(heroLayout);
+   status.Dock=DockStyle.Fill; status.Font=new Font(Font.FontFamily,15.5f,FontStyle.Bold); status.MarkScale=1.3f; status.TextAlign=ContentAlignment.MiddleLeft; status.Margin=Padding.Empty; heroLayout.Controls.Add(status,0,0);
+   detail.Dock=DockStyle.Fill; detail.Tag="muted"; detail.AutoEllipsis=true; detail.Font=new Font("Segoe UI",9.5f); detail.Margin=new Padding(70,0,0,0); heroLayout.Controls.Add(detail,0,1);
    var actions=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Margin=Padding.Empty,Padding=new Padding(0,4,0,0),BackColor=Color.Transparent };
    restart.Text=L.T("Yeniden başlat"); restart.Glyph="restart"; restart.Click+=delegate { Execute("restart",0); };
    pauseButton.Text=L.T("Mola ver");
-   toggle.Size=new Size(280,42); toggle.Margin=Padding.Empty; toggle.Font=new Font("Segoe UI Semibold",10.5f);
+   toggle.Size=new Size(326,50); toggle.Margin=Padding.Empty; toggle.Font=new Font("Segoe UI Semibold",11.5f);
    toggle.PrimaryClick+=delegate { Execute(running?"stop":"start",0); }; toggle.BreakClick+=delegate { ShowPauseMenu(); };
    toggle.HoverChanged+=delegate(int part) { tips.SetToolTip(toggle,part==0?toggle.BreakText:part==1?toggle.Text:null); };
    actions.Controls.Add(toggle);
@@ -988,10 +988,10 @@ namespace GoodbyeTray {
   int S(int pixels) { return (int)Math.Round(pixels*ui); }
   internal void ApplyScale(float factor) { if(factor<=0 || Math.Abs(factor-ui)<0.01f) return; float step=factor/ui; ui=factor; Scale(new SizeF(step,step)); }
   // The console and report buttons are 46 px; the rest of their row is the gap before the footer.
-  const int ActionRowHeight=62, SettingsHeight=248, ChoicesHeight=168, FooterHeight=34;
+  const int ActionRowHeight=62, SettingsHeight=248, ChoicesHeight=168, FooterHeight=34, HeroHeight=132;
   // The height the full layout needs, title bar included: the window opens at this size when the screen allows.
   // The footer counts at its fixed height: its current height follows the space left, so it cannot size the window.
-  int NaturalHeight() { return titleBar.Height+dashboard.Padding.Vertical+S(FooterHeight+116+ChoicesHeight+SettingsHeight+72+ActionRowHeight); }
+  int NaturalHeight() { return titleBar.Height+dashboard.Padding.Vertical+S(FooterHeight+HeroHeight+ChoicesHeight+SettingsHeight+72+ActionRowHeight); }
   // The window gets its final size before it exists, so nothing is resized (and briefly left unpainted) after it
   // shows. With the caption folded into the window, only the side and bottom frames lie outside the client area.
   void SetOpeningSize() {
@@ -1018,12 +1018,12 @@ namespace GoodbyeTray {
    int choices=S(ChoicesHeight), access=S(72), actions=S(ActionRowHeight);
    int fixedPart=dashboard.Padding.Vertical+S(FooterHeight)+choices+access+actions;
    // "Roomy" when the full layout fits as it is; the window opens at that height, so no empty band is left.
-   bool roomy=ClientSize.Height>=fixedPart+titleBar.Height+S(116+SettingsHeight); float open=accessOpen;
+   bool roomy=ClientSize.Height>=fixedPart+titleBar.Height+S(HeroHeight+SettingsHeight); float open=accessOpen;
    bool compact=!roomy;
    Func<int,int,int> blend=delegate(int a,int b) { return (int)Math.Round(a+(b-a)*open); };
    int[] heights=new int[7];
    heights[0]=0;
-   heights[1]=S(116);
+   heights[1]=S(HeroHeight);
    heights[3]=choices;
    // Only the settings and access rows move when the detailed test opens; the rest stays put
    // (repainting it every frame is what made the motion stutter), and the detailed list scrolls when it needs more room.
