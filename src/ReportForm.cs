@@ -94,7 +94,7 @@ namespace GoodbyeTray {
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=7 };
    foreach(int h in new[]{46,48,26}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
    layout.RowStyles.Add(new RowStyle(SizeType.Percent,40)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,32)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,60)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,60)); Controls.Add(layout);
-   layout.Controls.Add(new Label { Text=L.T("Sorun bildir"),Dock=DockStyle.Fill,Font=new Font(Font.FontFamily,20,FontStyle.Bold),AutoEllipsis=true });
+   layout.Controls.Add(new Label { Text=L.T("Sorun bildir"),Dock=DockStyle.Fill,Font=Fonts.Serif(22),AutoEllipsis=true });
    layout.Controls.Add(new Label { Text=L.T("Ne olduğunu yaz, gerisini biz ekleyelim. GitHub'da bir hata kaydı açılır; göndermeden önce orada da görüp düzenleyebilirsin."),Dock=DockStyle.Fill,ForeColor=muted });
    layout.Controls.Add(new Label { Text=L.T("Ne oldu?"),Dock=DockStyle.Fill,Font=new Font(Font.FontFamily,10,FontStyle.Bold),TextAlign=ContentAlignment.BottomLeft });
    what.Multiline=true; what.ScrollBars=ScrollBars.Vertical; what.AcceptsReturn=true; what.Dock=DockStyle.Fill; what.BackColor=surface; what.ForeColor=ink; what.BorderStyle=BorderStyle.FixedSingle; what.AccessibleName=L.T("Ne oldu?"); layout.Controls.Add(what);

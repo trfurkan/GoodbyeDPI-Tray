@@ -11,7 +11,7 @@ namespace GoodbyeTray {
    Text=L.T("Neler değişti?"); ClientSize=new Size(640,520); MinimumSize=new Size(550,440); StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=4 };
    layout.RowStyles.Add(new RowStyle(SizeType.Absolute,48)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,52)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,60)); Controls.Add(layout);
-   layout.Controls.Add(new Label { Text=L.T("Yeni sürümde neler var?"),Dock=DockStyle.Fill,Font=new Font(Font.FontFamily,20,FontStyle.Bold),AutoEllipsis=true });
+   layout.Controls.Add(new Label { Text=L.T("Yeni sürümde neler var?"),Dock=DockStyle.Fill,Font=Fonts.Serif(22),AutoEllipsis=true });
    layout.Controls.Add(new Label { Text="GoodbyeDPI Tray "+version+Environment.NewLine+L.T("GitHub sürüm notlarından kısa bir özet."),Dock=DockStyle.Fill,ForeColor=muted });
    var content=new NoticeView { Dock=DockStyle.Fill,Text=String.IsNullOrWhiteSpace(notes)?L.T("Bu sürüm için henüz yenilik notu paylaşılmamış. Ayrıntıları sürüm sayfasında kontrol edebilirsin."):notes,BackColor=surface,ForeColor=ink,EdgeColor=edge,ThumbColor=muted,AccessibleName=L.T("Sürüm notları") }; layout.Controls.Add(content);
    var actions=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=3,RowCount=1,Margin=Padding.Empty };

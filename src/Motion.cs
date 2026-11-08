@@ -18,6 +18,12 @@ namespace GoodbyeTray {
   internal static Font Get(FontFamily family,float size) { return Get(family.Name,size); }
   internal static Font Get(string family,float size,GraphicsUnit unit) { return Get(family,size,FontStyle.Regular,unit); }
   internal static Font Get(Font prototype,FontStyle style) { return Get(prototype.FontFamily.Name,prototype.Size,style,prototype.Unit); }
+  // Dialog headings in a serif face that ships with Windows; Segoe UI where neither is installed.
+  static string serifFamily;
+  internal static Font Serif(float size) {
+   if(serifFamily==null) serifFamily=Array.Exists(FontFamily.Families,f=>f.Name=="Georgia")?"Georgia":Array.Exists(FontFamily.Families,f=>f.Name=="Cambria")?"Cambria":"Segoe UI";
+   return Get(serifFamily,size,FontStyle.Bold);
+  }
  } // One UI-thread timer drives every animation: tweens that ease to a target and controls that loop (pulse, spin, shimmer).
  // With Windows' "Animation effects" off, tweens jump to their target and loops draw a still frame.
  static class Motion {

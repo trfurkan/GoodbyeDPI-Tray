@@ -27,7 +27,7 @@ namespace GoodbyeTray {
    foreach(int h in new[]{46,48,26}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
    layout.RowStyles.Add(new RowStyle(SizeType.Percent,45)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,30)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,55));
    layout.RowStyles.Add(new RowStyle(SizeType.Absolute,74)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,56)); Controls.Add(layout);
-   layout.Controls.Add(new Label { Text=L.T("Engelli siteler"),Dock=DockStyle.Fill,Font=new Font(Font.FontFamily,20,FontStyle.Bold),AutoEllipsis=true });
+   layout.Controls.Add(new Label { Text=L.T("Engelli siteler"),Dock=DockStyle.Fill,Font=Fonts.Serif(22),AutoEllipsis=true });
    layout.Controls.Add(new Label { Text=L.T("Bu ayar açıkken GoodbyeDPI yalnızca bu sitelere karışır. Açılmayan bir site varsa aşağıdan ekleyebilirsin."),Dock=DockStyle.Fill,ForeColor=muted });
    layout.Controls.Add(Heading(L.T("Hazır gelenler")));
    foreach(var flow in new[]{defaults,custom}) { flow.Dock=DockStyle.Fill; flow.AutoScroll=true; flow.WrapContents=true; flow.Padding=new Padding(0,4,0,4); flow.BackColor=background; }
