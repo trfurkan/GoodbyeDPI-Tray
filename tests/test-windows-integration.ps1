@@ -117,7 +117,7 @@ try {
   if([string]$iconState.GetValue($icon) -ne 'Available') { throw 'Durum simgesi yanlış' }
   # The window follows later changes too: a finished check that finds nothing shows "current".
   $type.GetMethod('SetUpdateState',$instance).Invoke($trayForm,[object[]]@([Enum]::Parse($assembly.GetType('GoodbyeTray.UpdateState'),'Current'))) | Out-Null
-  if(-not ($about.Controls | Where-Object { $_.Text -eq 'Tertemiz! En güncel sürümdesin.' }) -or -not ($about.Controls | Where-Object { $_.Text -eq 'Güncellemelere bak' }) -or [string]$iconState.GetValue($icon) -ne 'Current') { throw 'Hakkında penceresi güncel durumu göstermiyor' }
+  if(-not ($about.Controls | Where-Object { $_.Text -eq 'Her şey güncel. En son sürümdesin.' }) -or -not ($about.Controls | Where-Object { $_.Text -eq 'Şimdi kontrol et' }) -or [string]$iconState.GetValue($icon) -ne 'Current') { throw 'Hakkında penceresi güncel durumu göstermiyor' }
  } finally { $about.Dispose() }
  if($type.GetField('UpdateStateChanged',$instance).GetValue($trayForm) -ne $null) { throw 'Kapanan Hakkında penceresi dinlemeye devam ediyor' }
 } finally { $type.GetField('quitting',$instance).SetValue($trayForm,$true); $trayForm.Dispose() }
