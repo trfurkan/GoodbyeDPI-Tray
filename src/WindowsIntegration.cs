@@ -206,25 +206,83 @@ namespace GoodbyeTray {
    }
   }
  }
- // One shared renderer keeps profile, theme and tray menus consistent.
+ // One shared renderer keeps the menus consistent. The tray menus keep the classic look; the menus that open from
+ // the main window (Modern) share one design: Windows 11's rounded window, a soft fill under the mouse, the chosen
+ // item marked by an accent check on the right, icons in one column on the left and descriptions as a muted line.
  class MenuRenderer : ToolStripProfessionalRenderer {
-  readonly Color background,foreground,selection,accent,border;
+  readonly Color background,foreground,selection,accent,border,muted,hover;
   // Rounded corners for the window of the menu (the drop-down pickers); the tray menus stay square.
   internal bool Rounded;
-  protected override void Initialize(ToolStrip toolStrip) { base.Initialize(toolStrip); if(Rounded) toolStrip.SizeChanged+=delegate { Shape(toolStrip); }; }
-  static void Shape(ToolStrip strip) { if(strip.Width<20 || strip.Height<20) return; using(var path=SoftButton.Round(new Rectangle(0,0,strip.Width,strip.Height),16)) strip.Region=new Region(path); }
-  internal MenuRenderer(Color bg,Color fg,Color selected) { background=bg; foreground=fg; bool dark=bg.GetBrightness()<0.5f; selection=SystemInformation.HighContrast?SystemColors.Highlight:AppPalette.Selection(dark); accent=SystemInformation.HighContrast?SystemColors.HighlightText:dark?AppPalette.Mint:AppPalette.Accent; border=SystemInformation.HighContrast?SystemColors.WindowText:AppPalette.Border(dark); RoundedEdges=false; }
+  // The main window's menus: no check or image column, everything laid out by this renderer.
+  internal bool Modern;
+  bool systemCorners;
+  [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd,int attribute,ref int value,int size);
+  protected override void Initialize(ToolStrip toolStrip) {
+   base.Initialize(toolStrip);
+   if(!Rounded) return;
+   toolStrip.SizeChanged+=delegate { Shape(toolStrip); };
+   // Windows 11 rounds the menu window itself, with a smooth edge and its own border; older Windows clips a region.
+   if(toolStrip.IsHandleCreated) RoundWindow(toolStrip); else toolStrip.HandleCreated+=delegate { RoundWindow(toolStrip); };
+  }
+  void RoundWindow(ToolStrip strip) {
+   try {
+    int corner=3; systemCorners=DwmSetWindowAttribute(strip.Handle,33,ref corner,4)==0; // DWMWA_WINDOW_CORNER_PREFERENCE: small round
+    if(systemCorners) { int edge=ColorTranslator.ToWin32(border); DwmSetWindowAttribute(strip.Handle,34,ref edge,4); strip.Region=null; } // DWMWA_BORDER_COLOR
+   } catch(DllNotFoundException) { systemCorners=false; } catch(EntryPointNotFoundException) { systemCorners=false; }
+  }
+  void Shape(ToolStrip strip) { if(systemCorners || strip.Width<20 || strip.Height<20) return; using(var path=SoftButton.Round(new Rectangle(0,0,strip.Width,strip.Height),16)) strip.Region=new Region(path); }
+  internal MenuRenderer(Color bg,Color fg,Color selected) {
+   background=bg; foreground=fg; bool dark=bg.GetBrightness()<0.5f;
+   selection=SystemInformation.HighContrast?SystemColors.Highlight:AppPalette.Selection(dark);
+   accent=SystemInformation.HighContrast?SystemColors.HighlightText:dark?AppPalette.Mint:AppPalette.Accent;
+   border=SystemInformation.HighContrast?SystemColors.WindowText:AppPalette.Border(dark);
+   muted=SystemInformation.HighContrast?fg:Blend(fg,bg,0.6f);
+   hover=SystemInformation.HighContrast?SystemColors.Highlight:Blend(fg,bg,dark?0.09f:0.06f);
+   RoundedEdges=false;
+  }
   protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e) { e.Graphics.Clear(background); }
   protected override void OnRenderImageMargin(ToolStripRenderEventArgs e) { using(var brush=new SolidBrush(background)) e.Graphics.FillRectangle(brush,e.AffectedBounds); }
   protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e) {
+   if(Rounded && systemCorners) return;
    if(Rounded) { Shape(e.ToolStrip); e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; using(var path=SoftButton.Round(new Rectangle(0,0,e.ToolStrip.Width-1,e.ToolStrip.Height-1),16)) using(var pen=new Pen(border)) e.Graphics.DrawPath(pen,path); return; }
    using(var pen=new Pen(border)) e.Graphics.DrawRectangle(pen,0,0,e.ToolStrip.Width-1,e.ToolStrip.Height-1);
   }
-  protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; bool active=(e.Item.Enabled && e.Item.Selected) || (item!=null && item.Checked); if(active) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; using(var path=SoftButton.Round(new Rectangle(3,1,e.Item.Width-6,e.Item.Height-2),10)) using(var brush=new SolidBrush(selection)) e.Graphics.FillPath(brush,path); } }
-  protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; var r=e.ImageRectangle; using(var pen=new Pen(accent,2)) e.Graphics.DrawLines(pen,new[]{new Point(r.Left+3,r.Top+r.Height/2),new Point(r.Left+7,r.Top+r.Height/2+4),new Point(r.Right-2,r.Top+3)}); }
+  protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e) {
+   var item=e.Item as ToolStripMenuItem;
+   if(Modern) {
+    // Only the row under the mouse (or keyboard focus) gets a fill; the chosen row shows its check instead.
+    if(!e.Item.Enabled || !e.Item.Selected) return;
+    e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+    using(var path=SoftButton.Round(new Rectangle(2,1,e.Item.Width-4,e.Item.Height-2),12)) using(var brush=new SolidBrush(hover)) e.Graphics.FillPath(brush,path);
+    return;
+   }
+   bool active=(e.Item.Enabled && e.Item.Selected) || (item!=null && item.Checked); if(active) { e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; using(var path=SoftButton.Round(new Rectangle(3,1,e.Item.Width-6,e.Item.Height-2),10)) using(var brush=new SolidBrush(selection)) e.Graphics.FillPath(brush,path); }
+  }
+  protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e) { if(Modern) return; e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; var r=e.ImageRectangle; using(var pen=new Pen(accent,2)) e.Graphics.DrawLines(pen,new[]{new Point(r.Left+3,r.Top+r.Height/2),new Point(r.Left+7,r.Top+r.Height/2+4),new Point(r.Right-2,r.Top+3)}); }
+  protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e) { if(!Modern) base.OnRenderItemImage(e); }
   protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e) { e.ArrowColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:foreground; base.OnRenderArrow(e); }
-  protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,12,e.Item.Height/2,e.Item.Width-12,e.Item.Height/2); }
-  protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) { var item=e.Item as ToolStripMenuItem; e.TextColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:item!=null && (item.Checked || Convert.ToString(item.Tag)=="accent")?accent:foreground;
+  protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e) { int inset=Modern?8:12; using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,inset,e.Item.Height/2,e.Item.Width-inset,e.Item.Height/2); }
+  // Draws a row of a Modern menu: icon column, name, optional muted description, and the check on the right.
+  protected void DrawModernRow(ToolStripItemTextRenderEventArgs e,Action<Graphics,Rectangle,Color> icon) {
+   var g=e.Graphics; var item=e.Item as ToolStripMenuItem; g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+   bool selected=e.Item.Selected && e.Item.Enabled, chosen=item!=null && item.Checked, find=Convert.ToString(e.Item.Tag)=="accent";
+   Color ink=!e.Item.Enabled?Blend(foreground,background,0.45f):SystemInformation.HighContrast && selected?SystemColors.HighlightText:find?accent:foreground;
+   string hint=e.Item.AccessibleDescription; bool twoLines=!String.IsNullOrEmpty(hint) && e.Item.Height>=50;
+   int width=Math.Min(e.Item.Width,e.ToolStrip.ClientSize.Width), x=12, top=twoLines?8:0, line=twoLines?22:e.Item.Height;
+   var iconBox=new Rectangle(x,top+(line-18)/2,18,18);
+   bool hasIcon=icon!=null || e.Item.Image!=null || find;
+   if(icon!=null) icon(g,iconBox,ink);
+   else if(e.Item.Image!=null) { g.InterpolationMode=System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic; g.DrawImage(e.Item.Image,iconBox); }
+   else if(find) using(var pen=new Pen(ink,1.7f) { StartCap=System.Drawing.Drawing2D.LineCap.Round,EndCap=System.Drawing.Drawing2D.LineCap.Round }) { g.DrawEllipse(pen,iconBox.X+1,iconBox.Y+1,11,11); g.DrawLine(pen,iconBox.X+11,iconBox.Y+11,iconBox.Right-1,iconBox.Bottom-1); }
+   int textX=hasIcon?x+30:x+4, checkSpace=28, textWidth=Math.Max(1,width-textX-checkSpace);
+   var font=chosen || find?Fonts.Get(e.TextFont,FontStyle.Bold):e.TextFont;
+   TextRenderer.DrawText(g,e.Text,font,new Rectangle(textX,top,textWidth,line),ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
+   if(twoLines) TextRenderer.DrawText(g,hint,Fonts.Get(e.TextFont.FontFamily,8.5f),new Rectangle(textX,top+line,textWidth+checkSpace-8,e.Item.Height-top-line-4),SystemInformation.HighContrast && selected?SystemColors.HighlightText:muted,TextFormatFlags.Left|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix);
+   if(chosen) { int cx=width-22, cy=top+line/2; using(var pen=new Pen(SystemInformation.HighContrast && selected?SystemColors.HighlightText:accent,2f) { StartCap=System.Drawing.Drawing2D.LineCap.Round,EndCap=System.Drawing.Drawing2D.LineCap.Round,LineJoin=System.Drawing.Drawing2D.LineJoin.Round }) g.DrawLines(pen,new[]{new PointF(cx-5,cy),new PointF(cx-1.5f,cy+3.5f),new PointF(cx+5,cy-4)}); }
+  }
+  protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) {
+   if(Modern && e.Item is ToolStripMenuItem) { DrawModernRow(e,null); return; }
+   var item=e.Item as ToolStripMenuItem; e.TextColor=!e.Item.Enabled?SystemColors.GrayText:SystemInformation.HighContrast && e.Item.Selected?SystemColors.HighlightText:item!=null && (item.Checked || Convert.ToString(item.Tag)=="accent")?accent:foreground;
    // An item with a description (AccessibleDescription) shows it as a smaller, muted second line under its name.
    string hint=e.Item.AccessibleDescription;
    if(String.IsNullOrEmpty(hint) || e.Item.Height<52) { base.OnRenderItemText(e); return; }
@@ -232,6 +290,41 @@ namespace GoodbyeTray {
    TextRenderer.DrawText(e.Graphics,e.Text,e.TextFont,new Rectangle(x,8,width,22),e.TextColor,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
    { var small=Fonts.Get(e.TextFont.FontFamily,8.5f); TextRenderer.DrawText(e.Graphics,hint,small,new Rectangle(x,30,width,e.Item.Height-34),Blend(foreground,background,0.62f),TextFormatFlags.Left|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix); }
   }
-  static Color Blend(Color a,Color b,float share) { return Color.FromArgb((int)(a.R*share+b.R*(1-share)),(int)(a.G*share+b.G*(1-share)),(int)(a.B*share+b.B*(1-share))); }
+  internal static Color Blend(Color a,Color b,float share) { return Color.FromArgb((int)(a.R*share+b.R*(1-share)),(int)(a.G*share+b.G*(1-share)),(int)(a.B*share+b.B*(1-share))); }
+  // The tray menu and its submenus in the same look, with tighter rows (32 px) since it lists more commands.
+  internal static void PrepareTree(ToolStripDropDownMenu menu,Color surface,Color ink,Color border,int width) {
+   // Sizes are written at 100 %; the menu's own screen scale grows them with the text.
+   float f=menu.DeviceDpi/96f; Func<int,int> s=delegate(int px) { return (int)Math.Round(px*f); }; width=s(width);
+   menu.ShowCheckMargin=false; menu.ShowImageMargin=false; menu.Padding=new Padding(4); menu.DropShadowEnabled=true;
+   menu.BackColor=surface; menu.ForeColor=ink; menu.Font=Fonts.Get("Segoe UI",10f); menu.MinimumSize=new Size(width,0);
+   menu.Renderer=new MenuRenderer(surface,ink,border) { Rounded=true,Modern=true };
+   foreach(ToolStripItem item in menu.Items) {
+    item.AutoSize=false; item.Margin=Padding.Empty; item.BackColor=surface; item.ForeColor=ink; item.Font=Fonts.Get("Segoe UI",10f);
+    if(item is ToolStripSeparator) { item.Size=new Size(width-s(8),s(9)); continue; }
+    int height=s(32);
+    if(!String.IsNullOrEmpty(item.AccessibleDescription)) height=Math.Max(s(60),s(8+22)+TextRenderer.MeasureText(item.AccessibleDescription,Fonts.Get("Segoe UI",8.5f),new Size(Math.Max(40,width-s(8+16+20)),Int32.MaxValue),TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix).Height+s(8));
+    item.Size=new Size(width-s(8),height);
+    var parent=item as ToolStripMenuItem;
+    if(parent!=null && parent.HasDropDownItems) { var sub=parent.DropDown as ToolStripDropDownMenu; if(sub!=null) PrepareTree(sub,surface,ink,border,(int)Math.Round(width/f)); }
+   }
+  }
+  // Sets up a main-window menu for the Modern look: one padding, one font, roomy rows, no check or image column.
+  internal static void Prepare(ToolStripDropDownMenu menu,Color surface,Color ink,Color border,int width) {
+   float f=menu.DeviceDpi/96f; Func<int,int> s=delegate(int px) { return (int)Math.Round(px*f); }; width=Math.Max(width,s(width));
+   menu.ShowCheckMargin=false; menu.ShowImageMargin=false; menu.Padding=new Padding(5); menu.DropShadowEnabled=true;
+   menu.BackColor=surface; menu.ForeColor=ink; menu.MinimumSize=new Size(width,0);
+   menu.Renderer=new MenuRenderer(surface,ink,border) { Rounded=true,Modern=true };
+   foreach(ToolStripItem item in menu.Items) {
+    item.AutoSize=false; item.Margin=Padding.Empty; item.BackColor=surface; item.ForeColor=ink;
+    if(item is ToolStripSeparator) { item.Size=new Size(width-s(10),s(11)); continue; }
+    if(item is ToolStripMenuItem) item.Font=Fonts.Get("Segoe UI",10f,Convert.ToString(item.Tag)=="accent"?FontStyle.Bold:FontStyle.Regular);
+    bool described=!String.IsNullOrEmpty(item.AccessibleDescription) && !(item is ToolStripLabel);
+    if(item is ToolStripLabel) continue;
+    // A description wraps to as many lines as it needs under the name.
+    int height=s(36);
+    if(described) { bool icon=item.Image!=null || Convert.ToString(item.Tag)=="accent"; int textWidth=Math.Max(40,width-s(10+(icon?42:16)+20)); height=s(8+22)+TextRenderer.MeasureText(item.AccessibleDescription,Fonts.Get("Segoe UI",8.5f),new Size(textWidth,Int32.MaxValue),TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix).Height+s(8); }
+    item.Size=new Size(width-s(10),height);
+   }
+  }
  }
 }

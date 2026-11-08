@@ -30,15 +30,13 @@ namespace GoodbyeTray {
     menu.Items.Add(L.T("15 dakika durdur"),null,delegate { Execute("pause15",0); });
     foreach(ToolStripItem item in menu.Items) item.AccessibleDescription=L.T("Süre bitince kendiliğinden devam eder.");
    }
-   MenuAppearance.Apply(menu,surface,foreground,border,Math.Max(300,toggle.Width));
-   menu.ShowCheckMargin=false;
-   menu.Padding=new Padding(8);
-   menu.DropShadowEnabled=true;
-   menu.Renderer=new PauseMenuRenderer(surface,foreground,border,paused);
+   // The same look as the other menus: a title (with a muted line on what happens), then rows with a clock icon.
+   int width=Math.Max(260,toggle.Width);
+   MenuRenderer.Prepare(menu,surface,foreground,border,width);
+   menu.Renderer=new PauseMenuRenderer(surface,foreground,border,paused) { Rounded=true,Modern=true };
    foreach(ToolStripItem item in menu.Items) {
-    item.Size=new Size(menu.MinimumSize.Width-16,item is ToolStripLabel?(paused?32:66):46);
-    item.Margin=new Padding(0,2,0,2);
-    item.Padding=new Padding(10,4,10,4);
+    item.Font=Fonts.Get("Segoe UI",10f);
+    float f=menu.DeviceDpi/96f; item.Size=new Size(Math.Max(width,(int)Math.Round(width*f))-(int)Math.Round(10*f),(int)Math.Round((item is ToolStripLabel?(paused?34:56):38)*f));
    }
    return menu;
   }
@@ -113,20 +111,17 @@ namespace GoodbyeTray {
    if(e.Item is ToolStripLabel) {
     int width=e.Item.Width-24;
     var title=Fonts.Get(e.TextFont,FontStyle.Bold);
-    TextRenderer.DrawText(e.Graphics,e.Text,title,new Rectangle(12,4,width,24),ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
-    if(!paused) TextRenderer.DrawText(e.Graphics,L.T("Süre bitince kendiliğinden devam eder."),e.TextFont,new Rectangle(12,30,width,36),muted,TextFormatFlags.Left|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix);
+    TextRenderer.DrawText(e.Graphics,e.Text,title,new Rectangle(12,6,width,22),ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
+    if(!paused) TextRenderer.DrawText(e.Graphics,L.T("Süre bitince kendiliğinden devam eder."),Fonts.Get(e.TextFont.FontFamily,8.5f),new Rectangle(12,28,width,24),muted,TextFormatFlags.Left|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix);
     return;
    }
-   bool selected=e.Item.Selected && e.Item.Enabled;
-   Color color=SystemInformation.HighContrast && selected?SystemColors.HighlightText:ink;
-   Color icon=SystemInformation.HighContrast && selected?SystemColors.HighlightText:accent;
-   e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-   using(var pen=new Pen(icon,1.6f)) {
-    int y=e.Item.Height/2;
-    e.Graphics.DrawEllipse(pen,14,y-8,16,16);
-    e.Graphics.DrawLines(pen,new[]{new Point(22,y-5),new Point(22,y),new Point(26,y+2)});
-   }
-   TextRenderer.DrawText(e.Graphics,e.Text,e.TextFont,new Rectangle(42,0,e.Item.Width-54,e.Item.Height),color,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
+   // Rows: a small clock in the icon column, like the flags and swatches in the other menus.
+   DrawModernRow(e,delegate(Graphics g,Rectangle box,Color color) {
+    using(var pen=new Pen(SystemInformation.HighContrast?color:accent,1.6f) { StartCap=System.Drawing.Drawing2D.LineCap.Round,EndCap=System.Drawing.Drawing2D.LineCap.Round }) {
+     g.DrawEllipse(pen,box.X+1,box.Y+1,box.Width-2,box.Height-2);
+     g.DrawLines(pen,new[]{new Point(box.X+9,box.Y+5),new Point(box.X+9,box.Y+9),new Point(box.X+12,box.Y+11)});
+    }
+   });
   }
  }
 }

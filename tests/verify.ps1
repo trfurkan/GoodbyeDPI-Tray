@@ -34,7 +34,7 @@ try {
  $restart = $formType.GetField('restart',$instanceFlags).GetValue($form)
  $notice = $formType.GetField('notice',$instanceFlags).GetValue($form)
  $stateMethod.Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Stopped)) | Out-Null
- if ($toggle.Text -ne 'Aç' -or -not $toggle.Enabled -or $restart.Enabled) { throw 'Durdurulmuş hizmet düğmeleri yanlış.' }
+ if ($toggle.Text -ne 'Başlat' -or -not $toggle.Enabled -or $restart.Enabled) { throw 'Durdurulmuş hizmet düğmeleri yanlış.' }
  # The picker lists profiles in display order; select profile 4 by its position.
  $position = [Array]::IndexOf($assembly.GetType('GoodbyeTray.Program').GetMethod('MotorProfiles',[Reflection.BindingFlags]'NonPublic,Static').Invoke($null,@(0)),4)
  $combo.SelectedIndex = $position
@@ -42,7 +42,7 @@ try {
  if ($pending.Text -notlike '*henüz*') { throw 'Uygulanmamış profil gösterilmiyor.' }
  $notice.Text = 'Kalıcı işlem sonucu'
  $stateMethod.Invoke($form,[object[]]@(0,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
- if ($toggle.Text -ne 'Kapat' -or -not $restart.Enabled -or $combo.SelectedIndex -ne $position -or $notice.Text -ne 'Kalıcı işlem sonucu') { throw 'Çalışan hizmet veya bekleyen seçim durumu yanlış.' }
+ if ($toggle.Text -ne 'Durdur' -or -not $restart.Enabled -or $combo.SelectedIndex -ne $position -or $notice.Text -ne 'Kalıcı işlem sonucu') { throw 'Çalışan hizmet veya bekleyen seçim durumu yanlış.' }
  $stateMethod.Invoke($form,[object[]]@(4,[ServiceProcess.ServiceControllerStatus]::Running)) | Out-Null
  if ($pending.Text) { throw 'Etkin profil için uyarı gösteriliyor.' }
  $formType.GetField('busy',$instanceFlags).SetValue($form,$true)

@@ -22,6 +22,8 @@ namespace GoodbyeTray {
   // Fully round instead of the usual rounded rectangle (the header's language and theme buttons).
   internal bool Circle;
   internal static readonly string IconFamily=Array.Exists(FontFamily.Families,f=>f.Name=="Segoe Fluent Icons")?"Segoe Fluent Icons":"Segoe MDL2 Assets";
+  // A select field: the text sits on the left and a small arrow on the right (the profile and DNS pickers).
+  internal bool Chevron;
   // Corner radius in pixels; 0 keeps the default soft corner.
   internal int Corner;
   Tween flash;
@@ -81,7 +83,7 @@ namespace GoodbyeTray {
      }
      else if(Glyph=="trash") { e.Graphics.DrawLine(pen,2,4,16,4); e.Graphics.DrawRectangle(pen,6,1,6,3); e.Graphics.DrawLines(pen,new[]{new Point(4,5),new Point(5,17),new Point(13,17),new Point(14,5)}); e.Graphics.DrawLine(pen,8,7,8,14); e.Graphics.DrawLine(pen,11,7,11,14); }
      else if(Glyph=="console") { e.Graphics.DrawLines(pen,new[]{new Point(2,3),new Point(8,9),new Point(2,15)}); e.Graphics.DrawLine(pen,10,15,17,15); }
-     else if(GlyphImage!=null) e.Graphics.DrawImage(GlyphImage,-1,-1,20,20);
+     else if(GlyphImage!=null) e.Graphics.DrawImage(GlyphImage,1,1,16,16);
      else if(Glyph=="power") {
       // On hover the ring redraws itself from the top and the stem drops in after it.
       float t=Motion.EaseOut(draw.Value);
@@ -104,7 +106,12 @@ namespace GoodbyeTray {
     }
     e.Graphics.Restore(saved); int gap=Glyph.StartsWith("ch:",StringComparison.Ordinal)?22:26; textBounds=new Rectangle(x+gap,0,Math.Max(1,Width-x-gap-8),Height);
    }
-   if(!IconOnly || String.IsNullOrEmpty(Glyph)) TextRenderer.DrawText(e.Graphics,Text,Font,textBounds,ink,(String.IsNullOrEmpty(Glyph)?TextFormatFlags.HorizontalCenter:TextFormatFlags.Left)|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
+   if(Chevron && String.IsNullOrEmpty(Glyph)) {
+    int pad=(int)Math.Round(14*DeviceDpi/96f), cx=Width-pad-5, cy=Height/2;
+    TextRenderer.DrawText(e.Graphics,Text,Font,new Rectangle(pad,0,Math.Max(1,Width-pad*2-16),Height),ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+    using(var arrow=new Pen(Color.FromArgb(200,ink),1.7f) { StartCap=LineCap.Round,EndCap=LineCap.Round,LineJoin=LineJoin.Round }) e.Graphics.DrawLines(arrow,new[]{new PointF(cx-4.5f,cy-2),new PointF(cx,cy+2.5f),new PointF(cx+4.5f,cy-2)});
+   }
+   else if(!IconOnly || String.IsNullOrEmpty(Glyph)) TextRenderer.DrawText(e.Graphics,Text,Font,textBounds,ink,(String.IsNullOrEmpty(Glyph)?TextFormatFlags.HorizontalCenter:TextFormatFlags.Left)|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
    if(flash!=null && flash.Value>0.01f) using(var path=RoundF(new RectangleF(1.5f,1.5f,Width-4,Height-4),Math.Min(16,Math.Min(Width-4,Height-4)))) using(var glow=new Pen(Color.FromArgb((int)(230*flash.Value),StatusLabel.Green),2.4f)) e.Graphics.DrawPath(glow,path);
    if(Focused && ShowFocusCues) ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(8,8,Width-16,Height-16),Ink,Fill);
   }
@@ -141,23 +148,25 @@ namespace GoodbyeTray {
   internal event EventHandler Picked;
   public int SelectedIndex {
    get { return selected; }
-   set { if(value < -1 || value>=Items.Count) throw new ArgumentOutOfRangeException("value"); if(selected==value) return; selected=value; Text=value<0?L.T("Profil seç  ▾"):Items[value]+"  ▾"; RefreshTip(); if(SelectedIndexChanged!=null) SelectedIndexChanged(this,EventArgs.Empty); Invalidate(); }
+   set { if(value < -1 || value>=Items.Count) throw new ArgumentOutOfRangeException("value"); if(selected==value) return; selected=value; Text=value<0?L.T("Profil seç  ▾").TrimEnd(' ','▾'):Items[value]; RefreshTip(); if(SelectedIndexChanged!=null) SelectedIndexChanged(this,EventArgs.Empty); Invalidate(); }
   }
-  public ProfilePicker() { Click+=delegate { OpenMenu(); }; AccessibleName=L.T("Bağlantı profili"); }
+  public ProfilePicker() { Click+=delegate { OpenMenu(); }; AccessibleName=L.T("Bağlantı profili"); Chevron=true; }
   void OpenMenu() {
    if(IsDisposed || Disposing || !Enabled || menu.Visible) return;
    // The owner keeps the menu alive until disposal. Closed runs before all
    // WinForms dismissal/focus processing has finished; do not dispose there.
    while(menu.Items.Count>0) { var old=menu.Items[0]; menu.Items.RemoveAt(0); old.Dispose(); }
    // The menu is as wide as the picker, with roomy rows and rounded corners.
-   var font=new Font("Segoe UI",10.5f); int width=Math.Max(Width,220);
-   menu.Font=font; menu.Padding=new Padding(6,8,6,8); menu.MinimumSize=new Size(width,0); menu.BackColor=Fill; menu.ForeColor=Ink; menu.Renderer=new MenuRenderer(Fill,Ink,ControlPaint.Light(Fill,0.12f)) { Rounded=true };
-   for(int i=0;i<Items.Count;i++) { int index=i; var item=new ToolStripMenuItem(Items[i]) { Checked=i==selected,BackColor=Fill,ForeColor=Ink,Font=font,AutoSize=false,Size=new Size(width-12,38),Margin=Padding.Empty,ToolTipText=Describe==null?null:Describe(i) }; item.Click+=delegate { SelectedIndex=index; if(Picked!=null) Picked(this,EventArgs.Empty); }; menu.Items.Add(item); }
+   int width=Math.Max(Width,220);
+   for(int i=0;i<Items.Count;i++) { int index=i; var item=new ToolStripMenuItem(Items[i]) { Checked=i==selected,ToolTipText=Describe==null?null:Describe(i) }; item.Click+=delegate { SelectedIndex=index; if(Picked!=null) Picked(this,EventArgs.Empty); }; menu.Items.Add(item); }
    if(Extra!=null) {
-    menu.Items.Add(new ToolStripSeparator { Margin=new Padding(0,4,0,4) });
-    var extra=new ToolStripMenuItem("✦   "+ExtraText) { Tag="accent",AccessibleDescription=ExtraHint,Enabled=ExtraEnabled==null || ExtraEnabled(),BackColor=Fill,Font=new Font("Segoe UI",10.5f,FontStyle.Bold),AutoSize=false,Size=new Size(width-12,String.IsNullOrEmpty(ExtraHint)?40:58),Margin=Padding.Empty };
+    menu.Items.Add(new ToolStripSeparator());
+    // The action under the choices gets a magnifier and the accent color instead of a check.
+    var extra=new ToolStripMenuItem(ExtraText) { Tag="accent",AccessibleDescription=ExtraHint,Enabled=ExtraEnabled==null || ExtraEnabled() };
     extra.Click+=delegate { BeginInvoke(Extra); }; menu.Items.Add(extra);
    }
+   // The menu card takes the picker's own surface so it reads as part of it, in the look the other menus share.
+   MenuRenderer.Prepare(menu,Fill,Ink,Edge,width);
    menu.ShowItemToolTips=Describe!=null;
    menu.Show(this,new Point(0,Height+4));
   }
@@ -200,6 +209,53 @@ namespace GoodbyeTray {
   protected override void OnKeyDown(KeyEventArgs e) { base.OnKeyDown(e); if(e.KeyCode==Keys.Down) ScrollTo(offset+Font.Height); else if(e.KeyCode==Keys.Up) ScrollTo(offset-Font.Height); else if(e.KeyCode==Keys.PageDown) ScrollTo(offset+ViewHeight); else if(e.KeyCode==Keys.PageUp) ScrollTo(offset-ViewHeight); else if(e.KeyCode==Keys.Home) ScrollTo(0); else if(e.KeyCode==Keys.End) ScrollTo(Limit); else if(e.Control && e.KeyCode==Keys.C) { try { Clipboard.SetText(Text); } catch(System.Runtime.InteropServices.ExternalException) {} } else return; e.Handled=true; e.SuppressKeyPress=true; }
  }
  class BufferedLayout : TableLayoutPanel { public BufferedLayout() { DoubleBuffered=true; } }
+ // Lets the mouse through to the window beneath, so empty parts of the title bar act as the caption.
+ class HitThroughFlow : FlowLayoutPanel { protected override void WndProc(ref Message m) { if(m.Msg==0x84) { m.Result=(IntPtr)(-1); return; } base.WndProc(ref m); } }
+ // The app's title bar: the icon and name painted on the left; the window answers hit tests on it as the caption.
+ class TitleBar : Panel {
+  public TitleBar() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true); }
+  protected override void WndProc(ref Message m) { if(m.Msg==0x84) { m.Result=(IntPtr)(-1); return; } base.WndProc(ref m); }
+  protected override void OnPaint(PaintEventArgs e) {
+   base.OnPaint(e);
+   int size=(int)Math.Round(18*DeviceDpi/96f), x=(int)Math.Round(14*DeviceDpi/96f);
+   e.Graphics.InterpolationMode=InterpolationMode.HighQualityBicubic; e.Graphics.DrawImage(Program.Logo(size),x,(Height-size)/2,size,size);
+   TextRenderer.DrawText(e.Graphics,"GoodbyeDPI",Font,new Rectangle(x+size+8,0,Math.Max(1,Width/2),Height),ForeColor,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
+  }
+ }
+ // Minimize, maximize/restore and close, drawn like Windows' own caption buttons; close turns red under the mouse.
+ class CaptionButton : Control {
+  internal enum Kind { Minimize, Maximize, Close }
+  readonly Kind kind; bool hot,down,restore;
+  internal bool Restore { get { return restore; } set { if(restore==value) return; restore=value; AccessibleName=Caption(); Invalidate(); } }
+  public CaptionButton(Kind kind) {
+   this.kind=kind; SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
+   Size=new Size(46,40); Margin=Padding.Empty; TabStop=false; AccessibleRole=AccessibleRole.PushButton; AccessibleName=Caption();
+  }
+  string Caption() { return kind==Kind.Close?L.T("Kapat"):kind==Kind.Minimize?L.T("Simge durumuna küçült"):restore?L.T("Önceki boyutuna getir"):L.T("Ekranı kapla"); }
+  // The maximize button lets hit tests through to the window, which reports it to Windows as the maximize button
+  // (so Windows 11 shows its snap layouts on hover) and drives its hover and press look from the non-client messages.
+  internal bool HitThrough;
+  internal void SetHot(bool value) { if(hot==value) return; hot=value; if(!value) down=false; Invalidate(); }
+  internal void SetDown(bool value) { if(down==value) return; down=value; Invalidate(); }
+  internal bool IsDown { get { return down; } }
+  protected override void WndProc(ref Message m) { if(HitThrough && m.Msg==0x84) { m.Result=(IntPtr)(-1); return; } base.WndProc(ref m); }
+  protected override void OnMouseEnter(EventArgs e) { hot=true; Invalidate(); base.OnMouseEnter(e); }
+  protected override void OnMouseLeave(EventArgs e) { hot=down=false; Invalidate(); base.OnMouseLeave(e); }
+  protected override void OnMouseDown(MouseEventArgs e) { if(e.Button==MouseButtons.Left) { down=true; Invalidate(); } base.OnMouseDown(e); }
+  protected override void OnMouseUp(MouseEventArgs e) { down=false; Invalidate(); base.OnMouseUp(e); }
+  protected override void OnPaint(PaintEventArgs e) {
+   var g=e.Graphics; bool close=kind==Kind.Close && !SystemInformation.HighContrast;
+   Color fill=!hot?BackColor:close?(down?Color.FromArgb(148,20,18):Color.FromArgb(196,43,28)):Motion.Mix(BackColor,ForeColor,down?0.16f:0.09f);
+   g.Clear(fill);
+   Color ink=hot && close?Color.White:ForeColor; float s=DeviceDpi/96f; int half=(int)Math.Round(5*s), cx=Width/2, cy=Height/2;
+   using(var pen=new Pen(ink,Math.Max(1,s))) {
+    if(kind==Kind.Minimize) g.DrawLine(pen,cx-half,cy,cx+half,cy);
+    else if(kind==Kind.Close) { g.SmoothingMode=SmoothingMode.AntiAlias; g.DrawLine(pen,cx-half,cy-half,cx+half,cy+half); g.DrawLine(pen,cx+half,cy-half,cx-half,cy+half); }
+    else if(!restore) g.DrawRectangle(pen,cx-half,cy-half,half*2,half*2);
+    else { int o=(int)Math.Round(2*s); g.DrawRectangle(pen,cx-half,cy-half+o,half*2-o,half*2-o); g.DrawLines(pen,new[]{new Point(cx-half+o,cy-half+o),new Point(cx-half+o,cy-half),new Point(cx+half,cy-half),new Point(cx+half,cy+half-o),new Point(cx+half-o,cy+half-o)}); }
+   }
+  }
+ }
  partial class MainForm : Form {
   internal const string RevealEvent=@"Local\GoodbyeDPI.Tray.Reveal";
   readonly NotifyIcon tray;
@@ -222,10 +278,48 @@ namespace GoodbyeTray {
 
 
   readonly SessionPill toggle=new SessionPill();
-  readonly SoftButton restart=new SoftButton(), consoleButton=new SoftButton(), reportButton=new SoftButton(), aboutButton=new SoftButton();
-  readonly LinkLabel versionLink=new LinkLabel();
-  readonly LiveLogo liveLogo=new LiveLogo();
-  readonly WordMark brandTitle=new WordMark();
+  readonly SoftButton restart=new SoftButton(), consoleButton=new SoftButton(), reportButton=new SoftButton();
+  // The version is plain text; the About link next to it opens the details and the download.
+  readonly Label versionLink=new Label();
+  readonly LinkLabel aboutLink=new LinkLabel();
+  TableLayoutPanel actionRow;
+  readonly TitleBar titleBar=new TitleBar();
+  readonly CaptionButton minimizeButton=new CaptionButton(CaptionButton.Kind.Minimize), maximizeButton=new CaptionButton(CaptionButton.Kind.Maximize), closeButton=new CaptionButton(CaptionButton.Kind.Close);
+  // Windows' caption becomes part of the window: the frame's top is removed when its size is computed and the strip
+  // under the app's own title bar answers hit tests as caption or top edge. Left, right and bottom stay native frame.
+  [System.Runtime.InteropServices.DllImport("user32.dll")] static extern int GetSystemMetrics(int index);
+  [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool IsZoomed(IntPtr window);
+  [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr window,IntPtr after,int x,int y,int width,int height,int flags);
+  protected override void WndProc(ref Message m) {
+   if(m.Msg==0x83 && m.WParam!=IntPtr.Zero) { // WM_NCCALCSIZE
+    int top=System.Runtime.InteropServices.Marshal.ReadInt32(m.LParam,4); base.WndProc(ref m);
+    // Maximized, the window reaches past the screen by the frame's thickness; keep the title bar on screen.
+    int frame=IsZoomed(m.HWnd)?GetSystemMetrics(33)+GetSystemMetrics(92):0; // SM_CYFRAME, SM_CXPADDEDBORDER
+    System.Runtime.InteropServices.Marshal.WriteInt32(m.LParam,4,top+frame); return;
+   }
+   if(m.Msg==0x84) { // WM_NCHITTEST
+    base.WndProc(ref m);
+    if(m.Result==(IntPtr)1) {
+     long value=m.LParam.ToInt64(); var point=PointToClient(new Point(unchecked((short)value),unchecked((short)(value>>16))));
+     if(maximizeButton.Visible && RectangleToClient(maximizeButton.RectangleToScreen(maximizeButton.ClientRectangle)).Contains(point)) { m.Result=(IntPtr)9; return; } // HTMAXBUTTON
+     int edge=Math.Max(4,(int)Math.Round(6*DeviceDpi/96f));
+     if(point.Y<edge && WindowState!=FormWindowState.Maximized) m.Result=(IntPtr)(point.X<edge*2?13:point.X>=ClientSize.Width-edge*2?14:12); // HTTOPLEFT, HTTOPRIGHT, HTTOP
+     else if(point.Y<titleBar.Height) m.Result=(IntPtr)2; // HTCAPTION
+    }
+    return;
+   }
+   // The maximize button's own mouse handling, as non-client messages (see CaptionButton.HitThrough).
+   bool onMaximize=m.WParam==(IntPtr)9;
+   if(m.Msg==0xA0) { maximizeButton.SetHot(onMaximize); if(onMaximize) TrackLeave(); } // WM_NCMOUSEMOVE
+   else if(m.Msg==0x2A2) maximizeButton.SetHot(false); // WM_NCMOUSELEAVE
+   else if(onMaximize && m.Msg==0xA1) { maximizeButton.SetDown(true); m.Result=IntPtr.Zero; return; } // WM_NCLBUTTONDOWN
+   else if(onMaximize && m.Msg==0xA2) { bool pressed=maximizeButton.IsDown; maximizeButton.SetDown(false); if(pressed) WindowState=WindowState==FormWindowState.Maximized?FormWindowState.Normal:FormWindowState.Maximized; m.Result=IntPtr.Zero; return; } // WM_NCLBUTTONUP
+   else if(onMaximize && m.Msg==0xA3) { m.Result=IntPtr.Zero; return; } // WM_NCLBUTTONDBLCLK
+   base.WndProc(ref m);
+  }
+  [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)] struct TrackMouse { public int Size,Flags; public IntPtr Window; public int Hover; }
+  [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool TrackMouseEvent(ref TrackMouse track);
+  void TrackLeave() { var track=new TrackMouse { Size=System.Runtime.InteropServices.Marshal.SizeOf(typeof(TrackMouse)),Flags=0x12,Window=Handle }; TrackMouseEvent(ref track); } // TME_LEAVE|TME_NONCLIENT
   // The pill's frame is the page color on the card; its main part takes the state color (see SessionPill).
   void PaintActionGroup() {
    bool contrast=SystemInformation.HighContrast;
@@ -239,7 +333,7 @@ namespace GoodbyeTray {
    string state=updateState==UpdateState.Current?L.T("güncel"):updateState==UpdateState.Available?L.T("yeni sürüm var"):null;
    versionLink.Text="v"+AppInfo.Version+(state==null?"":" · "+state);
    Color muted=secondary.IsEmpty?SystemColors.GrayText:secondary, accent=dark?AppPalette.Mint:AppPalette.Accent;
-   Color color=updateState==UpdateState.Available?accent:muted; versionLink.LinkColor=versionLink.ActiveLinkColor=versionLink.VisitedLinkColor=color;
+   Color color=updateState==UpdateState.Available?accent:muted; versionLink.ForeColor=color;
   }
   readonly Label trayHelp=LabelOf("",9,false);
   // The first check waits a little: right after logon the network is often not up yet.
@@ -311,64 +405,69 @@ namespace GoodbyeTray {
   public MainForm(bool withTray,bool? previewDark) {
    themeOverride=previewDark; Text="GoodbyeDPI"; FormBorderStyle=FormBorderStyle.Sizable; ControlBox=true; MinimizeBox=true; MaximizeBox=true; Font=new Font("Segoe UI",10); AutoScaleMode=AutoScaleMode.Dpi; DoubleBuffered=true; SetStyle(ControlStyles.ResizeRedraw,true);
    themePreference=AppPalette.SavedTheme();
-   ClientSize=new Size(900,Math.Min(800,Screen.PrimaryScreen.WorkingArea.Height-70)); MinimumSize=new Size(760,740); StartPosition=FormStartPosition.CenterScreen; Icon=Program.AppIcon;
+   ClientSize=new Size(900,Math.Min(760,Screen.PrimaryScreen.WorkingArea.Height-70)); MinimumSize=new Size(760,740); StartPosition=FormStartPosition.CenterScreen; Icon=Program.AppIcon;
    var scroll=dashboardHost; scroll.Dock=DockStyle.Fill; scroll.AutoScroll=false; Controls.Add(scroll); BuildPageHost();
-   var layout=dashboard; layout.Dock=DockStyle.Fill; layout.AutoSize=false; layout.Padding=new Padding(20,10,20,10); layout.ColumnCount=1; layout.RowCount=8;
-   foreach(int height in new[]{104,264,0,0,292,118}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
-   layout.RowStyles.Add(new RowStyle(SizeType.Absolute,0)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); scroll.Controls.Add(layout);
-   var header=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=3,RowCount=1 };
-   // Header: a live logo whose ring shows the engine's state, the two-tone name, and round language and theme buttons.
-   header.RowStyles.Add(new RowStyle(SizeType.Percent,100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,94)); header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,48));
-      var brand=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1 };
-   brand.RowStyles.Add(new RowStyle(SizeType.Percent,100)); brand.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,66)); brand.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-   liveLogo.Dock=DockStyle.Fill; liveLogo.Margin=Padding.Empty; liveLogo.AccessibleName="GoodbyeDPI"; brand.Controls.Add(liveLogo);
-   brandTitle.Dock=DockStyle.Fill; brandTitle.Font=new Font(Font.FontFamily,21,FontStyle.Bold); brandTitle.Margin=new Padding(6,0,0,0); brand.Controls.Add(brandTitle); header.Controls.Add(brand,0,0);
+   var layout=dashboard; layout.Dock=DockStyle.Fill; layout.AutoSize=false; layout.Padding=new Padding(20,10,20,8); layout.ColumnCount=1; layout.RowCount=8;
+   // Rows: (unused, the menus moved to the title bar), status card, notice (no height), connection card, settings, access, action buttons, footer.
+   foreach(int height in new[]{0,116,0,ChoicesHeight,SettingsHeight,72,ActionRowHeight}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
+   layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); scroll.Controls.Add(layout);
+   // Title bar: Windows' caption is folded into the window (see WndProc), so the app draws the icon and name,
+   // the language and theme menus and the minimize, maximize and close buttons in one strip. Dragging, double-click,
+   // the system menu and resizing from the top edge still go through Windows.
+   titleBar.Dock=DockStyle.Top; titleBar.Height=40; titleBar.Font=new Font("Segoe UI Semibold",9.5f); Controls.Add(titleBar);
+   var header=new HitThroughFlow { Dock=DockStyle.Right,AutoSize=true,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Margin=Padding.Empty,Padding=Padding.Empty }; titleBar.Controls.Add(header);
+   closeButton.Click+=delegate { Close(); }; maximizeButton.HitThrough=true; minimizeButton.Click+=delegate { WindowState=FormWindowState.Minimized; };
+   header.Controls.Add(closeButton); header.Controls.Add(maximizeButton); header.Controls.Add(minimizeButton);
+   Resize+=delegate { maximizeButton.Restore=WindowState==FormWindowState.Maximized; };
    for(int i=0;i<ThemeModes.Length;i++) { string choice=ThemeModes[i]; var item=new ToolStripMenuItem(ThemeLabels[i]) { Tag=choice,Image=ThemeSwatch(choice),AutoSize=false,Size=new Size(300,choice=="system"?72:40),Padding=new Padding(8,6,12,6) };
     if(choice=="system") { item.AccessibleDescription=L.T("Temayı (Karanlık/Aydınlık) sistem tercihlerine göre otomatik ayarlar."); item.ImageAlign=ContentAlignment.TopCenter; } item.Click+=delegate { try { SetThemePreference(choice,true); notice.Text=L.T("Tema kaydedildi."); } catch(Exception ex) { ReportError(ex); } }; if(choice=="system") themeMenu.Items.Add(new ToolStripSeparator()); themeMenu.Items.Add(item); }
-   themeButton.Size=new Size(42,42); themeButton.Anchor=AnchorStyles.Right; themeButton.Margin=new Padding(0,0,2,0); themeButton.Circle=true; themeButton.IconOnly=true; themeButton.AccessibleName=L.T("Görünüm teması"); themeButton.Glyph="swatch";
-   themeButton.Click+=delegate { foreach(ToolStripItem entry in themeMenu.Items) { var item=entry as ToolStripMenuItem; if(item==null) continue; item.Checked=Convert.ToString(item.Tag)==themePreference; item.BackColor=surface; item.ForeColor=foreground; } themeMenu.BackColor=surface; themeMenu.ForeColor=foreground; themeMenu.Renderer=new MenuRenderer(surface,foreground,border); if(!themeMenu.Visible) themeMenu.Show(themeButton,new Point(0,themeButton.Height)); };
-   // Language picker left of the theme button: round flag, language name, a menu of the languages.
+   themeButton.Size=new Size(112,26); themeButton.Margin=new Padding(0,7,10,7); themeButton.Circle=true; themeButton.AccessibleName=L.T("Görünüm teması"); themeButton.Glyph="swatch"; themeButton.Font=new Font("Segoe UI",8.75f);
+   themeButton.Click+=delegate { foreach(ToolStripItem entry in themeMenu.Items) { var item=entry as ToolStripMenuItem; if(item!=null) item.Checked=Convert.ToString(item.Tag)==themePreference; } MenuRenderer.Prepare(themeMenu,surface,foreground,border,250); if(!themeMenu.Visible) themeMenu.Show(themeButton,new Point(themeButton.Width-250,themeButton.Height+6)); };
+   // Language picker left of the theme menu: the globe, the language's name and a menu of the languages with their flags.
    int current=Array.IndexOf(L.Codes,L.Current);
-   languageButton.Size=new Size(76,42); languageButton.Anchor=AnchorStyles.Right; languageButton.Margin=new Padding(0,0,8,0); languageButton.Circle=true; languageButton.AccessibleName=L.T("Dil")+": "+L.Names[current]; languageButton.Glyph="ch:\uE774"; languageButton.Font=new Font("Segoe UI Semibold",9.5f); languageButton.Text=L.Current.ToUpperInvariant(); tips.SetToolTip(languageButton,L.T("Dil")+": "+L.Names[current]);
+   languageButton.Size=new Size(98,26); languageButton.Margin=new Padding(0,7,6,7); languageButton.Circle=true; languageButton.AccessibleName=L.T("Dil")+": "+L.Names[current]; languageButton.Glyph="flag"; languageButton.GlyphImage=L.Flag(L.Current); languageButton.Font=new Font("Segoe UI",8.75f); languageButton.Text=L.Names[current]+"  ▾"; tips.SetToolTip(languageButton,L.T("Dil")+": "+L.Names[current]);
    for(int i=0;i<L.Codes.Length;i++) { string code=L.Codes[i]; var item=new ToolStripMenuItem(L.Names[i]) { Tag=code,Image=L.Flag(code),AutoSize=false,Size=new Size(200,40),Padding=new Padding(8,6,12,6) }; item.Click+=delegate { ChangeLanguage(code); }; languageMenu.Items.Add(item); }
-   languageButton.Click+=delegate { foreach(ToolStripItem entry in languageMenu.Items) { var item=(ToolStripMenuItem)entry; item.Checked=Convert.ToString(item.Tag)==L.Current; item.BackColor=surface; item.ForeColor=foreground; } languageMenu.BackColor=surface; languageMenu.ForeColor=foreground; languageMenu.Renderer=new MenuRenderer(surface,foreground,border); if(!languageMenu.Visible) languageMenu.Show(languageButton,new Point(0,languageButton.Height)); };
-   header.Controls.Add(languageButton,1,0);
-   header.Controls.Add(themeButton,2,0);
-   layout.Controls.Add(header);
-   var hero=heroCard; hero.Dock=DockStyle.Fill; hero.Margin=new Padding(0,0,0,12); hero.Padding=new Padding(26,18,26,16); layout.Controls.Add(hero);
+   languageButton.Click+=delegate { foreach(ToolStripItem entry in languageMenu.Items) { var item=(ToolStripMenuItem)entry; item.Checked=Convert.ToString(item.Tag)==L.Current; } MenuRenderer.Prepare(languageMenu,surface,foreground,border,190); if(!languageMenu.Visible) languageMenu.Show(languageButton,new Point(0,languageButton.Height+6)); };
+   FitPill(languageButton); header.Controls.Add(themeButton); header.Controls.Add(languageButton);
+   // Status card: the live shield mark and the state on the left, a line with the active profile and DNS under it,
+   // and on the right the break menu and the main button.
+   var hero=heroCard; hero.Dock=DockStyle.Fill; hero.Margin=new Padding(0,0,0,12); hero.Padding=new Padding(22,16,22,14); layout.Controls.Add(hero,0,1);
    var heroLayout=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,BackColor=Color.Transparent };
-   heroLayout.RowCount=3; heroRows=heroLayout; heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,304)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,64)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,0)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); hero.Controls.Add(heroLayout);
-   status.Dock=DockStyle.Fill; status.Font=new Font(Font.FontFamily,19,FontStyle.Bold); status.TextAlign=ContentAlignment.MiddleLeft; heroLayout.Controls.Add(status,0,0);
-   // Only notices go under the status (a break, a missing install); the active profile is already in the picker below.
-   detail.Dock=DockStyle.Fill; detail.Tag="muted"; detail.AutoEllipsis=true; heroLayout.Controls.Add(detail,0,1); detail.TextChanged+=delegate { FitDashboard(); };
-   // One pill on the right: the break part (a cup) and the main part (Aç / Kapat / Devam et).
-   // Restart stays in the tray menu and the jump list.
-   var actions=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Margin=Padding.Empty,Padding=new Padding(0,6,0,0),BackColor=Color.Transparent };
-   restart.Text=L.T("Yeniden başlat"); restart.Click+=delegate { Execute("restart",0); };
+   heroRows=heroLayout; heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,286)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,50)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); hero.Controls.Add(heroLayout);
+   status.Dock=DockStyle.Fill; status.Font=new Font(Font.FontFamily,15,FontStyle.Bold); status.TextAlign=ContentAlignment.MiddleLeft; status.Margin=Padding.Empty; heroLayout.Controls.Add(status,0,0);
+   detail.Dock=DockStyle.Fill; detail.Tag="muted"; detail.AutoEllipsis=true; detail.Font=new Font("Segoe UI",9.5f); detail.Margin=new Padding(54,0,0,0); heroLayout.Controls.Add(detail,0,1);
+   var actions=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Margin=Padding.Empty,Padding=new Padding(0,4,0,0),BackColor=Color.Transparent };
+   restart.Text=L.T("Yeniden başlat"); restart.Glyph="restart"; restart.Click+=delegate { Execute("restart",0); };
    pauseButton.Text=L.T("Mola ver");
-   toggle.Size=new Size(236,52); toggle.Margin=Padding.Empty; toggle.Font=new Font("Segoe UI Semibold",10.5f);
+   toggle.Size=new Size(280,42); toggle.Margin=Padding.Empty; toggle.Font=new Font("Segoe UI Semibold",10.5f);
    toggle.PrimaryClick+=delegate { Execute(running?"stop":"start",0); }; toggle.BreakClick+=delegate { ShowPauseMenu(); };
    toggle.HoverChanged+=delegate(int part) { tips.SetToolTip(toggle,part==0?toggle.BreakText:part==1?toggle.Text:null); };
    actions.Controls.Add(toggle);
-   heroLayout.Controls.Add(actions,1,0); heroLayout.SetRowSpan(actions,2); BuildChoices(heroLayout);
-   // The status line under the hero has no height (its row is 0); errors still show in a message box.
-   // It stays visible so the layout keeps its row order.
-   notice.Dock=DockStyle.Fill; layout.Controls.Add(notice);
-   // Row 3 used to hold the profile card; the choices now live in the status card and the row stays empty.
-   layout.Controls.Add(new Panel { Dock=DockStyle.Fill,Margin=Padding.Empty }); BuildSettings(layout);
+   heroLayout.Controls.Add(actions,1,0); heroLayout.SetRowSpan(actions,2);
+   // The notice row has no height; results show in the status line's tooltip and errors in a message box.
+   notice.Dock=DockStyle.Fill; layout.Controls.Add(notice,0,2);
+   BuildChoices(layout); BuildSettings(layout);
    BuildAccess(layout); ConfirmTrayOff=AskTrayOff;
-   // Footer: developer link on the left, then the version with its update state, then three icon buttons with tooltips.
-   footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=44; footerPanel.ColumnCount=5; footerPanel.RowCount=1; footerPanel.Margin=Padding.Empty;
-   footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-   for(int i=0;i<3;i++) footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,46));
+   // Two labeled buttons under the cards: the engine console and the problem report.
+   // Restart stays in the tray menu and the jump list.
+   var actionRow=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=new Padding(0,0,0,ActionRowHeight-46),BackColor=Color.Transparent }; this.actionRow=actionRow;
+   for(int i=0;i<2;i++) actionRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,50));
+   actionRow.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+   consoleButton.Text=L.T("Konsol"); consoleButton.Glyph="console"; tips.SetToolTip(consoleButton,L.T("Motor konsolu"));
+   reportButton.Text=L.T("Sorun bildir"); reportButton.Glyph="bug";
+   int slot=0;
+   foreach(var button in new[]{consoleButton,reportButton}) { button.Dock=DockStyle.Fill; button.Corner=8; button.Margin=new Padding(slot==0?0:4,0,slot==1?0:4,0); button.Font=new Font("Segoe UI",10); button.AccessibleName=button.Text; actionRow.Controls.Add(button,slot++,0); }
+   consoleButton.Click+=delegate { ShowDiagnostics(); }; reportButton.Click+=delegate { ShowReport(); };
+   layout.Controls.Add(actionRow,0,6);
+   // Footer: developer link on the left; the version with its update state and the About link on the right.
+   footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=FooterHeight; footerPanel.Padding=new Padding(0,2,0,0); footerPanel.Font=new Font("Segoe UI",8.75f);
+   // A hairline above the footer sets it apart from the buttons, with room on both sides of it.
+   footerPanel.Paint+=delegate(object sender,PaintEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,4,0,footerPanel.Width-5,0); }; footerPanel.ColumnCount=3; footerPanel.RowCount=1; footerPanel.Margin=Padding.Empty;
+   footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
    footerPanel.RowStyles.Add(new RowStyle(SizeType.Percent,100));
    var developer=ProjectLinks.Create(L.T("Geliştirici: trfurkan"),AppInfo.DeveloperUrl,AppPalette.Accent,true); developer.Dock=DockStyle.Fill; footerPanel.Controls.Add(developer,0,0);
-   versionLink.AutoSize=true; versionLink.Anchor=AnchorStyles.Right; versionLink.Margin=new Padding(0,0,12,0); versionLink.Tag="muted"; versionLink.LinkBehavior=LinkBehavior.HoverUnderline; versionLink.LinkClicked+=delegate { if(updateState==UpdateState.Available) DownloadUpdate(); else ShowAbout(); }; footerPanel.Controls.Add(versionLink,1,0); ShowVersion();
-   int column=2;
-   foreach(var entry in new[]{Tuple.Create(consoleButton,"console",L.T("Konsol"),L.T("Motor konsolu")),Tuple.Create(reportButton,"bug",L.T("Sorun bildir"),L.T("Sorun bildir")),Tuple.Create(aboutButton,"info",L.T("Hakkında"),L.T("Hakkında"))}) {
-    var button=entry.Item1; button.Glyph=entry.Item2; button.IconOnly=true; button.Text=entry.Item3; button.AccessibleName=entry.Item3; button.Size=new Size(40,34); button.Anchor=AnchorStyles.Right; button.Margin=new Padding(6,0,0,0); tips.SetToolTip(button,entry.Item4); footerPanel.Controls.Add(button,column++,0);
-   }
-   consoleButton.Click+=delegate { ShowDiagnostics(); }; reportButton.Click+=delegate { ShowReport(); }; aboutButton.Click+=delegate { ShowAbout(); };
+   versionLink.AutoSize=true; versionLink.Anchor=AnchorStyles.Right; versionLink.Margin=new Padding(0,0,14,0); versionLink.Tag="muted"; footerPanel.Controls.Add(versionLink,1,0); ShowVersion();
+   aboutLink.Text=L.T("Hakkında"); aboutLink.AutoSize=true; aboutLink.Anchor=AnchorStyles.Right; aboutLink.Margin=Padding.Empty; aboutLink.LinkBehavior=LinkBehavior.HoverUnderline; aboutLink.LinkClicked+=delegate { ShowAbout(); }; footerPanel.Controls.Add(aboutLink,2,0);
    layout.Controls.Add(footerPanel,0,7);
    if(withTray) {
     commands=new AppCommands();
@@ -399,20 +498,21 @@ namespace GoodbyeTray {
    Activated+=delegate { UpdatePace(); }; Deactivate+=delegate { UpdatePace(); }; VisibleChanged+=delegate { UpdatePace(); }; Resize+=delegate { UpdatePace(); };
    timer.Interval=250; timer.Tick+=delegate { if(reveal!=null && reveal.WaitOne(0)) Reveal(); string command=commands==null?null:commands.Poll(); if(command!=null) DispatchCommand(command); TryStartupNotification(); if(++refreshTicks>=(Visible && WindowState!=FormWindowState.Minimized?8:40)) { refreshTicks=0; if(!busy && !sizing) RefreshStateAsync(); if(!sizing && Visible) ApplyTheme(false); if(DateTime.UtcNow>=nextUpdateCheck && !startupNoticePending) CheckForUpdateAsync(); } }; if(withTray) timer.Start();
    SizeChanged+=delegate { if(WindowState!=FormWindowState.Minimized) FitDashboard(); }; ResizeBegin+=delegate { sizing=true; }; ResizeEnd+=delegate { sizing=false; FitDashboard(); };
-   ApplyTheme(true); FitDashboard(); if(withTray) { Shown+=delegate { RefreshStateAsync(); }; } else RefreshState();
+   // The layout above is written at 100 %; on a scaled screen every size, margin and row grows with the text.
+   ApplyScale(DeviceDpi/96f);
+   DpiChanged+=delegate(object sender,DpiChangedEventArgs e) { ui=e.DeviceDpiNew/96f; FitPill(languageButton); FitPill(themeButton); FitDashboard(); };
+   SetOpeningSize(); ApplyTheme(true); FitDashboard(); if(withTray) { Shown+=delegate { RefreshStateAsync(); }; } else RefreshState();
   }
   static Label LabelOf(string text,float size,bool bold) { return new Label { Text=text,Dock=DockStyle.Fill,Font=new Font("Segoe UI",size,bold?FontStyle.Bold:FontStyle.Regular),AutoEllipsis=true }; }
   SoftButton ButtonOf(string text,EventHandler action) { var button=new SoftButton { Text=text,Width=140 }; button.Click+=action; return button; }
-  // A section heading: an accent icon and the title, like the captions in the status card but stronger.
+  // A section heading: the title in plain bold, as in the old window.
   static Control SectionTitle(string glyph,string text) {
    var row=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.LeftToRight,WrapContents=false,Margin=Padding.Empty,Padding=Padding.Empty };
-   string family=Array.Exists(System.Drawing.FontFamily.Families,f=>f.Name=="Segoe Fluent Icons")?"Segoe Fluent Icons":"Segoe MDL2 Assets";
-   row.Controls.Add(new Label { Text=glyph,Font=new Font(family,13),AutoSize=true,Tag="accent",Margin=new Padding(0,5,8,0) });
-   row.Controls.Add(new Label { Text=text,Font=new Font("Segoe UI",12,FontStyle.Bold),AutoSize=true,Margin=new Padding(0,1,0,0) });
+   row.Controls.Add(new Label { Text=text,Font=new Font("Segoe UI",11.5f,FontStyle.Bold),AutoSize=true,Margin=new Padding(0,1,0,0) });
    return row;
   }
   TableLayoutPanel Section(TableLayoutPanel parent,string glyph,string title,int[] rows) {
-   var box=new SoftPanel { Dock=DockStyle.Fill,Margin=new Padding(0,0,0,12),Padding=new Padding(26,14,26,10) }; parent.Controls.Add(box);
+   var box=new SoftPanel { Dock=DockStyle.Fill,Margin=new Padding(0,0,0,12),Padding=new Padding(22,12,22,8) }; parent.Controls.Add(box,0,4);
    var content=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=1,RowCount=rows.Length,BackColor=Color.Transparent,Margin=Padding.Empty };
    foreach(int height in rows) content.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
    content.Controls.Add(SectionTitle(glyph,title),0,0); box.Controls.Add(content); return content;
@@ -423,8 +523,7 @@ namespace GoodbyeTray {
   static readonly Color[] QuickColors={Color.FromArgb(88,101,242),Color.FromArgb(57,59,61),Color.FromArgb(255,80,10)};
   const string ControlSite="google.com";
   readonly AccessChip[] accessChips=new AccessChip[QuickSites.Length];
-  readonly SoftButton accessRun=new SoftButton();
-  readonly DetailTile accessMore=new DetailTile();
+  readonly SoftButton accessRun=new SoftButton(), quickRun=new SoftButton();
   readonly Label accessSummary=new Label();
   // The summary line stays short ("3/3 açıldı · 13:54"); the profile, DNS and any advice sit in its tooltip.
   string quickSummary="",quickTip="",accessContextKey;
@@ -437,7 +536,8 @@ namespace GoodbyeTray {
    tips.SetToolTip(accessSummary,String.IsNullOrEmpty(tip)?text:tip);
   }
   void InvalidateAccessResults() {
-   accessGeneration++; quickSummary=L.T("Hızlı test")+" · "+L.T("Ayarlar değişti; yeniden test et."); quickTip="";
+   // "Settings changed" only means something after a test ran; before that the summary keeps its question.
+   accessGeneration++; quickSummary=accessTested?L.T("Hızlı test")+" · "+L.T("Ayarlar değişti; yeniden test et."):""; quickTip="";
    foreach(var chip in accessChips) if(chip!=null) { chip.State=AccessChip.Phase.Idle; tips.SetToolTip(chip,L.T("Yeniden test gerekli")); }
    if(accessFull!=null) accessFull.InvalidateResults();
    ShowAccessSummary();
@@ -447,36 +547,28 @@ namespace GoodbyeTray {
    if(accessContextKey!=null && accessContextKey!=key) InvalidateAccessResults();
    accessContextKey=key;
   }
-  bool accessTesting;
+  bool accessTesting,accessTested;
   void BuildAccess(TableLayoutPanel layout) {
-   var box=new SoftPanel { Dock=DockStyle.Fill,Margin=new Padding(0,0,0,12),Padding=new Padding(26,12,26,10) }; layout.Controls.Add(box);
-   var content=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,BackColor=Color.Transparent,Margin=Padding.Empty };
-   content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); content.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,190));
-   content.RowStyles.Add(new RowStyle(SizeType.Absolute,38)); content.RowStyles.Add(new RowStyle(SizeType.Percent,100)); box.Controls.Add(content); accessBox=box;
-   var head=new FlowLayoutPanel { Dock=DockStyle.Fill,WrapContents=false,Margin=Padding.Empty,BackColor=Color.Transparent };
-   head.Controls.Add(SectionTitle("\uE774",L.T("Erişim"))); head.Controls[0].Dock=DockStyle.None; head.Controls[0].AutoSize=true;
-   accessSummary.AutoSize=false; accessSummary.AutoEllipsis=true; accessSummary.Height=22; accessSummary.Tag="muted"; accessSummary.Font=new Font("Segoe UI",9); accessSummary.Margin=new Padding(14,9,0,0); accessSummary.Text=L.T("Sitelerin bu profille açılıp açılmadığını dene."); head.Controls.Add(accessSummary);
-   head.SizeChanged+=delegate { accessSummary.Width=Math.Max(1,head.ClientSize.Width-head.Controls[0].Width-accessSummary.Margin.Left-8); };
-   content.Controls.Add(head,0,0);
-   var buttons=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Margin=Padding.Empty,BackColor=Color.Transparent };
-   accessRun.Glyph="restart"; accessRun.Text=L.T("Test et"); accessRun.Size=new Size(132,34); accessRun.Margin=Padding.Empty; accessRun.Click+=delegate { RunAccessCheck(); }; buttons.Controls.Add(accessRun);
-   content.Controls.Add(buttons,1,0);
-   // The site icons on the left, and filling the rest of the row a tile that opens the detailed test.
-   var row=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=new Padding(0,6,0,0),BackColor=Color.Transparent };
-   row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); row.RowStyles.Add(new RowStyle(SizeType.Absolute,42));
-   var chips=new FlowLayoutPanel { AutoSize=true,WrapContents=false,Margin=Padding.Empty,BackColor=Color.Transparent };
-   for(int i=0;i<QuickSites.Length;i++) { accessChips[i]=new AccessChip(QuickSites[i],QuickColors[i]) { Font=new Font("Segoe UI",10) }; accessChips[i].Size=accessChips[i].GetPreferredSize(Size.Empty); tips.SetToolTip(accessChips[i],L.T("Henüz denenmedi")); chips.Controls.Add(accessChips[i]); }
-   row.Controls.Add(chips,0,0);
-   accessMore.Dock=DockStyle.Fill; accessMore.Margin=new Padding(4,1,0,1); accessMore.Font=new Font("Segoe UI",10); accessMore.Click+=delegate { ToggleAccess(); }; row.Controls.Add(accessMore,1,0);
-   UpdateAccessTile();
-   content.Controls.Add(row,0,1); content.SetColumnSpan(row,2); accessChipRow=row;
-   accessHost.Dock=DockStyle.Fill; accessHost.Visible=false; accessHost.Margin=new Padding(0,6,0,0); content.Controls.Add(accessHost,0,1); content.SetColumnSpan(accessHost,2);
-   accessCollapse.Glyph="up"; accessCollapse.IconOnly=true; accessCollapse.Text=L.T("Küçült"); accessCollapse.AccessibleName=accessCollapse.Text; accessCollapse.Size=new Size(40,34); accessCollapse.Margin=new Padding(8,0,0,0); accessCollapse.Visible=false; accessCollapse.Click+=delegate { ToggleAccess(); }; tips.SetToolTip(accessCollapse,accessCollapse.Text); buttons.Controls.Add(accessCollapse); buttons.Controls.SetChildIndex(accessCollapse,0);
+   // One row: the title, the three site chips, a short summary and the test button. Expanded, the detailed test
+   // takes the room under it and the chips step aside.
+   var box=new SoftPanel { Dock=DockStyle.Fill,Margin=new Padding(0,0,0,12),Padding=new Padding(22,10,12,10) }; layout.Controls.Add(box,0,5);
+   var content=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=4,RowCount=2,BackColor=Color.Transparent,Margin=Padding.Empty };
+   content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+   content.RowStyles.Add(new RowStyle(SizeType.Absolute,40)); content.RowStyles.Add(new RowStyle(SizeType.Percent,100)); box.Controls.Add(content); accessBox=box;
+   var title=new Label { Text=L.T("Erişim"),Font=new Font("Segoe UI",11.5f,FontStyle.Bold),AutoSize=true,Anchor=AnchorStyles.Left,Margin=new Padding(0,0,14,0) }; content.Controls.Add(title,0,0);
+   var chips=new FlowLayoutPanel { AutoSize=true,WrapContents=false,Anchor=AnchorStyles.Left,Margin=Padding.Empty,BackColor=Color.Transparent };
+   for(int i=0;i<QuickSites.Length;i++) { accessChips[i]=new AccessChip(QuickSites[i],QuickColors[i]) { Font=new Font("Segoe UI",9.5f) }; accessChips[i].Size=accessChips[i].GetPreferredSize(Size.Empty); accessChips[i].Margin=new Padding(0,0,6,0); accessChips[i].Cursor=Cursors.Hand; accessChips[i].Click+=delegate { RunAccessCheck(); }; tips.SetToolTip(accessChips[i],L.T("Henüz denenmedi")); chips.Controls.Add(accessChips[i]); }
+   content.Controls.Add(chips,1,0); accessChipRow=chips;
+   accessSummary.AutoSize=false; accessSummary.AutoEllipsis=true; accessSummary.Anchor=AnchorStyles.Left|AnchorStyles.Right; accessSummary.Height=20; accessSummary.TextAlign=ContentAlignment.MiddleLeft; accessSummary.Tag="muted"; accessSummary.Font=new Font("Segoe UI",9); accessSummary.Margin=new Padding(8,0,8,0); accessSummary.Text=L.T("Sitelerin bu profille açılıp açılmadığını dene."); content.Controls.Add(accessSummary,2,0);
+   var buttons=new FlowLayoutPanel { AutoSize=true,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Anchor=AnchorStyles.Right,Margin=Padding.Empty,BackColor=Color.Transparent };
+   accessRun.Glyph="list"; accessRun.Text=L.T("Ayrıntılı test"); accessRun.Size=new Size(140,36); accessRun.Corner=8; accessRun.Margin=Padding.Empty; accessRun.Click+=delegate { ToggleAccess(); }; tips.SetToolTip(accessRun,AccessProbe.Domains.Length+L.T(" site, tek tek sonuç ve süre")); buttons.Controls.Add(accessRun);
+   // A small refresh button runs the quick check of the three sites again; it spins while the check runs.
+   quickRun.Glyph="restart"; quickRun.IconOnly=true; quickRun.Text=L.T("Test et"); quickRun.AccessibleName=quickRun.Text; quickRun.Size=new Size(36,36); quickRun.Corner=8; quickRun.Margin=new Padding(0,0,6,0); quickRun.Click+=delegate { RunAccessCheck(); }; tips.SetToolTip(quickRun,L.T("Test et")); buttons.Controls.Add(quickRun);
+   content.Controls.Add(buttons,3,0);
+   accessHost.Dock=DockStyle.Fill; accessHost.Visible=false; accessHost.Margin=new Padding(0,6,0,0); content.Controls.Add(accessHost,0,1); content.SetColumnSpan(accessHost,4);
+   accessCollapse.Glyph="up"; accessCollapse.IconOnly=true; accessCollapse.Text=L.T("Küçült"); accessCollapse.AccessibleName=accessCollapse.Text; accessCollapse.Size=new Size(40,36); accessCollapse.Corner=8; accessCollapse.Margin=new Padding(8,0,0,0); accessCollapse.Visible=false; accessCollapse.Click+=delegate { ToggleAccess(); }; tips.SetToolTip(accessCollapse,accessCollapse.Text); buttons.Controls.Add(accessCollapse); buttons.Controls.SetChildIndex(accessCollapse,0);
   }
-  void UpdateAccessTile() {
-   accessMore.Caption=L.T("Ayrıntılı test"); accessMore.Hint=AccessProbe.Domains.Length+L.T(" site, tek tek sonuç ve süre"); accessMore.AccessibleName=accessMore.Caption; accessMore.Invalidate();
-  }
-  // Expanded, the card holds the full access test (every site, retry buttons and details) in place of the icons;
+  // Expanded, the card holds the full access test (every site, retry buttons and details) in place of the chips;
   // the settings card steps aside to make room and comes back when the card is folded again.
   readonly SoftButton accessCollapse=new SoftButton();
   readonly Panel accessHost=new Panel();
@@ -493,7 +585,7 @@ namespace GoodbyeTray {
    if(accessExpanded) {
     PrepareAccessFull();
     if(accessFull==null) { accessFull=new AccessTestForm(dark,delegate { return running; }); accessFull.Context=CaptureAccessContext; accessFull.SummaryChanged=ShowAccessSummary; accessFull.Embed(); accessHost.Controls.Add(accessFull); accessFull.Show(); ApplyTheme(false); }
-    accessHost.Visible=true; accessChipRow.Visible=false; accessRun.Visible=false; accessCollapse.Visible=true;
+    accessHost.Visible=true; accessChipRow.Visible=false; accessRun.Visible=false; quickRun.Visible=false; accessCollapse.Visible=true;
    }
    ShowAccessSummary();
    // The clock starts on the first frame: building the detailed test the first time takes a moment and must not eat the motion.
@@ -524,21 +616,19 @@ namespace GoodbyeTray {
   void FinishAccessMove() {
    SetCardContent(true);
    // The settings card keeps its place in the layout (a hidden control would shift the rows); its row just gets no height.
-   if(!accessExpanded) { accessHost.Visible=false; accessChipRow.Visible=true; accessRun.Visible=true; accessCollapse.Visible=false; }
-   ShowAccessSummary(); FitDashboard(); if(!accessExpanded) accessMore.Focus();
+   if(!accessExpanded) { accessHost.Visible=false; accessChipRow.Visible=true; accessRun.Visible=true; quickRun.Visible=true; accessCollapse.Visible=false; }
+   ShowAccessSummary(); FitDashboard(); if(!accessExpanded) accessRun.Focus();
   }
   void PaintAccessChips() {
    bool contrast=SystemInformation.HighContrast;
    foreach(var chip in accessChips) { if(chip==null) continue;
     chip.BackColor=surface; chip.Fill=contrast?surface:background; chip.Edge=border; chip.Ink=foreground; chip.Muted=secondary;
-    chip.Good=contrast?foreground:dark?Color.FromArgb(74,222,128):Color.FromArgb(22,135,74); chip.Bad=contrast?foreground:dark?Color.FromArgb(248,113,113):Color.FromArgb(196,52,62); chip.Spin=contrast?foreground:dark?AppPalette.Mint:AppPalette.Accent; chip.Invalidate(); }
-   accessMore.BackColor=surface; accessMore.Fill=contrast?surface:background; accessMore.Edge=border; accessMore.Ink=foreground; accessMore.Muted=secondary; accessMore.Accent=contrast?foreground:dark?AppPalette.Mint:AppPalette.Accent; accessMore.Invalidate();
-  }
+    chip.Good=contrast?foreground:dark?Color.FromArgb(74,222,128):Color.FromArgb(22,135,74); chip.Bad=contrast?foreground:dark?Color.FromArgb(248,113,113):Color.FromArgb(196,52,62); chip.Spin=contrast?foreground:dark?AppPalette.Mint:AppPalette.Accent; chip.Invalidate(); }  }
   // Opens a real HTTPS connection to each site at once; nothing is sent anywhere else.
   async void RunAccessCheck() {
    if(accessTesting || IsDisposed || busy || transition) return;
    CheckAccessContext(); var context=CaptureAccessContext(); int revision=accessGeneration;
-   accessTesting=true; accessRun.Enabled=false; accessRun.Spinning=true; quickSummary=L.T("Hızlı test")+" · "+L.T("Siteler deneniyor…"); quickTip=""; ShowAccessSummary();
+   accessTesting=true; quickRun.Enabled=false; quickRun.Spinning=true; quickSummary=L.T("Hızlı test")+" · "+L.T("Siteler deneniyor…"); quickTip=""; ShowAccessSummary();
    foreach(var chip in accessChips) { chip.State=AccessChip.Phase.Testing; tips.SetToolTip(chip,L.T("Test ediliyor…")); }
    int reached=0;
    try {
@@ -562,40 +652,40 @@ namespace GoodbyeTray {
     CheckAccessContext(); if(revision!=accessGeneration) return;
     string time=DateTime.Now.ToString("HH:mm"), advice=!online && reached==0?L.T(" İnternet bağlantını kontrol et."):!running?L.T(" GoodbyeDPI kapalıyken denendi."):"";
     quickSummary=L.T("Hızlı test")+" · "+reached+"/"+QuickSites.Length+" "+L.T("açıldı")+" · "+time+(advice.Length>0?" · "+L.T("ayrıntı için üzerine gel"):"");
-    quickTip=L.T("Hızlı test")+" · "+time+" · "+reached+"/"+QuickSites.Length+L.T(" site açıldı.")+advice+"\n"+context.Caption; ShowAccessSummary();
+    quickTip=L.T("Hızlı test")+" · "+time+" · "+reached+"/"+QuickSites.Length+L.T(" site açıldı.")+advice+"\n"+context.Caption; accessTested=true; ShowAccessSummary();
    } catch(Exception ex) { AppInfo.Log("Hızlı erişim testi: "+ex); if(revision==accessGeneration) { quickSummary=L.T("Hızlı test")+" · "+L.T("Test tamamlanamadı."); ShowAccessSummary(); foreach(var chip in accessChips) if(chip.State==AccessChip.Phase.Testing) chip.State=AccessChip.Phase.Idle; } }
-   finally { accessTesting=false; if(!IsDisposed) { accessRun.Enabled=true; accessRun.Spinning=false; } }
+   finally { accessTesting=false; if(!IsDisposed) { quickRun.Enabled=true; quickRun.Spinning=false; } }
   }
   // After a change that restarts the engine, check again once it had a moment to come up.
   async void RecheckAccessSoon() { if(commands==null) return; await Task.Delay(2500); if(!IsDisposed && running && !busy) RunAccessCheck(); }
-  // A small accent icon and a quiet caption above each choice.
+  // A quiet caption above each choice.
   static Control ChoiceTitle(string glyph,string text) {
    var row=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.LeftToRight,WrapContents=false,Margin=Padding.Empty,Padding=Padding.Empty };
-   string family=Array.Exists(System.Drawing.FontFamily.Families,f=>f.Name=="Segoe Fluent Icons")?"Segoe Fluent Icons":"Segoe MDL2 Assets";
-   row.Controls.Add(new Label { Text=glyph,Font=new Font(family,12),AutoSize=true,Tag="accent",Margin=new Padding(0,5,6,0) });
-   row.Controls.Add(new Label { Text=text,Font=new Font("Segoe UI",10.5f),AutoSize=true,Tag="muted",Margin=new Padding(0,4,0,0) });
+   row.Controls.Add(new Label { Text=text,Font=new Font("Segoe UI",10),AutoSize=true,Tag="muted",Margin=new Padding(0,4,0,0) });
    return row;
   }
-  // Under the status line: the connection profile on the left, the DNS server on the right.
-  void BuildChoices(TableLayoutPanel heroLayout) {
-   var choices=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=new Padding(0,12,0,0),Padding=new Padding(0,16,0,0),BackColor=Color.Transparent };
-   // A hairline separates the status from the choices.
-   choices.Paint+=delegate(object sender,PaintEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,0,0,choices.Width,0); };
-   choices.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,58)); choices.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,42)); choices.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-   heroLayout.Controls.Add(choices,0,2); heroLayout.SetColumnSpan(choices,2);
+  // The connection card under the status: the profile on the left, the DNS server on the right.
+  void BuildChoices(TableLayoutPanel layout) {
+   var box=new SoftPanel { Dock=DockStyle.Fill,Margin=new Padding(0,0,0,12),Padding=new Padding(22,14,22,8) }; layout.Controls.Add(box,0,3);
+   var card=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=1,RowCount=2,Margin=Padding.Empty,BackColor=Color.Transparent };
+   card.RowStyles.Add(new RowStyle(SizeType.Absolute,32)); card.RowStyles.Add(new RowStyle(SizeType.Percent,100)); box.Controls.Add(card);
+   card.Controls.Add(SectionTitle(null,L.T("Bağlantı ayarları")),0,0);
+   var choices=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty,BackColor=Color.Transparent };
+   choices.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,55)); choices.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,45)); choices.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+   card.Controls.Add(choices,0,1);
    var left=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,Margin=new Padding(0,0,12,0),BackColor=Color.Transparent }; choiceRows=left;
-   foreach(int h in new[]{30,50,22,22}) left.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
+   foreach(int h in new[]{30,48,22,22}) left.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
    var caption=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty,BackColor=Color.Transparent };
    caption.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); caption.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); caption.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-   caption.Controls.Add(ChoiceTitle("\uE945",L.T("Bağlantı profili")),0,0);
-   findLink.Text="✦ "+L.T("Uygun profil bul"); findLink.AutoSize=true; findLink.Anchor=AnchorStyles.Right; findLink.Margin=new Padding(0,5,0,0); findLink.LinkBehavior=LinkBehavior.HoverUnderline; findLink.LinkClicked+=delegate { if(findProfile.Enabled) FindProfile(); }; tips.SetToolTip(findLink,L.T("Profilleri senin hattında sırayla dener."));
+   caption.Controls.Add(ChoiceTitle(null,L.T("Profil")),0,0);
+   findLink.Text=L.T("Uygun profil bul"); findLink.AutoSize=true; findLink.Anchor=AnchorStyles.Right; findLink.Margin=new Padding(0,5,0,0); findLink.LinkBehavior=LinkBehavior.HoverUnderline; findLink.LinkClicked+=delegate { if(findProfile.Enabled) FindProfile(); }; tips.SetToolTip(findLink,L.T("Profilleri senin hattında sırayla dener."));
    caption.Controls.Add(findLink,1,0); left.Controls.Add(caption,0,0);
    var selection=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty };
    selection.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,Program.ZapretEnabled?130:0)); selection.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
    motors.Dock=DockStyle.Top; motors.AccessibleName=L.T("DPI motoru"); motors.Visible=Program.ZapretEnabled; motors.Items.AddRange(Program.ZapretEnabled?new[]{"GoodbyeDPI","Zapret 2"}:new[]{"GoodbyeDPI"});
    motors.SelectedIndexChanged+=delegate { profiles.SelectedIndex=-1; profiles.Items.Clear(); foreach(int id in Program.MotorProfiles(motors.SelectedIndex==1?Program.ZapretStart:0)) profiles.Items.Add(Program.Names[id].Replace("Zapret 2 · ","")); profiles.SelectedIndex=0; UpdateSelection(); };
    selection.Controls.Add(motors,0,0); motors.SelectedIndex=0;
-   profiles.Dock=DockStyle.Top; profiles.Height=46; motors.Height=46;
+   profiles.Dock=DockStyle.Top; profiles.Height=42; motors.Height=42; profiles.Corner=8; motors.Corner=8;
    profiles.Describe=delegate(int position) { var ids=Program.MotorProfiles(motors.SelectedIndex==1?Program.ZapretStart:0); return position>=0 && position<ids.Length?Program.Describe(ids[position]):null; };
    profiles.SelectedIndexChanged+=delegate { UpdateSelection(); }; selection.Controls.Add(profiles,1,0);
    // A profile picked from the menu is applied at once, like the DNS server; picking an engine applies its first profile.
@@ -607,9 +697,9 @@ namespace GoodbyeTray {
    pending.Dock=DockStyle.Fill; pending.Tag="muted"; pending.AutoEllipsis=true; left.Controls.Add(pending,0,3); pending.TextChanged+=delegate { FitDashboard(); };
    choices.Controls.Add(left,0,0);
    var right=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=1,RowCount=3,Margin=new Padding(12,0,0,0),BackColor=Color.Transparent };
-   foreach(int h in new[]{30,50,22}) right.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
+   foreach(int h in new[]{30,48,22}) right.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
    right.Controls.Add(ChoiceTitle("\uE774",L.T("DNS sunucusu")),0,0);
-   dnsServer.Dock=DockStyle.Top; dnsServer.Height=46; dnsServer.Margin=new Padding(0,2,0,2); dnsServer.AccessibleName=L.T("DNS sunucusu");
+   dnsServer.Dock=DockStyle.Top; dnsServer.Height=42; dnsServer.Corner=8; dnsServer.Margin=new Padding(0,2,0,2); dnsServer.AccessibleName=L.T("DNS sunucusu");
    foreach(int id in DnsChoice.Order) dnsServer.Items.Add(L.T(DnsChoice.Names[id]));
    dnsServer.SelectedIndex=DnsChoice.Position; right.Controls.Add(dnsServer,0,1);
    dnsHelp.Text=L.T("Standart ve \"DNS ile\" profillerinde kullanılır."); dnsHelp.Dock=DockStyle.Fill; dnsHelp.Font=new Font("Segoe UI",9); dnsHelp.AutoEllipsis=true; dnsHelp.Tag="muted"; right.Controls.Add(dnsHelp,0,2);
@@ -622,10 +712,11 @@ namespace GoodbyeTray {
   readonly LinkLabel findLink=new LinkLabel();
   void BuildSettings(TableLayoutPanel layout) {
    // Standard checkboxes with their explanations underneath.
-   var content=Section(layout,"\uE713",L.T("Ayarlar"),new[]{38,0}); startupContent=content; content.RowStyles[1].SizeType=SizeType.Percent; content.RowStyles[1].Height=100;
+   var content=Section(layout,"\uE713",L.T("Ayarlar"),new[]{32,0}); startupContent=content; content.RowStyles[1].SizeType=SizeType.Percent; content.RowStyles[1].Height=100;
    var grid=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,Margin=Padding.Empty,BackColor=Color.Transparent };
    grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-   for(int i=0;i<4;i++) grid.RowStyles.Add(new RowStyle(SizeType.Percent,25));
+   // The first setting needs no explanation, so its row is just the checkbox; the other three share the rest.
+   grid.RowStyles.Add(new RowStyle(SizeType.Absolute,34)); for(int i=1;i<4;i++) grid.RowStyles.Add(new RowStyle(SizeType.Percent,33.3f));
    content.Controls.Add(grid,0,1);
    engineStartup.Text=L.T("Windows açıldığında GoodbyeDPI'ı başlat");
    startup.Text=L.T("Sistem tepsisinde göster");
@@ -634,7 +725,6 @@ namespace GoodbyeTray {
    var sitesLink=new LinkLabel { Text=L.T("Siteler")+" ›",AutoSize=true,LinkBehavior=LinkBehavior.HoverUnderline,Margin=new Padding(0,0,8,0) }; sitesLink.LinkClicked+=delegate { ShowSiteList(); }; tips.SetToolTip(sitesLink,L.T("Siteleri düzenle"));
    var boxes=new[]{engineStartup,startup,quicBlock,sitesOnly};
    var helpLabels=new[]{new Label(),trayHelp,new Label(),new Label()}; settingsHelp=helpLabels;
-   helpLabels[0].Text=L.T("Bilgisayar açılınca GoodbyeDPI otomatik başlar, simgesi saatin yanına gelir.");
    trayHelp.Text=TrayHelp(true);
    helpLabels[2].Text=L.T("Discord gibi siteler tarayıcıda açılmıyorsa açık kalsın. Yalnızca GoodbyeDPI çalışırken etkilidir.");
    helpLabels[3].Text=L.T("Varsayılan liste: Discord, Roblox ve Wattpad. Siteler bölümünden düzenleyebilirsin.");
@@ -756,7 +846,13 @@ namespace GoodbyeTray {
    }
    catch(Exception ex) { ReportError(ex); }
   }
-  void Reveal() { Show(); ShowInTaskbar=true; WindowState=FormWindowState.Normal; Activate(); }
+  void Reveal() {
+   // Coming back from the tray, the window is drawn while cloaked and appears complete.
+   bool hidden=!Visible; if(hidden) Cloak(true);
+   Show(); ShowInTaskbar=true; WindowState=FormWindowState.Normal;
+   if(hidden) { PaintNow(); Cloak(false); }
+   Activate();
+  }
   internal void DispatchCommand(string command) {
    if(command=="show") Reveal();
    else if(command=="profiles") { Reveal(); profiles.Focus(); }
@@ -773,18 +869,17 @@ namespace GoodbyeTray {
    CheckAccessContext();
    if(available && (previous<0 || SelectedProfile==previous)) SelectProfile(profile);
    status.Text=!available?L.T("Kurulum gerekiyor"):running?L.T("GoodbyeDPI çalışıyor"):transition?L.T("Durum değişiyor…"):L.T("GoodbyeDPI durduruldu");
-   detail.Text=available?"":L.T("GoodbyeDPI-Installer.exe'yi açıp kurman gerekiyor.");
+   detail.Text=available?ProfileLine(profile):L.T("GoodbyeDPI-Installer.exe'yi açıp kurman gerekiyor.");
    if(paused) { status.Text=L.T("Geçici olarak durduruldu"); detail.Text=L.T("Moladan dönüş: ")+resumeAt.Value.ToLocalTime().ToString("HH:mm:ss"); }
-   toggle.Text=busy?L.T("Bir saniye…"):paused?L.T("Devam et"):running?L.T("Kapat"):L.T("Aç");
+   toggle.Text=busy?L.T("Bir saniye…"):paused?L.T("Devam et"):running?L.T("Durdur"):L.T("Başlat");
    toggle.Enabled=available && !busy && !transition;
    restart.Enabled=available && running && !busy && !transition;
    profiles.Enabled=available && !busy && !transition;
    motors.Enabled=profiles.Enabled;
    if(available && profile>=Program.ZapretStart) status.Text=status.Text.Replace("GoodbyeDPI","Zapret 2");
-   liveLogo.State=!available?StatusLabel.Mark.Stopped:busy || transition?StatusLabel.Mark.Busy:running?StatusLabel.Mark.Running:paused?StatusLabel.Mark.Paused:StatusLabel.Mark.Stopped;
    status.State=!available?StatusLabel.Mark.Stopped:busy || transition?StatusLabel.Mark.Busy:running?StatusLabel.Mark.Running:paused?StatusLabel.Mark.Paused:StatusLabel.Mark.Stopped;
-   heroCard.Glow=status.State==StatusLabel.Mark.Running?StatusLabel.Green:status.State==StatusLabel.Mark.Paused?StatusLabel.Amber:status.State==StatusLabel.Mark.Busy?AppPalette.Accent:Color.Empty;
-   heroCard.Breathing=status.State==StatusLabel.Mark.Running; toggle.Busy=busy || transition;
+   heroCard.Glow=Color.Empty;
+   heroCard.Breathing=false; toggle.Busy=busy || transition;
    findProfile.Enabled=available && !busy && !transition && !paused; findLink.Enabled=findProfile.Enabled;
    pauseButton.Enabled=available && (running || paused) && !busy && !transition;
    pauseButton.Text=paused?L.T("Molayı yönet"):L.T("Mola ver"); toggle.BreakText=pauseButton.Text; toggle.BreakEnabled=pauseButton.Enabled;
@@ -803,6 +898,14 @@ namespace GoodbyeTray {
   }
   // Only the real app (with its tray icon) changes the service; previews and tests never do.
   void ApplyPicked() { int id=SelectedProfile; if(commands!=null && available && !busy && !transition && id>=0 && id!=activeProfile) Execute("profile",id); }
+  // The line under the status: the active profile and, when that profile uses it, the DNS server.
+  string ProfileLine(int profile) {
+   if(profile<0 || profile>=Program.Names.Length) return "";
+   string line=L.T("Etkin profil: ")+Program.Names[profile];
+   int dns=DnsChoice.Position;
+   if(DnsChoice.Uses(profile) && dns>=0 && dns<dnsServer.Items.Count) line+="  ·  DNS: "+dnsServer.Items[dns];
+   return line;
+  }
   void UpdateSelection() {
    // A profile that leaves DNS alone does not use the chosen server: the picker goes quiet and says why.
    bool usesDns=DnsChoice.Uses(SelectedProfile);
@@ -814,6 +917,7 @@ namespace GoodbyeTray {
    if(i==11) hint.Text=L.T("QUIC başlangıcını engeller; destekleyen uygulamalar TCP'ye döner. DNS değişmez.");   bool dirty=available && i!=activeProfile;
    // Silent while the chosen profile is the active one; it only speaks up when there is something to apply.
    pending.Text=dirty?L.T("Seçtiğin profil henüz uygulanmadı."):available?"":L.T("Kurulumdan sonra profil seçebilirsin.");
+   if(pending.Text.Length>0) hint.Text=pending.Text;
   }
   async void Execute(string action,int profile) {
    if(busy) return;
@@ -886,31 +990,61 @@ namespace GoodbyeTray {
    if(commands!=null && updateState==UpdateState.Unknown) dialog.Shown+=delegate { CheckForUpdateAsync(true); };
    dialog.HandleCreated+=delegate { WindowsIntegration.ThemeCaption(dialog,dark,background,foreground); }; return dialog;
   }
+  // The small pills in the title bar take the width of their label, the icon and the padding around them.
+  static void FitPill(SoftButton pill) { pill.Width=TextRenderer.MeasureText(pill.Text,pill.Font).Width+(pill.IconOnly?0:(int)Math.Round(48*pill.DeviceDpi/96f)); }
+  // The screen scale (1 at 100 %, 1.5 at 150 %). Sizes in this file are written at 100 % and go through S().
+  float ui=1f;
+  int S(int pixels) { return (int)Math.Round(pixels*ui); }
+  internal void ApplyScale(float factor) { if(factor<=0 || Math.Abs(factor-ui)<0.01f) return; float step=factor/ui; ui=factor; Scale(new SizeF(step,step)); }
+  // The console and report buttons are 46 px; the rest of their row is the gap before the footer.
+  const int ActionRowHeight=62, SettingsHeight=248, ChoicesHeight=168, FooterHeight=34;
+  // The height the full layout needs, title bar included: the window opens at this size when the screen allows.
+  // The footer counts at its fixed height: its current height follows the space left, so it cannot size the window.
+  int NaturalHeight() { return titleBar.Height+dashboard.Padding.Vertical+S(FooterHeight+116+ChoicesHeight+SettingsHeight+72+ActionRowHeight); }
+  // The window gets its final size before it exists, so nothing is resized (and briefly left unpainted) after it
+  // shows. With the caption folded into the window, only the side and bottom frames lie outside the client area.
+  void SetOpeningSize() {
+   int side=GetSystemMetrics(32)+GetSystemMetrics(92), bottom=GetSystemMetrics(33)+GetSystemMetrics(92); // SM_CXFRAME, SM_CYFRAME, SM_CXPADDEDBORDER
+   var area=Screen.PrimaryScreen.WorkingArea;
+   Size=new Size(S(900)+side*2,Math.Max(MinimumSize.Height,Math.Min(NaturalHeight()+bottom,area.Height-24)));
+  }
+  // Windows shows a new window as soon as it exists; until the first paint has reached every card it would show
+  // black. The window stays cloaked (present but not drawn) until then, and the same when it comes back from the tray.
+  [System.Runtime.InteropServices.DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr window,int attribute,ref int value,int size);
+  [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool RedrawWindow(IntPtr window,IntPtr rect,IntPtr region,int flags);
+  void Cloak(bool hidden) { if(!IsHandleCreated) return; try { int value=hidden?1:0; DwmSetWindowAttribute(Handle,13,ref value,4); } catch(DllNotFoundException) { } } // DWMWA_CLOAK
+  void PaintNow() { if(IsHandleCreated) RedrawWindow(Handle,IntPtr.Zero,IntPtr.Zero,0x0185); } // RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW
+  protected override void OnShown(EventArgs e) { base.OnShown(e); PaintNow(); Cloak(false); }
   void FitDashboard() {
    if(dashboard.RowStyles.Count<8 || startupContent==null) return;
-   // The full layout needs about 870 px. Below that (small laptop screens) the settings drop their explanations,
-   // the header shrinks and the status card loses its spare line, so every card still fits without scrolling.
-   bool note=!String.IsNullOrEmpty(detail.Text), pend=!String.IsNullOrEmpty(pending.Text);
-   if(choiceRows!=null) choiceRows.RowStyles[3].Height=pend?22:0;
-   int lines=(note?24:0)+(pend?0:-22);
+   // The full layout needs about 750 px. Below that (small laptop screens) the settings drop their explanations
+   // (an info mark keeps each one a hover away) and the top rows tighten, so every card fits without scrolling.
+   // A pending choice is said in the hint line under the picker, so the card never grows (see UpdateSelection).
+   bool pend=false;
+   if(choiceRows!=null) choiceRows.RowStyles[3].Height=0;
+   int choices=S(ChoicesHeight), access=S(72), actions=S(ActionRowHeight);
+   int fixedPart=dashboard.Padding.Vertical+S(FooterHeight)+choices+access+actions;
    // "Roomy" when the full layout fits as it is; the window opens at that height, so no empty band is left.
-   bool roomy=ClientSize.Height>=80+264+292+118+lines+dashboard.Padding.Vertical+footerPanel.Height; float open=accessOpen;
-   // Only the settings and access rows move; the header and the status card stay put (repainting them every frame
-   // is what made the motion stutter), and the detailed list scrolls when it needs more room.
+   bool roomy=ClientSize.Height>=fixedPart+titleBar.Height+S(116+SettingsHeight); float open=accessOpen;
    bool compact=!roomy;
-   if(heroRows!=null) heroRows.RowStyles[1].Height=note?24:0;
    Func<int,int,int> blend=delegate(int a,int b) { return (int)Math.Round(a+(b-a)*open); };
-   int[] heights=new int[6];
-   heights[0]=roomy?80:64;
-   heights[1]=(roomy?264:242)+lines;
-   int settings=roomy?292:204; heights[4]=blend(settings,0);
-   int opened=Math.Max(260,ClientSize.Height-heights[0]-heights[1]-dashboard.Padding.Vertical-footerPanel.Height-8);
-   heights[5]=blend(118,opened);
+   int[] heights=new int[7];
+   heights[0]=0;
+   heights[1]=S(116);
+   heights[3]=choices;
+   // Only the settings and access rows move when the detailed test opens; the rest stays put
+   // (repainting it every frame is what made the motion stutter), and the detailed list scrolls when it needs more room.
+   heights[4]=blend(S(roomy?SettingsHeight:190),0);
+   int opened=Math.Max(S(260),ClientSize.Height-fixedPart+access-titleBar.Height-heights[1]-4);
+   heights[5]=blend(access,opened);
+   heights[6]=actions;
    dashboard.SuspendLayout(); startupContent.SuspendLayout(); footerPanel.SuspendLayout();
    try {
     for(int i=0;i<heights.Length;i++) if(dashboard.RowStyles[i].Height!=heights[i]) dashboard.RowStyles[i].Height=heights[i];
-    if(settingsHelp!=null) foreach(var help in settingsHelp) help.Visible=!compact;
-    foreach(var info in settingsInfo) if(info!=null) info.Visible=compact;
+    // A short moment (while scaling, or a tiny window) can squeeze the footer to its cell; give it its height back.
+    if(footerPanel.Height!=S(FooterHeight)) footerPanel.Height=S(FooterHeight);
+    if(settingsHelp!=null) foreach(var help in settingsHelp) help.Visible=!compact && help.Text.Length>0;
+    for(int i=0;i<settingsInfo.Length;i++) if(settingsInfo[i]!=null) settingsInfo[i].Visible=compact && settingsHelp!=null && settingsHelp[i].Text.Length>0;
    } finally { startupContent.ResumeLayout(); footerPanel.ResumeLayout(); dashboard.ResumeLayout(); }
   }
   int stateRevision;
@@ -994,23 +1128,22 @@ namespace GoodbyeTray {
   void ApplyTheme(bool force) {
    bool next=themeOverride??(themePreference=="system"?WindowsDark():AppPalette.IsDark(themePreference)); if(!force && next==dark && !SystemInformation.HighContrast) return; dark=next;
    AppPalette.Variant=themeOverride==null?AppPalette.VariantOf(themePreference):"black";
-   themeButton.Text=ThemeName(themePreference)+"  ▾"; tips.SetToolTip(themeButton,L.T("Tema")+": "+ThemeName(themePreference));
-   brandTitle.Accent=dark?AppPalette.Mint:AppPalette.Accent; brandTitle.Invalidate();
+   themeButton.Text=ThemeName(themePreference)+"  ▾"; FitPill(themeButton); tips.SetToolTip(themeButton,L.T("Tema")+": "+ThemeName(themePreference));
    var oldSwatch=themeButton.GlyphImage; themeButton.GlyphImage=ThemeSwatch(themePreference); if(oldSwatch!=null) oldSwatch.Dispose(); themeButton.Invalidate();
    background=AppPalette.Background(dark); surface=AppPalette.Surface(dark); foreground=AppPalette.Text(dark); secondary=AppPalette.Muted(dark); border=AppPalette.Border(dark);
    if(SystemInformation.HighContrast) { background=SystemColors.Window; surface=SystemColors.Window; foreground=SystemColors.WindowText; secondary=SystemColors.WindowText; border=SystemColors.WindowText; }
    BackColor=background; PaintControls(this); ShowVersion(); PaintActionGroup(); WindowsIntegration.ThemeCaption(this,dark,background,foreground);
    if(diagnosticsWindow!=null && !diagnosticsWindow.IsDisposed) { ((EngineConsoleForm)diagnosticsWindow).ApplyPalette(dark); }
    PaintAccessChips(); if(accessFull!=null && !accessFull.IsDisposed) accessFull.ApplyPalette(dark);
-   if(tray!=null) MenuAppearance.Apply(tray.ContextMenuStrip,surface,foreground,border,230,true);
+   if(tray!=null) MenuRenderer.PrepareTree(tray.ContextMenuStrip,surface,foreground,border,240);
    if(pauseMenu.Visible) pauseMenu.Close();
-   heroCard.Glow=status.State==StatusLabel.Mark.Running?StatusLabel.Green:status.State==StatusLabel.Mark.Paused?StatusLabel.Amber:status.State==StatusLabel.Mark.Busy?AppPalette.Accent:Color.Empty;
+   heroCard.Glow=Color.Empty;
    Invalidate(true);
   }
   // The color behind a control: the card's surface inside a SoftPanel, else the window background.
   Color HostColor(Control control) { for(Control parent=control.Parent;parent!=null;parent=parent.Parent) if(parent is SoftPanel) return surface; return background; }
   void PaintButton(SoftButton button,bool primary) { button.Fill=primary?AppPalette.Accent:surface; button.Ink=primary?AppPalette.AccentInk:foreground; button.Edge=primary?button.Fill:border; if(SystemInformation.HighContrast) { button.Fill=primary?foreground:background; button.Ink=primary?background:foreground; } Color host=background; for(Control parent=button.Parent;parent!=null;parent=parent.Parent) { if(parent is SoftPanel) { host=surface; break; } } button.BackColor=host; button.ForeColor=button.Ink; button.Invalidate(); }
-  protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); ApplyTheme(true); }
+  protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); Cloak(true); SetWindowPos(Handle,IntPtr.Zero,0,0,0,0,0x0037); ApplyTheme(true); } // SWP_FRAMECHANGED|NOMOVE|NOSIZE|NOZORDER|NOACTIVATE: recompute the frame without the caption.
   void PaintControls(Control parent) {
    foreach(Control control in parent.Controls) {
     var panel=control as SoftPanel; var button=control as SoftButton;

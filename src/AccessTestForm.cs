@@ -62,7 +62,11 @@ namespace GoodbyeTray {
  sealed class AccessRow : Control {
   internal enum Phase { Idle,Testing,Reached,Failed }
   internal readonly string Domain;
-  internal readonly SoftButton Retry=new SoftButton { Glyph="restart",Width=42,Height=34 };
+  internal readonly SoftButton Retry=new SoftButton { Glyph="restart",IconOnly=true,Width=34,Height=32,Corner=8 };
+  // The site's own icon once a test has fetched it (kept in app data); until then a letter in a circle.
+  internal Image Icon;
+  // A hairline under every row but the last.
+  internal bool Divider=true;
   internal Phase State;
   internal string Status=L.T("Test Yapılmadı"),Detail="";
   internal float Angle;
@@ -71,21 +75,27 @@ namespace GoodbyeTray {
   internal AccessRow(string domain,string label=null) {
    Label=label;
    Domain=domain; SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
-   Height=48; Margin=Padding.Empty; Retry.AccessibleName=(label ?? domain)+L.T(" için yeniden test et"); Controls.Add(Retry);
+   Height=48; Margin=Padding.Empty; Retry.AccessibleName=(label ?? domain)+L.T(" için yeniden test et"); Retry.Text=Retry.AccessibleName; Controls.Add(Retry);
+   Icon=SiteIcons.Load(domain);
   }
   string Title { get { return Label ?? Char.ToUpperInvariant(Domain[0])+Domain.Substring(1); } }
   protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); Retry.Location=new Point(Width-Retry.Width-2,(Height-Retry.Height)/2); }
+  // One plain row: icon, name, a status dot with its result, the timing in muted text and a small retry button.
   protected override void OnPaint(PaintEventArgs e) {
    var g=e.Graphics; g.Clear(BackColor); g.SmoothingMode=SmoothingMode.AntiAlias;
-   var chip=new Rectangle(2,8,176,Height-17);
-   using(var path=SoftButton.Round(chip,12)) using(var fill=new SolidBrush(Chip)) using(var pen=new Pen(Edge)) { g.FillPath(fill,path); g.DrawPath(pen,path); }
-   TextRenderer.DrawText(g,Title,Font,new Rectangle(chip.X+12,chip.Y,chip.Width-16,chip.Height),Ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
-   int y=Height/2; Color tone=State==Phase.Reached?Good:State==Phase.Failed?Bad:State==Phase.Testing?Spin:Muted;
-   if(State==Phase.Testing) using(var pen=new Pen(tone,2.2f)) { pen.StartCap=pen.EndCap=LineCap.Round; g.DrawArc(pen,197,y-7,14,14,Angle,270); }
-   else using(var dot=new SolidBrush(tone)) g.FillEllipse(dot,199,y-5,11,11);
-   { var bold=Fonts.Get(Font,State==Phase.Idle?FontStyle.Regular:FontStyle.Bold); TextRenderer.DrawText(g,Status,bold,new Rectangle(222,0,170,Height),State==Phase.Idle?Muted:tone,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis); }
-   int detailWidth=Math.Max(1,Width-400-Retry.Width-10);
-   if(Detail.Length>0) TextRenderer.DrawText(g,"("+Detail+")",Font,new Rectangle(396,0,detailWidth,Height),Muted,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
+   float s=DeviceDpi/96f; int y=Height/2, icon=(int)Math.Round(20*s), x=(int)Math.Round(6*s);
+   if(Icon!=null) { g.InterpolationMode=InterpolationMode.HighQualityBicubic; g.DrawImage(Icon,x,y-icon/2,icon,icon); }
+   else { using(var fill=new SolidBrush(Chip)) using(var pen=new Pen(Edge)) { g.FillEllipse(fill,x,y-icon/2,icon,icon); g.DrawEllipse(pen,x,y-icon/2,icon,icon); } TextRenderer.DrawText(g,Title.Substring(0,1),Fonts.Get(Font,FontStyle.Bold),new Rectangle(x,y-icon/2,icon,icon),Muted,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding|TextFormatFlags.NoPrefix); }
+   int nameX=x+icon+(int)Math.Round(12*s), nameWidth=(int)Math.Round(190*s), statusX=nameX+nameWidth;
+   TextRenderer.DrawText(g,Title,Font,new Rectangle(nameX,0,nameWidth-8,Height),Ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+   Color tone=State==Phase.Reached?Good:State==Phase.Failed?Bad:State==Phase.Testing?Spin:Muted; int dot=(int)Math.Round(8*s);
+   if(State==Phase.Testing) using(var pen=new Pen(tone,2f)) { pen.StartCap=pen.EndCap=LineCap.Round; g.DrawArc(pen,statusX-2,y-6,12,12,Angle,270); }
+   else using(var brush=new SolidBrush(tone)) g.FillEllipse(brush,statusX,y-dot/2,dot,dot);
+   int textX=statusX+dot+(int)Math.Round(10*s), statusWidth=(int)Math.Round(150*s);
+   { var font=Fonts.Get(Font,State==Phase.Reached || State==Phase.Failed?FontStyle.Bold:FontStyle.Regular); TextRenderer.DrawText(g,Status,font,new Rectangle(textX,0,statusWidth,Height),State==Phase.Idle?Muted:tone,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix); }
+   int detailX=textX+statusWidth, detailWidth=Math.Max(1,Width-detailX-Retry.Width-12);
+   if(Detail.Length>0) TextRenderer.DrawText(g,Detail,Font,new Rectangle(detailX,0,detailWidth,Height),Muted,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+   if(Divider) using(var pen=new Pen(Edge)) g.DrawLine(pen,x,Height-1,Width-x,Height-1);
   }
  }
  sealed class AccessTestForm : Form {
@@ -118,7 +128,12 @@ namespace GoodbyeTray {
    TopLevel=false; FormBorderStyle=FormBorderStyle.None; Dock=DockStyle.Fill; MinimumSize=Size.Empty;
    outer.Padding=new Padding(4,2,4,4); embedded=true; outer.RowStyles[0].Height=Scale(46); heading.Invalidate();
    // 9: rows follow the screen scale, so text and buttons keep their room at 150-200 %.
-   for(int i=0;i<rows.Length;i++) { siteList.RowStyles[i].Height=RowHeight; rows[i].Height=RowHeight; }
+   for(int i=0;i<rows.Length;i++) { siteList.RowStyles[i].Height=RowHeight; rows[i].Height=RowHeight; rows[i].Divider=i<rows.Length-1; }
+   // The card around the list and the status line under it belong to the main window's card now: the list sits
+   // straight on its surface, the summary shows in the card's header and the test button is a quiet one.
+   outer.RowStyles[2].Height=0; state.Visible=false; card.Padding=new Padding(0,4,4,0);
+   testAll.Glyph="restart"; testAll.Height=Scale(34); testAll.Corner=8; testAll.Margin=new Padding(8,Scale(6),0,0);
+   ApplyPalette(dark);
    // On a short window the list scrolls with a thin themed bar instead of the Windows scroll bar.
    siteList.RowStyles[rows.Length].Height=0; siteList.RowStyles[rows.Length].SizeType=SizeType.Absolute; siteList.AutoScroll=false;
    card.Controls.Remove(siteList);
@@ -200,6 +215,8 @@ namespace GoodbyeTray {
    if(revision!=generation) return;
    if(current.Key!=CurrentContext().Key) { InvalidateResults(); return; }
    row.State=result.Reached?AccessRow.Phase.Reached:AccessRow.Phase.Failed; row.Status=result.Status; row.Detail=result.Detail; row.Retry.Enabled=true; row.Invalidate();
+   // The first time a site opens, its own icon replaces the letter (fetched from the site itself, as in the quick check).
+   if(result.Reached && row.Icon==null) { var picture=await Task.Run(delegate { return SiteIcons.Fetch(domain); }); if(!disposed && !IsDisposed && picture!=null) { row.Icon=picture; row.Invalidate(); } }
    if(!current.Covers(domain)) row.Detail=L.T("Liste dışında; GoodbyeDPI uygulanmadı.")+" "+row.Detail;
    tips.SetToolTip(row,row.Status+" · "+row.Detail+" · "+current.Caption);
    if(--pending==0) { spinner.Stop(); testAll.Enabled=true; Summarize(); }
@@ -222,10 +239,13 @@ namespace GoodbyeTray {
   internal void ApplyPalette(bool darkTheme) {
    dark=darkTheme; bool contrast=SystemInformation.HighContrast;
    Color background=contrast?SystemColors.Window:AppPalette.Background(dark), surface=contrast?SystemColors.Window:AppPalette.Surface(dark), text=contrast?SystemColors.WindowText:AppPalette.Text(dark), muted=contrast?SystemColors.WindowText:AppPalette.Muted(dark), edge=contrast?SystemColors.WindowText:AppPalette.Border(dark);
-   BackColor=background; ForeColor=text; state.ForeColor=muted; heading.BackColor=background; card.BackColor=background; card.Fill=surface; card.Edge=edge;
-   testAll.BackColor=background; testAll.Fill=contrast?text:AppPalette.Accent; testAll.Ink=contrast?background:AppPalette.AccentInk; testAll.Edge=testAll.Fill;
+   // Embedded, everything takes the main window card's surface, so no second panel shows inside it.
+   if(embedded) background=surface;
+   BackColor=background; ForeColor=text; state.ForeColor=muted; heading.BackColor=background; card.BackColor=background; card.Fill=surface; card.Edge=embedded?surface:edge;
+   testAll.BackColor=background;
+   if(embedded) { testAll.Fill=surface; testAll.Ink=text; testAll.Edge=edge; } else { testAll.Fill=contrast?text:AppPalette.Accent; testAll.Ink=contrast?background:AppPalette.AccentInk; testAll.Edge=testAll.Fill; }
    foreach(var row in rows) {
-    row.BackColor=surface; row.Chip=AppPalette.Background(dark); row.Edge=edge; row.Ink=text; row.Muted=muted;
+    row.BackColor=surface; row.Chip=AppPalette.Background(dark); row.Edge=embedded?MenuRenderer.Blend(edge,surface,0.6f):edge; row.Ink=text; row.Muted=muted;
     row.Good=dark?Color.FromArgb(74,222,128):Color.FromArgb(22,135,74); row.Bad=dark?Color.FromArgb(248,113,113):Color.FromArgb(196,52,62); row.Spin=dark?AppPalette.Mint:AppPalette.Accent;
     if(contrast) { row.Chip=surface; row.Good=row.Bad=row.Spin=text; }
     row.Retry.BackColor=surface; row.Retry.Fill=surface; row.Retry.Ink=text; row.Retry.Edge=edge; row.Retry.ForeColor=text; row.Invalidate(); row.Retry.Invalidate();

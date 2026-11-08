@@ -161,7 +161,7 @@ $translate=$lang.GetMethod('T',$static)
 $language=$lang.GetProperty('Current',$static)
 foreach($code in 'tr','kanka') {
  $language.SetValue($null,$code)
- if($language.GetValue($null) -ne 'tr' -or $translate.Invoke($null,[object[]]@('GoodbyeDPI çalışıyor')) -ne 'GoodbyeDPI iş başında') { throw 'Varsayilan Turkce veya eski dil tercihi uyumsuz' }
+ if($language.GetValue($null) -ne 'tr' -or $translate.Invoke($null,[object[]]@('Profil uygulandı.')) -ne 'Tamamdır! Yeni profil devrede.') { throw 'Varsayilan Turkce veya eski dil tercihi uyumsuz' }
 }
 foreach($key in $lang.GetProperty('KankaKeys',$static).GetValue($null)) {
  $copy=$translate.Invoke($null,[object[]]@($key))
@@ -169,7 +169,7 @@ foreach($key in $lang.GetProperty('KankaKeys',$static).GetValue($null)) {
 }
 foreach($code in 'en','ru') {
  $language.SetValue($null,$code)
- if($translate.Invoke($null,[object[]]@('GoodbyeDPI çalışıyor')) -eq 'GoodbyeDPI iş başında') { throw 'Turkce metin baska dile sizdi' }
+ if($translate.Invoke($null,[object[]]@('Profil uygulandı.')) -eq 'Tamamdır! Yeni profil devrede.') { throw 'Turkce metin baska dile sizdi' }
 }
 $language.SetValue($null,'tr')
 foreach($code in 'tr','en','ru') { $flag=$lang.GetMethod('Flag',$static).Invoke($null,[object[]]@($code)); if($flag.Width -ne 20) { throw 'Bayrak cizilemedi' }; $flag.Dispose() }

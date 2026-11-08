@@ -21,7 +21,8 @@ $t=$a.GetType('GoodbyeTray.MainForm'); $form=[Activator]::CreateInstance($t,[obj
 try {
  $a.GetType('GoodbyeTray.Motion').GetField('Override',$s).SetValue($null,$false)
  $form.Show()
- $t.GetField('quickSummary',$f).SetValue($form,'Quick test 3/3 old')
+ # A finished quick test: its summary, and the mark that a test ran (only then does a change ask for a retest).
+ $t.GetField('quickSummary',$f).SetValue($form,'Quick test 3/3 old'); $t.GetField('accessTested',$f).SetValue($form,$true)
  $t.GetMethod('ToggleAccess',$f).Invoke($form,$null) | Out-Null
  $full=$t.GetField('accessFull',$f).GetValue($form); $ft=$full.GetType()
  $ft.GetMethod('SetSummary',$f,$null,[Type[]]@([string]),$null).Invoke($full,@('6/10 new')) | Out-Null

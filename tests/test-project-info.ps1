@@ -10,8 +10,9 @@ $type=$asm.GetType('GoodbyeTray.MainForm'); $flags=[Reflection.BindingFlags]'Non
 $form=[Activator]::CreateInstance($type,[object[]]@($false))
 try {
  $footer=$type.GetField('footerPanel',$flags).GetValue($form)
- if($footer.Controls.Count -ne 5){throw 'Unexpected footer content'}
- if(@($footer.Controls | Where-Object {$_.Text -eq 'Dert yan'}).Count -ne 1){throw 'Report link missing'}
+ if($footer.Controls.Count -ne 3){throw 'Unexpected footer content'}
+ $actions=$type.GetField('actionRow',$flags).GetValue($form)
+ if(@($actions.Controls | Where-Object {$_.Text -eq 'Sorun bildir'}).Count -ne 1){throw 'Report button missing'}
  $profile=@($footer.Controls | Where-Object {$_.Text -eq 'Geliştirici: trfurkan'})
  if($profile.Count -ne 1 -or $profile[0].Tag -ne 'https://github.com/trfurkan' -or $profile[0].GetType().Name -ne 'GitHubProfileLink'){throw 'Profile link or icon missing'}
  if(@($footer.Controls | Where-Object {$_.Text -eq 'Hakkında'}).Count -ne 1){throw 'About link missing'}

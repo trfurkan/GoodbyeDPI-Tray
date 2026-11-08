@@ -161,6 +161,9 @@ namespace GoodbyeTray {
    base.OnPaint(e);
    if(mark==Mark.None) return;
    var g=e.Graphics; g.SmoothingMode=SmoothingMode.AntiAlias;
+   // The mark is drawn at 100 % and grows with the status text on a scaled screen (its line is 27 px at 100 %).
+   float grow=Math.Max(1f,Font.Height/27f);
+   if(grow>1.01f) { g.TranslateTransform(0,Height/2f); g.ScaleTransform(grow,grow); g.TranslateTransform(0,-Height/2f); }
    float cx=23, cy=Height/2f, pop=appear.Value;
    // Overshoot: 0.35 → about 1.12 → 1, so the mark settles instead of stopping dead.
    float scale=pop>=1?1:(float)(pop+Math.Sin(Math.PI*pop)*0.25);
@@ -317,12 +320,10 @@ namespace GoodbyeTray {
   internal bool Busy { get { return busy; } set { if(busy==value) return; busy=value; Loop(); Invalidate(); } }
   internal bool BreakEnabled { get { return breakEnabled; } set { if(breakEnabled==value) return; breakEnabled=value; Loop(); Invalidate(); } }
   // Colors of the main part for the current state; a state change crossfades to them.
+  // The main part keeps the accent color in every state, as in the old window: only its label changes.
   void Targets(out Color fill,out Color ink) {
    if(SystemInformation.HighContrast) { fill=Ink; ink=Frame; return; }
-   bool dark=Frame.GetBrightness()<0.5f;
-   if(mode==Mode.Running) { fill=Motion.Mix(Frame,Danger,dark?0.18f:0.11f); ink=Danger; }
-   else if(mode==Mode.Paused) { fill=Motion.Mix(Frame,Amber,dark?0.20f:0.14f); ink=dark?Amber:Motion.Mix(Amber,Color.Black,0.35f); }
-   else { fill=Accent; ink=AccentInk; }
+   fill=Accent; ink=AccentInk;
   }
   internal void Recolor(bool animate) {
    Color fill,ink; Targets(out fill,out ink);
@@ -334,11 +335,12 @@ namespace GoodbyeTray {
   internal void Retheme() { Color fill,ink; Targets(out fill,out ink); toFill=fill; toInk=ink; if(fade.Value>=1) { fromFill=fill; fromInk=ink; } Invalidate(); }
   Color CurrentFill { get { return Motion.Mix(fromFill,toFill,fade.Value); } }
   Color CurrentInk { get { return Motion.Mix(fromInk,toInk,fade.Value); } }
-  // Steam and the spinner need frames; everything else is driven by tweens.
-  void Loop() { Motion.Loop(this,Visible && (busy || (breakEnabled && (mode==Mode.Paused || hot==0)))); }
-  int Pad { get { return 4; } }
-  Rectangle BreakRect { get { int h=Height-Pad*2; return new Rectangle(Pad,Pad,Math.Min(56,h+8),h); } }
-  Rectangle MainRect { get { var b=BreakRect; return new Rectangle(b.Right+4,Pad,Width-b.Right-4-Pad,Height-Pad*2); } }
+  // Only the spinner needs frames; everything else is driven by tweens.
+  void Loop() { Motion.Loop(this,Visible && busy); }
+  int Pad { get { return 1; } }
+  // The break part is a labeled button ("Mola ver ▾") sized to its text; the main part fills the rest.
+  Rectangle BreakRect { get { int h=Height-Pad*2, w=TextRenderer.MeasureText(BreakText,Font).Width+42; return new Rectangle(Pad,Pad,Math.Max(96,Math.Min(Width/2,w)),h); } }
+  Rectangle MainRect { get { var b=BreakRect; return new Rectangle(b.Right+8,Pad,Width-b.Right-8-Pad,Height-Pad*2); } }
   int PartAt(Point p) { if(BreakRect.Contains(p)) return 0; if(MainRect.Contains(p)) return 1; return -1; }
   bool PartEnabled(int part) { return Enabled && (part==1 || breakEnabled); }
   protected override void OnMouseMove(MouseEventArgs e) { int part=PartAt(e.Location); if(part!=hot) { hot=part; hoverBreak.To(hot==0 && PartEnabled(0)?1:0,150); hoverMain.To(hot==1 && PartEnabled(1)?1:0,150); Cursor=hot>=0 && PartEnabled(hot)?Cursors.Hand:Cursors.Default; Loop(); if(HoverChanged!=null) HoverChanged(hot); } base.OnMouseMove(e); }
@@ -369,48 +371,27 @@ namespace GoodbyeTray {
   protected override void OnPaint(PaintEventArgs e) {
    var g=e.Graphics; g.SmoothingMode=SmoothingMode.AntiAlias; g.PixelOffsetMode=PixelOffsetMode.HighQuality;
    if(Width<80 || Height<20) return;
-   // The frame.
-   using(var path=SoftButton.RoundF(new RectangleF(0.5f,0.5f,Width-1.5f,Height-1.5f),Math.Min(Height-1.5f,(12+Pad)*2))) using(var b=new SolidBrush(Frame)) using(var pen=new Pen(Edge)) { g.FillPath(b,path); g.DrawPath(pen,path); }
-   float press=sink.Value;
-   // Break part: a soft tint under the mouse, the cup in the middle.
+   float press=sink.Value; const float corner=16;
+   // Break part: a quiet outlined button with its label and a small arrow, tinted under the mouse.
    var br=BreakRect; float hb=hoverBreak.Value; bool breakOn=PartEnabled(0);
-   if(hb>0.01f) using(var path=SoftButton.RoundF(Inset(br,pressed==0?press:0),24)) using(var b=new SolidBrush(Color.FromArgb((int)(28*hb),Ink))) g.FillPath(b,path);
-   DrawCup(g,br,breakOn?Ink:Muted,breakOn && (mode==Mode.Paused || hot==0));
-   // Main part: state color, lifted a little on hover, sunk while pressed.
+   // Unavailable (stopped or busy), the break button fades into the card: no fill, a faint edge and a dim label.
+   Color breakFill=breakOn?Motion.Mix(Host,Ink,(SystemInformation.HighContrast?0:0.05f)+0.07f*hb):Host;
+   Color breakEdge=breakOn?Edge:Motion.Mix(Edge,Host,0.5f);
+   using(var path=SoftButton.RoundF(Inset(br,pressed==0?press:0),corner)) using(var b=new SolidBrush(breakFill)) using(var pen=new Pen(breakEdge)) { g.FillPath(b,path); g.DrawPath(pen,path); }
+   Color breakInk=breakOn?Ink:Motion.Mix(Muted,Host,SystemInformation.HighContrast?0:0.4f);
+   int arrowSpace=16, labelWidth=TextRenderer.MeasureText(BreakText,Font).Width, lx=br.X+Math.Max(10,(br.Width-labelWidth-arrowSpace)/2);
+   TextRenderer.DrawText(g,BreakText,Font,new Rectangle(lx,br.Y,Math.Max(1,br.Right-lx-arrowSpace-6),br.Height),breakInk,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
+   float ax=Math.Min(br.Right-14,lx+labelWidth+6), ay=br.Y+br.Height/2f;
+   using(var pen=new Pen(breakInk,1.7f) { StartCap=LineCap.Round,EndCap=LineCap.Round,LineJoin=LineJoin.Round }) g.DrawLines(pen,new[]{new PointF(ax,ay-2),new PointF(ax+4,ay+2),new PointF(ax+8,ay-2)});
+   // Main part: the accent color, lifted a little on hover, sunk while pressed; a spinner while busy.
    var mr=MainRect; Color fill=CurrentFill, ink=CurrentInk;
-   if(!Enabled) { fill=Motion.Mix(fill,Frame,0.45f); ink=Motion.Mix(ink,Frame,0.45f); }
-   fill=Motion.Mix(fill,mode==Mode.Stopped?Color.White:ink,hoverMain.Value*(mode==Mode.Stopped?0.10f:0.08f));
-   using(var path=SoftButton.RoundF(Inset(mr,pressed==1?press:0),24)) using(var b=new SolidBrush(fill)) using(var pen=new Pen(mode==Mode.Stopped?fill:Motion.Mix(fill,ink,0.35f))) { g.FillPath(b,path); g.DrawPath(pen,path); }
-   int textWidth=TextRenderer.MeasureText(Text,Font).Width, x=mr.X+Math.Max(10,(mr.Width-textWidth-28)/2), y=mr.Y+(mr.Height-18)/2;
-   using(var pen=new Pen(ink,2f) { StartCap=LineCap.Round,EndCap=LineCap.Round }) {
-    if(busy) { float a=Motion.Enabled?(Motion.Now%900)/900f*360:0; using(var track=new Pen(Color.FromArgb(60,ink),2f)) g.DrawEllipse(track,x+1,y+1,16,16); g.DrawArc(pen,x+1,y+1,16,16,a,110); }
-    else if(mode==Mode.Paused) { var pts=new[]{new PointF(x+5,y+3),new PointF(x+15,y+9),new PointF(x+5,y+15)}; using(var b=new SolidBrush(ink)) g.FillPolygon(b,pts); }
-    else { float r=Motion.EaseOut(ring.Value); g.DrawArc(pen,x+1.5f,y+2.5f,15,15,-50,280*r); g.DrawLine(pen,x+9,y+0.5f+(1-r)*4,x+9,y+8); }
-   }
-   TextRenderer.DrawText(g,Text,Font,new Rectangle(x+26,mr.Y,Math.Max(1,mr.Right-x-30),mr.Height),ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
+   if(!Enabled) { fill=Motion.Mix(fill,Host,0.45f); ink=Motion.Mix(ink,Host,0.45f); }
+   fill=Motion.Mix(fill,Color.White,hoverMain.Value*0.10f);
+   using(var path=SoftButton.RoundF(Inset(mr,pressed==1?press:0),corner)) using(var b=new SolidBrush(fill)) { g.FillPath(b,path); }
+   int textWidth=TextRenderer.MeasureText(Text,Font).Width, spin=busy?26:0, x=mr.X+Math.Max(10,(mr.Width-textWidth-spin)/2), y=mr.Y+(mr.Height-18)/2;
+   if(busy) using(var pen=new Pen(ink,2f) { StartCap=LineCap.Round,EndCap=LineCap.Round }) { float a=Motion.Enabled?(Motion.Now%900)/900f*360:0; using(var track=new Pen(Color.FromArgb(60,ink),2f)) g.DrawEllipse(track,x+1,y+1,16,16); g.DrawArc(pen,x+1,y+1,16,16,a,110); }
+   TextRenderer.DrawText(g,Text,Font,new Rectangle(x+spin,mr.Y,Math.Max(1,mr.Right-x-spin-8),mr.Height),ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
    if(Focused && ShowFocusCues) using(var dot=new Pen(Ink) { DashStyle=DashStyle.Dot }) g.DrawRectangle(dot,Rectangle.Inflate(focus==0?br:mr,-4,-4));
   }
   static RectangleF Inset(Rectangle r,float press) { float i=press*1.5f; return new RectangleF(r.X+i,r.Y+i,r.Width-i*2,r.Height-i*2); }
-  // A cup on a saucer; with steam rising in two soft waves while the break is on offer or running.
-  void DrawCup(Graphics g,Rectangle area,Color color,bool steam) {
-   float cx=area.X+area.Width/2f-2, cy=area.Y+area.Height/2f+1;
-   using(var pen=new Pen(color,1.9f) { StartCap=LineCap.Round,EndCap=LineCap.Round,LineJoin=LineJoin.Round }) {
-    using(var body=new GraphicsPath()) {
-     body.AddLine(cx-7,cy-5,cx+7,cy-5); body.AddBezier(cx+7,cy-5,cx+7,cy+3,cx+4,cy+5,cx,cy+5); body.AddBezier(cx,cy+5,cx-4,cy+5,cx-7,cy+3,cx-7,cy-5); body.CloseFigure();
-     g.DrawPath(pen,body);
-    }
-    g.DrawArc(pen,cx+5,cy-4,6,6,-80,170);
-    g.DrawLine(pen,cx-9,cy+8,cx+9,cy+8);
-    if(steam) {
-     float phase=Motion.Enabled?(Motion.Now%1600)/1600f:0.5f;
-     for(int i=0;i<2;i++) {
-      float p=(phase+i*0.5f)%1f, rise=p*5, alpha=(float)Math.Sin(Math.PI*p);
-      using(var wisp=new Pen(Color.FromArgb((int)(220*alpha),color),1.6f) { StartCap=LineCap.Round,EndCap=LineCap.Round }) {
-       float sx=cx-3+i*6, sy=cy-8-rise;
-       g.DrawBezier(wisp,sx,sy,sx-2.2f,sy-2.5f,sx+2.2f,sy-4.5f,sx,sy-7);
-      }
-     }
-    }
-   }
-  }
  }}

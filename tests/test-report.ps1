@@ -17,7 +17,7 @@ if(-not $link.StartsWith('https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new
 if($link.Length -gt 8000) { throw "Baglanti cok uzun: $($link.Length)" }
 if($report.GetMethod('Title',$static).Invoke($null,@('  ')) -ne 'Sorun bildirimi') { throw 'Bos baslik' }
 $form=[Activator]::CreateInstance($asm.GetType('GoodbyeTray.ReportForm'),$instance,$null,[object[]]@($false),$null)
-try { if($form.Text -ne 'Dert yan') { throw 'Pencere basligi yanlis' } } finally { $form.Dispose() }
+try { if($form.Text -ne 'Sorun bildir') { throw 'Pencere basligi yanlis' } } finally { $form.Dispose() }
 $sites=$asm.GetType('GoodbyeTray.SiteList')
 $hosts=$sites.GetField('Hosts',$static).GetValue($null)
 foreach($h in 'discord.com','discord.gg','discordapp.com','discord.media','roblox.com','rbxcdn.com','wattpad.com') { if($hosts -notcontains $h) { throw "Site listesinde yok: $h" } }
@@ -45,5 +45,5 @@ try {
  if($calls -ne 0 -or $msg -notlike '*site adresi*') { throw "Gecersiz site hizmete gitti ya da uyari yok: $msg" }
 } finally { $form.Dispose() }
 $main=$asm.GetType('GoodbyeTray.MainForm'); $window=[Activator]::CreateInstance($main,[object[]]@($false))
-try { $box=$main.GetField('sitesOnly',$instance).GetValue($window); if($box.Text -ne 'Yalnızca listedeki sitelere uygula' -or $box.Parent -eq $null) { throw 'Site ayari arayuzde yok' } } finally { $window.Dispose() }
+try { $box=$main.GetField('sitesOnly',$instance).GetValue($window); if($box.Text -ne 'Seçili sitelerde uygula' -or $box.Parent -eq $null) { throw 'Site ayari arayuzde yok' } } finally { $window.Dispose() }
 Write-Output 'PASS: Sorun raporu bilgileri, kullanici adi gizleme, GitHub baglantisi; site listesi yalnizca GoodbyeDPI profillerinde ve varsayilan kapali. Ag istegi yapilmadi.'
