@@ -263,7 +263,6 @@ namespace GoodbyeTray {
   readonly ToolStripMenuItem trayStop,trayRestart,trayProfiles;
   readonly AppCommands commands;
   int refreshTicks;
-  readonly Label serviceNote=new Label();
   readonly EventWaitHandle reveal;
   readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();
   readonly StatusLabel status=new StatusLabel();
@@ -325,7 +324,6 @@ namespace GoodbyeTray {
    bool contrast=SystemInformation.HighContrast;
    toggle.Host=surface; toggle.BackColor=surface; toggle.Frame=background; toggle.Edge=border; toggle.Ink=foreground; toggle.Muted=secondary;
    toggle.Accent=contrast?foreground:AppPalette.Accent; toggle.AccentInk=contrast?background:AppPalette.AccentInk;
-   toggle.Danger=dark?Color.FromArgb(248,113,113):AppPalette.Danger; toggle.Amber=StatusLabel.Amber;
    toggle.Retheme();
   }
   // "v1.9.0 · güncel" in the footer; a new release turns it into the accent-colored download link.
@@ -363,7 +361,7 @@ namespace GoodbyeTray {
   TableLayoutPanel startupContent,heroRows;
 
   readonly ToolTip tips=new ToolTip { InitialDelay=300 };
-  readonly GlowPanel heroCard=new GlowPanel();
+  readonly SoftPanel heroCard=new SoftPanel();
   bool sizing,stateReadPending;
   Form diagnosticsWindow;
   readonly SoftButton themeButton=new SoftButton(), languageButton=new SoftButton();
@@ -504,7 +502,6 @@ namespace GoodbyeTray {
    SetOpeningSize(); ApplyTheme(true); FitDashboard(); if(withTray) { Shown+=delegate { RefreshStateAsync(); }; } else RefreshState();
   }
   static Label LabelOf(string text,float size,bool bold) { return new Label { Text=text,Dock=DockStyle.Fill,Font=new Font("Segoe UI",size,bold?FontStyle.Bold:FontStyle.Regular),AutoEllipsis=true }; }
-  SoftButton ButtonOf(string text,EventHandler action) { var button=new SoftButton { Text=text,Width=140 }; button.Click+=action; return button; }
   // A section heading: the title in plain bold, as in the old window.
   static Control SectionTitle(string glyph,string text) {
    var row=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.LeftToRight,WrapContents=false,Margin=Padding.Empty,Padding=Padding.Empty };
@@ -554,7 +551,7 @@ namespace GoodbyeTray {
    var box=new SoftPanel { Dock=DockStyle.Fill,Margin=new Padding(0,0,0,12),Padding=new Padding(22,10,12,10) }; layout.Controls.Add(box,0,5);
    var content=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=4,RowCount=2,BackColor=Color.Transparent,Margin=Padding.Empty };
    content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-   content.RowStyles.Add(new RowStyle(SizeType.Absolute,40)); content.RowStyles.Add(new RowStyle(SizeType.Percent,100)); box.Controls.Add(content); accessBox=box;
+   content.RowStyles.Add(new RowStyle(SizeType.Absolute,40)); content.RowStyles.Add(new RowStyle(SizeType.Percent,100)); box.Controls.Add(content);
    var title=new Label { Text=L.T("Erişim"),Font=new Font("Segoe UI",11.5f,FontStyle.Bold),AutoSize=true,Anchor=AnchorStyles.Left,Margin=new Padding(0,0,14,0) }; content.Controls.Add(title,0,0);
    var chips=new FlowLayoutPanel { AutoSize=true,WrapContents=false,Anchor=AnchorStyles.Left,Margin=Padding.Empty,BackColor=Color.Transparent };
    for(int i=0;i<QuickSites.Length;i++) { accessChips[i]=new AccessChip(QuickSites[i],QuickColors[i]) { Font=new Font("Segoe UI",9.5f) }; accessChips[i].Size=accessChips[i].GetPreferredSize(Size.Empty); accessChips[i].Margin=new Padding(0,0,6,0); accessChips[i].Cursor=Cursors.Hand; accessChips[i].Click+=delegate { RunAccessCheck(); }; tips.SetToolTip(accessChips[i],L.T("Henüz denenmedi")); chips.Controls.Add(accessChips[i]); }
@@ -572,7 +569,7 @@ namespace GoodbyeTray {
   // the settings card steps aside to make room and comes back when the card is folded again.
   readonly SoftButton accessCollapse=new SoftButton();
   readonly Panel accessHost=new Panel();
-  Control accessBox,accessChipRow;
+  Control accessChipRow;
   AccessTestForm accessFull;
   bool accessExpanded;
   // Opening slides the settings card shut while the access card grows into its place (and the reverse on closing),
@@ -878,8 +875,7 @@ namespace GoodbyeTray {
    motors.Enabled=profiles.Enabled;
    if(available && profile>=Program.ZapretStart) status.Text=status.Text.Replace("GoodbyeDPI","Zapret 2");
    status.State=!available?StatusLabel.Mark.Stopped:busy || transition?StatusLabel.Mark.Busy:running?StatusLabel.Mark.Running:paused?StatusLabel.Mark.Paused:StatusLabel.Mark.Stopped;
-   heroCard.Glow=Color.Empty;
-   heroCard.Breathing=false; toggle.Busy=busy || transition;
+   toggle.Busy=busy || transition;
    findProfile.Enabled=available && !busy && !transition && !paused; findLink.Enabled=findProfile.Enabled;
    pauseButton.Enabled=available && (running || paused) && !busy && !transition;
    pauseButton.Text=paused?L.T("Molayı yönet"):L.T("Mola ver"); toggle.BreakText=pauseButton.Text; toggle.BreakEnabled=pauseButton.Enabled;
@@ -1020,7 +1016,6 @@ namespace GoodbyeTray {
    // The full layout needs about 750 px. Below that (small laptop screens) the settings drop their explanations
    // (an info mark keeps each one a hover away) and the top rows tighten, so every card fits without scrolling.
    // A pending choice is said in the hint line under the picker, so the card never grows (see UpdateSelection).
-   bool pend=false;
    if(choiceRows!=null) choiceRows.RowStyles[3].Height=0;
    int choices=S(ChoicesHeight), access=S(72), actions=S(ActionRowHeight);
    int fixedPart=dashboard.Padding.Vertical+S(FooterHeight)+choices+access+actions;
@@ -1137,7 +1132,6 @@ namespace GoodbyeTray {
    PaintAccessChips(); if(accessFull!=null && !accessFull.IsDisposed) accessFull.ApplyPalette(dark);
    if(tray!=null) MenuRenderer.PrepareTree(tray.ContextMenuStrip,surface,foreground,border,240);
    if(pauseMenu.Visible) pauseMenu.Close();
-   heroCard.Glow=Color.Empty;
    Invalidate(true);
   }
   // The color behind a control: the card's surface inside a SoftPanel, else the window background.

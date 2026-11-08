@@ -51,34 +51,6 @@ namespace GoodbyeTray {
    TextRenderer.DrawText(g,Text,Font,new Rectangle(40,0,Width-46,Height),phase==Phase.Idle?Muted:Ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
   }
  }
- // A wide tile next to the site icons that opens the detailed test; it also tells what is behind it.
- sealed class DetailTile : Control {
-  internal Color Fill,Edge,Ink,Muted,Accent;
-  internal string Caption="",Hint="";
-  internal bool Open;
-  bool hover;
-  public DetailTile() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.Selectable|ControlStyles.StandardClick,true); Cursor=Cursors.Hand; TabStop=true; AccessibleRole=AccessibleRole.PushButton; Height=40; }
-  protected override void OnMouseEnter(EventArgs e) { hover=true; Invalidate(); base.OnMouseEnter(e); }
-  protected override void OnMouseLeave(EventArgs e) { hover=false; Invalidate(); base.OnMouseLeave(e); }
-  protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
-  protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
-  protected override void OnKeyUp(KeyEventArgs e) { if(e.KeyCode==Keys.Space || e.KeyCode==Keys.Enter) { OnClick(EventArgs.Empty); e.Handled=true; } base.OnKeyUp(e); }
-  protected override void OnPaint(PaintEventArgs e) {
-   var g=e.Graphics; g.Clear(BackColor); g.SmoothingMode=SmoothingMode.AntiAlias;
-   using(var path=SoftButton.Round(new Rectangle(1,1,Width-3,Height-3),Math.Min(16,Height-3))) using(var brush=new SolidBrush(Motion.Mix(Fill,Accent,hover?0.18f:0.08f))) using(var pen=new Pen(Motion.Mix(Edge,Accent,hover?0.6f:0.3f))) { g.FillPath(brush,path); g.DrawPath(pen,path); }
-   int arrow=26;
-   { var bold=Fonts.Get(Font,FontStyle.Bold);
-    int w=TextRenderer.MeasureText(Caption,bold).Width;
-    TextRenderer.DrawText(g,Caption,bold,new Rectangle(14,0,Width-arrow-18,Height),Accent,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
-    if(Hint.Length>0 && 14+w+8<Width-arrow-8) TextRenderer.DrawText(g,"· "+Hint,Font,new Rectangle(14+w+4,0,Width-arrow-22-w,Height),Muted,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.EndEllipsis);
-   }
-   float x=Width-arrow+6, y=Height/2f;
-   using(var pen=new Pen(Accent,2f) { StartCap=LineCap.Round,EndCap=LineCap.Round,LineJoin=LineJoin.Round })
-    if(Open) g.DrawLines(pen,new[]{new PointF(x-4,y+2.5f),new PointF(x+1,y-2.5f),new PointF(x+6,y+2.5f)});
-    else g.DrawLines(pen,new[]{new PointF(x-1,y-5),new PointF(x+4,y),new PointF(x-1,y+5)});
-   if(Focused && ShowFocusCues) using(var focus=new Pen(Accent) { DashStyle=DashStyle.Dot }) g.DrawRectangle(focus,4,4,Width-9,Height-9);
-  }
- }
  // Site icons for the quick check, taken from each site itself (its /favicon.ico) the first time it opens in a test,
  // then kept in the user's app data. Nothing is asked of any other server.
  static class SiteIcons {

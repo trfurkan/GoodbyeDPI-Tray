@@ -209,112 +209,22 @@ namespace GoodbyeTray {
    path.AddLine(p(8,30),p(8,12)); path.CloseFigure(); return path;
   }
  }
- // The status card: a soft wash of the state color rises from its left edge and crossfades when the state changes.
- // While running it breathes slowly so the card feels alive without drawing the eye.
- sealed class GlowPanel : SoftPanel {
-  Color from=Color.Empty,to=Color.Empty; bool breathing;
-  readonly Tween fade;
-  // Breathing repaints the whole card, children included, so it runs on its own slower timer instead of every frame.
-  readonly Timer beat=new Timer { Interval=70 };
-  int lastBeat;
-  public GlowPanel() { fade=new Tween(this,1); beat.Tick+=delegate { // The breathing is slow by nature: about 8 frames a second in front is enough, and behind other windows it rests.
-   if(Motion.Pace!=Motion.Front || unchecked(Motion.Now-lastBeat)<120) return; lastBeat=Motion.Now; if(Visible && IsHandleCreated) Invalidate(); }; }
-  // DoubleBuffer covers only this panel's paint. Transparent child HWNDs must
-  // also finish painting before Windows presents a new animation frame.
-  protected override CreateParams CreateParams {
-   get { var cp=base.CreateParams; cp.ExStyle|=0x02000000; return cp; } // WS_EX_COMPOSITED, scoped to the animated card.
-  }
-  // The labels and layouts on the card are transparent: they show the glow only when they repaint too.
-  protected override void OnInvalidated(InvalidateEventArgs e) { base.OnInvalidated(e); foreach(Control child in Controls) child.Invalidate(true); }
-  protected override void Dispose(bool disposing) { if(disposing) beat.Dispose(); base.Dispose(disposing); }
-  void Pace() { beat.Enabled=breathing && Visible && Motion.Enabled; }
-  internal Color Glow { get { return to; } set { if(value==to) return; from=Current; to=value; fade.Jump(0); fade.To(1,600); } }
-  internal bool Breathing { get { return breathing; } set { if(breathing==value) return; breathing=value; Pace(); } }
-  protected override void OnVisibleChanged(EventArgs e) { Pace(); base.OnVisibleChanged(e); }
-  protected override void OnHandleDestroyed(EventArgs e) { beat.Enabled=false; base.OnHandleDestroyed(e); }
-  Color Current { get { float t=fade.Value; Color a=from.IsEmpty?Color.FromArgb(0,to):from, b=to.IsEmpty?Color.FromArgb(0,a):to; return Color.FromArgb((int)(a.A+(b.A-a.A)*t),(int)(a.R+(b.R-a.R)*t),(int)(a.G+(b.G-a.G)*t),(int)(a.B+(b.B-a.B)*t)); } }
-  protected override void OnPaint(PaintEventArgs e) {
-   base.OnPaint(e);
-   if(SystemInformation.HighContrast || Width<40 || Height<40) return;
-   Color c=Current; if(c.A==0) return;
-   float beat=breathing && Motion.Enabled?(float)(0.5+0.5*Math.Sin(Motion.Now/1100.0)):0.6f;
-   int alpha=(int)(c.A/255f*(26+beat*20));
-   var g=e.Graphics; g.SmoothingMode=SmoothingMode.AntiAlias;
-   using(var clip=SoftButton.Round(new Rectangle(2,2,Width-5,Height-5),Math.Min(22,Math.Min(Width-5,Height-5)))) {
-    var saved=g.Save(); g.SetClip(clip);
-    // A wide ellipse behind the status line, fading to nothing toward the middle of the card.
-    using(var glow=new GraphicsPath()) {
-     glow.AddEllipse(-Width*0.35f,-Height*0.9f,Width*1.0f,Height*1.5f);
-     using(var brush=new PathGradientBrush(glow) { CenterColor=Color.FromArgb(alpha,c),SurroundColors=new[]{Color.FromArgb(0,c)},CenterPoint=new PointF(Width*0.08f,Height*0.22f) }) g.FillPath(brush,glow);
-    }
-    g.Restore(saved);
-   }
-  }
- }
- // The header logo: the app icon inside a ring that takes the engine's state color (green running, amber on a break,
- // accent while busy, grey stopped). A change crossfades the color and sends one ripple out; only the busy state
- // keeps animating (a short spinning arc), so a quiet window costs nothing.
- sealed class LiveLogo : Control {
-  StatusLabel.Mark mark=StatusLabel.Mark.None;
-  Color from=StatusLabel.Grey,to=StatusLabel.Grey;
-  readonly Tween blend,ripple;
-  public LiveLogo() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true); blend=new Tween(this,1); ripple=new Tween(this,1); AccessibleRole=AccessibleRole.Graphic; }
-  static Color ColorOf(StatusLabel.Mark state) { return state==StatusLabel.Mark.Running?StatusLabel.Green:state==StatusLabel.Mark.Paused?StatusLabel.Amber:state==StatusLabel.Mark.Busy?AppPalette.Accent:StatusLabel.Grey; }
-  internal StatusLabel.Mark State {
-   get { return mark; }
-   set {
-    if(value==mark) return;
-    bool first=mark==StatusLabel.Mark.None; mark=value;
-    from=Motion.Mix(from,to,blend.Value); to=ColorOf(value);
-    if(first) { from=to; blend.Jump(1); } else { blend.Jump(0); blend.To(1,450); ripple.Jump(0); ripple.To(1,900); }
-    Motion.Loop(this,mark==StatusLabel.Mark.Busy); Invalidate();
-   }
-  }
-  protected override void OnVisibleChanged(EventArgs e) { Motion.Loop(this,Visible && mark==StatusLabel.Mark.Busy); base.OnVisibleChanged(e); }
-  protected override void OnPaint(PaintEventArgs e) {
-   var g=e.Graphics; g.Clear(BackColor); g.SmoothingMode=SmoothingMode.AntiAlias;
-   float size=Math.Min(Width,Height)-12, x=(Width-size)/2f, y=(Height-size)/2f;
-   if(size<10) return;
-   Color color=SystemInformation.HighContrast?ForeColor:Motion.Mix(from,to,blend.Value);
-   // One ripple per change: a ring that grows past the logo and fades.
-   if(ripple.Value<1) { float grow=ripple.Value*6; using(var pen=new Pen(Color.FromArgb((int)(150*(1-ripple.Value)),color),2f)) g.DrawEllipse(pen,x-grow,y-grow,size+grow*2,size+grow*2); }
-   using(var halo=new SolidBrush(Color.FromArgb(28,color))) g.FillEllipse(halo,x,y,size,size);
-   if(mark==StatusLabel.Mark.Busy && Motion.Enabled) {
-    float angle=(Motion.Now%1000)/1000f*360;
-    using(var track=new Pen(Color.FromArgb(60,color),3f)) g.DrawEllipse(track,x+1.5f,y+1.5f,size-3,size-3);
-    using(var arc=new Pen(color,3f) { StartCap=LineCap.Round,EndCap=LineCap.Round }) g.DrawArc(arc,x+1.5f,y+1.5f,size-3,size-3,angle,110);
-   } else using(var ring=new Pen(color,3f)) g.DrawEllipse(ring,x+1.5f,y+1.5f,size-3,size-3);
-   int icon=(int)(size*0.62f); g.DrawImageUnscaled(Program.Logo(icon),(int)Math.Round(Width/2f-icon/2f),(int)Math.Round(Height/2f-icon/2f));
-  }
- }
- // "Goodbye" in the text color, "DPI" in the accent color.
- sealed class WordMark : Control {
-  internal Color Accent=AppPalette.Accent;
-  public WordMark() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true); Text="GoodbyeDPI"; AccessibleRole=AccessibleRole.StaticText; }
-  protected override void OnPaint(PaintEventArgs e) {
-   var g=e.Graphics; g.Clear(BackColor);
-   const TextFormatFlags flags=TextFormatFlags.NoPadding|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix;
-   int first=TextRenderer.MeasureText(g,"Goodbye",Font,Size.Empty,flags).Width;
-   TextRenderer.DrawText(g,"Goodbye",Font,new Rectangle(0,0,first+2,Height),ForeColor,flags);
-   TextRenderer.DrawText(g,"DPI",Font,new Rectangle(first,0,Math.Max(1,Width-first),Height),SystemInformation.HighContrast?ForeColor:Accent,flags);
-  }
- }
- // The engine's controls as one drawn pill: a break part with a steaming cup on the left and the main part
- // (Aç / Kapat / Devam et) filling the rest. Drawn as a single control so no inner button corners show through.
+ // The engine's controls as one drawn control: a labeled break button ("Mola ver" with an arrow) on the left and the
+ // accent-colored main button (Başlat / Durdur / Devam et) filling the rest, so the pair lays out and themes as one.
  sealed class SessionPill : Control {
   internal enum Mode { Stopped, Running, Paused }
-  internal Color Host,Frame,Edge,Ink,Muted,Accent,AccentInk,Danger,Amber;
+  internal Color Host,Frame,Edge,Ink,Muted,Accent,AccentInk;
   internal event Action PrimaryClick,BreakClick;
   internal event Action<int> HoverChanged;
   internal string BreakText="";
   Mode mode=Mode.Stopped; bool busy,breakEnabled=true;
   int hot=-1,pressed=-1,focus=1;
   Color fromFill,toFill,fromInk,toInk;
-  readonly Tween fade,hoverBreak,hoverMain,sink,ring;
+  readonly Tween fade,hoverBreak,hoverMain,sink;
   public SessionPill() {
    SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.Selectable,true);
    TabStop=true; Cursor=Cursors.Hand; AccessibleRole=AccessibleRole.PushButton;
-   fade=new Tween(this,1); hoverBreak=new Tween(this,0); hoverMain=new Tween(this,0); sink=new Tween(this,0); ring=new Tween(this,1);
+   fade=new Tween(this,1); hoverBreak=new Tween(this,0); hoverMain=new Tween(this,0); sink=new Tween(this,0);
   }
   internal Mode State { get { return mode; } set { if(mode==value) return; mode=value; Recolor(true); Loop(); } }
   internal bool Busy { get { return busy; } set { if(busy==value) return; busy=value; Loop(); Invalidate(); } }
@@ -349,7 +259,7 @@ namespace GoodbyeTray {
   protected override void OnMouseUp(MouseEventArgs e) { int part=pressed; pressed=-1; sink.To(0,180); if(part>=0 && part==PartAt(e.Location)) Activate(part); base.OnMouseUp(e); }
   void Activate(int part) {
    if(!PartEnabled(part)) return;
-   if(part==1) { ring.Jump(0.15f); ring.To(1,520); if(PrimaryClick!=null) PrimaryClick(); }
+   if(part==1) { if(PrimaryClick!=null) PrimaryClick(); }
    else if(BreakClick!=null) BreakClick();
   }
   // Keyboard: Left/Right pick the part, Enter or Space presses it.

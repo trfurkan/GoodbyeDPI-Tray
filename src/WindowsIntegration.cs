@@ -186,26 +186,6 @@ namespace GoodbyeTray {
    return bitmap;
   }
  }
- static class MenuAppearance {
-  static readonly Font MenuFont=new Font("Segoe UI",10);
-  internal static void Apply(ToolStripDropDown menu,Color background,Color foreground,Color border,int minimumWidth,bool compact=false) {
-   int inset=compact?4:6;
-   menu.Font=MenuFont; menu.Padding=new Padding(inset); menu.BackColor=background; menu.ForeColor=foreground;
-   menu.Renderer=new MenuRenderer(background,foreground,border);
-   var drop=menu as ToolStripDropDownMenu;
-   if(drop!=null) { drop.ShowImageMargin=false; drop.ShowCheckMargin=true; }
-   int width=minimumWidth;
-   foreach(ToolStripItem item in menu.Items) width=Math.Max(width,TextRenderer.MeasureText(item.Text,MenuFont).Width+80);
-   menu.MinimumSize=new Size(width,0);
-   foreach(ToolStripItem item in menu.Items) {
-    item.Font=MenuFont; item.AutoSize=false; item.Margin=Padding.Empty;
-    item.Size=new Size(width-2*inset,item is ToolStripSeparator?(compact?8:12):String.IsNullOrEmpty(item.AccessibleDescription)?Math.Max(compact?28:38,MenuFont.Height+(compact?10:18)):66);
-    item.Padding=compact?new Padding(4,2,8,2):new Padding(8,4,12,4); item.TextAlign=ContentAlignment.MiddleLeft;
-    var parent=item as ToolStripMenuItem;
-    if(parent!=null && parent.HasDropDownItems) Apply(parent.DropDown,background,foreground,border,minimumWidth,compact);
-   }
-  }
- }
  // One shared renderer keeps the menus consistent. The tray menus keep the classic look; the menus that open from
  // the main window (Modern) share one design: Windows 11's rounded window, a soft fill under the mouse, the chosen
  // item marked by an accent check on the right, icons in one column on the left and descriptions as a muted line.

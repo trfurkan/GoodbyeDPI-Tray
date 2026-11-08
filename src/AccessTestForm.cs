@@ -269,10 +269,10 @@ namespace GoodbyeTray {
   Rectangle ThumbRect { get { float scale=Height/(float)Math.Max(1,Content); int h=Math.Max(28,(int)(View*scale)); int y=(int)((Height-h)*(Offset/(float)Math.Max(1,Content-View))); return new Rectangle(0,y,Width,h); } }
   protected override void OnMouseEnter(EventArgs e) { hover=true; Invalidate(); base.OnMouseEnter(e); }
   protected override void OnMouseLeave(EventArgs e) { hover=false; Invalidate(); base.OnMouseLeave(e); }
-  protected override void OnMouseDown(MouseEventArgs e) { var r=ThumbRect; if(!r.Contains(e.Location)) { Move(e.Y-r.Height/2,0,0); r=ThumbRect; } dragging=true; grabY=e.Y; grabOffset=r.Y; Capture=true; base.OnMouseDown(e); }
-  protected override void OnMouseMove(MouseEventArgs e) { if(dragging) Move(grabOffset+e.Y-grabY,0,0); base.OnMouseMove(e); }
+  protected override void OnMouseDown(MouseEventArgs e) { var r=ThumbRect; if(!r.Contains(e.Location)) { MoveThumb(e.Y-r.Height/2); r=ThumbRect; } dragging=true; grabY=e.Y; grabOffset=r.Y; Capture=true; base.OnMouseDown(e); }
+  protected override void OnMouseMove(MouseEventArgs e) { if(dragging) MoveThumb(grabOffset+e.Y-grabY); base.OnMouseMove(e); }
   protected override void OnMouseUp(MouseEventArgs e) { dragging=false; Capture=false; Invalidate(); base.OnMouseUp(e); }
-  void Move(int thumbY,int unused,int unused2) {
+  void MoveThumb(int thumbY) {
    int h=ThumbRect.Height, track=Math.Max(1,Height-h);
    int to=(int)(Math.Max(0,Math.Min(track,thumbY))/(float)track*Math.Max(0,Content-View));
    if(Scrolled!=null) Scrolled(to);

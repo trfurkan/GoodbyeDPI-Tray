@@ -13,3 +13,4 @@
 !.env.example
 .codex/
 .agents/
+.claude/
