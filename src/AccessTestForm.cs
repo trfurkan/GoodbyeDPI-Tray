@@ -13,7 +13,9 @@ namespace GoodbyeTray {
   internal sealed class Result { internal bool Reached; internal string Status,Detail; }
   internal static readonly string[] Domains={"wattpad.com","pastebin.com","roblox.com","discord.com","torproject.org","grindr.com","pornhub.com","xvideos.com","wikipedia.org","google.com"};
   // Shown instead of the domain where a site needs a softer name (the two adult sites).
-  internal static readonly string[] Labels={null,null,null,null,"Torproject.org","Grindr.com","P*rnh*b.com · +18","XV*d*os.com · +18",null,null};
+  internal static readonly string[] Labels={null,null,null,null,"Torproject.org","Grindr.com","P*rnh*b.com","XV*d*os.com",null,null};
+  // A small line under the name of the two adult sites, with a wink: why on earth they are on the list.
+  internal static readonly string[] Notes={null,null,null,null,null,null,L.T("+18 · tamamen \"belgesel\" amaçlı"),L.T("+18 · sadece bilimsel merak"),null,null};
   internal static readonly bool[] Blocked={true,true,true,true,true,true,true,true,false,false};
   internal static readonly string[] Purposes={L.T("Türkiye'de engelli · DPI/SNI engeli kontrolü"),L.T("Türkiye'de engelli · metin paylaşım servisi"),L.T("Türkiye'de engelli · alan adı tabanlı engel kontrolü"),L.T("Türkiye'de engelli · sohbet servisi, SNI engeli kontrolü"),L.T("Türkiye'de engelli · Tor projesinin sitesi"),L.T("Türkiye'de engelli · tanışma uygulaması"),L.T("Türkiye'de engelli · +18, tamamen \"belgesel\" amaçlı"),L.T("Türkiye'de engelli · +18, sadece bilimsel merak"),L.T("Normal site · CDN hatlarının açık olduğunu doğrular"),L.T("Normal site · internet bağlantısının olduğunu doğrular")};
   const int TimeoutMs=8000;
@@ -72,6 +74,8 @@ namespace GoodbyeTray {
   internal float Angle;
   internal Color Chip,Edge,Ink,Muted,Good,Bad,Spin;
   internal readonly string Label;
+  // Shown small and muted under the name when set.
+  internal string Note;
   internal AccessRow(string domain,string label=null) {
    Label=label;
    Domain=domain; SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
@@ -87,7 +91,13 @@ namespace GoodbyeTray {
    if(Icon!=null) { g.InterpolationMode=InterpolationMode.HighQualityBicubic; g.DrawImage(Icon,x,y-icon/2,icon,icon); }
    else { using(var fill=new SolidBrush(Chip)) using(var pen=new Pen(Edge)) { g.FillEllipse(fill,x,y-icon/2,icon,icon); g.DrawEllipse(pen,x,y-icon/2,icon,icon); } TextRenderer.DrawText(g,Title.Substring(0,1),Fonts.Get(Font,FontStyle.Bold),new Rectangle(x,y-icon/2,icon,icon),Muted,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding|TextFormatFlags.NoPrefix); }
    int nameX=x+icon+(int)Math.Round(12*s), nameWidth=(int)Math.Round(190*s), statusX=nameX+nameWidth;
-   TextRenderer.DrawText(g,Title,Font,new Rectangle(nameX,0,nameWidth-8,Height),Ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+   if(String.IsNullOrEmpty(Note)) TextRenderer.DrawText(g,Title,Font,new Rectangle(nameX,0,nameWidth-8,Height),Ink,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+   else {
+    // Name on the upper half, the note under it in a smaller muted line.
+    var small=Fonts.Get(Font.FontFamily,8f); int half=Height/2;
+    TextRenderer.DrawText(g,Title,Font,new Rectangle(nameX,0,nameWidth-8,half+2),Ink,TextFormatFlags.Left|TextFormatFlags.Bottom|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+    TextRenderer.DrawText(g,Note,small,new Rectangle(nameX,half+1,nameWidth-8,Height-half-1),Muted,TextFormatFlags.Left|TextFormatFlags.Top|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+   }
    Color tone=State==Phase.Reached?Good:State==Phase.Failed?Bad:State==Phase.Testing?Spin:Muted; int dot=(int)Math.Round(8*s);
    if(State==Phase.Testing) using(var pen=new Pen(tone,2f)) { pen.StartCap=pen.EndCap=LineCap.Round; g.DrawArc(pen,statusX-2,y-6,12,12,Angle,270); }
    else using(var brush=new SolidBrush(tone)) g.FillEllipse(brush,statusX,y-dot/2,dot,dot);
@@ -180,7 +190,7 @@ namespace GoodbyeTray {
    testAll.Dock=DockStyle.Top; testAll.Margin=new Padding(8,8,0,0); testAll.Click+=delegate { TestAll(); }; top.Controls.Add(testAll,1,0); layout.Controls.Add(top);
    var list=siteList; list.Dock=DockStyle.Fill; list.ColumnCount=1; list.RowCount=rows.Length+1; list.Margin=Padding.Empty; list.BackColor=Color.Transparent;
    for(int i=0;i<rows.Length;i++) {
-    int index=i; rows[i]=new AccessRow(AccessProbe.Domains[i],AccessProbe.Labels[i]) { Dock=DockStyle.Fill };
+    int index=i; rows[i]=new AccessRow(AccessProbe.Domains[i],AccessProbe.Labels[i]) { Dock=DockStyle.Fill,Note=AccessProbe.Notes[i] };
     rows[i].Retry.Click+=delegate { Test(index); }; tips.SetToolTip(rows[i],AccessProbe.Purposes[i]); tips.SetToolTip(rows[i].Retry,L.T("Bu siteyi yeniden test et"));
     list.RowStyles.Add(new RowStyle(SizeType.Absolute,48)); list.Controls.Add(rows[i],0,i);
    }

@@ -203,6 +203,8 @@ namespace GoodbyeTray {
    {"ayrıntı için üzerine gel",new[]{"hover for details","наведи для подробностей"}},
    {"Siteleri düzenle",new[]{"Edit sites","Изменить сайты"}},
    {"Engelli siteler",new[]{"Blocked sites","Заблокированные сайты"}},
+   {"+18 · tamamen \"belgesel\" amaçlı",new[]{"+18 · strictly for \"documentary\" purposes","+18 · исключительно в \"документальных\" целях"}},
+   {"+18 · sadece bilimsel merak",new[]{"+18 · purely scientific curiosity","+18 · чисто научный интерес"}},
    {"Bağlantı ayarları",new[]{"Connection","Подключение"}},
    {"Profil",new[]{"Profile","Профиль"}},
    {"Simge durumuna küçült",new[]{"Minimize","Свернуть"}},
