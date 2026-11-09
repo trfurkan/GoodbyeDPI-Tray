@@ -8,6 +8,7 @@
 <link rel="canonical" href="https://trfurkan.github.io/GoodbyeDPI-Tray/">
 <link rel="icon" href="favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" href="favicon-96.png" sizes="96x96">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=2" sizes="any">
 <meta name="theme-color" content="#141413">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="tr_TR">
@@ -77,7 +78,7 @@
    "name": "Windows neden uyarı veriyor?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Kurucuda Windows’un tanıdığı bir yayıncı imzası bulunmadığı için SmartScreen uyarısı görebilirsin. Dosyanın bu projenin GitHub sürümlerinden geldiğini kontrol et ve uyarının ayrıntısını oku. Kaynağından emin değilsen kuruluma devam etme."
+    "text": "Kurucuda Windows’un tanıdığı bir yayıncı imzası bulunmadığı için SmartScreen uyarısı görebilirsin. Bu uyarı tek başına uygulamanın zararlı olduğu anlamına gelmez. Kurucuyu yalnızca bu projenin GitHub sürümlerinden indir ve uyarının ayrıntısını incele. Kaynağından emin olmadığın dosyaları çalıştırma."
    }
   },
   {
@@ -85,7 +86,7 @@
    "name": "Chrome, Edge ya da Firefox indirirken neden uyarıyor?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Az indirilen veya imzasız dosyalar tarayıcı uyarılarına neden olabilir. Uyarı tek başına dosyanın güvenli ya da zararlı olduğunu kanıtlamaz. Dosyanın kaynağını ve uyarının ne söylediğini kontrol et; kurucuyu projenin GitHub sürümlerinden indir."
+    "text": "Yeni yayımlanmış, az indirilmiş veya imzasız kurucular tarayıcı uyarılarına neden olabilir. Açık kaynaklı bileşenler kullanılması bu uyarıları otomatik olarak kaldırmaz. Dosyayı bu projenin GitHub sürümlerinden indirdiğini doğrula ve uyarının nedenini kontrol et; her uyarıyı aynı kabul edip geçme."
    }
   },
   {
@@ -93,7 +94,7 @@
    "name": "Uygulama güvenilir mi?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Kaynak kodunu ve sürüm geçmişini GitHub’da inceleyebilirsin. Güncelleme kontrolü GitHub’a, erişim testleri ise test edilen sitelere bağlanır. Sorun bildirimi hazırlarsan raporu göndermeden önce düzenleyebilirsin. Açık kaynak olması tek başına güvenlik garantisi değildir."
+    "text": "GoodbyeDPI Tray, GoodbyeDPI ve WinDivert gibi açık kaynaklı projeler üzerinden geliştirilmiştir. Güvenli ve şeffaf bir kullanım sunmayı amaçlar; kaynak kodu GitHub’da mevcuttur. Tam güvenlik veya sorunsuz çalışma garantisi verilmez; kullanım sorumluluğu kullanıcıya aittir."
    }
   },
   {
@@ -121,11 +122,12 @@
 <link rel="alternate" hreflang="x-default" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/">
 <link rel="preload" href="fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="site.css?v=14">
-<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script></head>
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script><link rel="stylesheet" href="motion.css?v=4">
+</head>
 <body>
 <div class="wrap">
  <header class="top">
-  <a class="brand" href="./"><img src="images/icon-128.png" alt="" width="34" height="34"><span>GoodbyeDPI Tray</span></a>
+  <a class="brand" href="./"><img src="favicon.svg?v=2" alt="" width="34" height="34"><span>GoodbyeDPI Tray</span></a>
   <nav aria-label="Sayfa içi">
    <a href="#ozellikler">Özellikler</a>
    <a href="#nasil-calisir">Nasıl çalışır?</a>
@@ -151,9 +153,9 @@
  </header>
  <main>
   <div class="hero">
-   <a class="eyebrow" data-latest href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest"><b data-version>v1.9.0</b>Son sürümde neler değişti?</a>
+   <a class="eyebrow" data-latest href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest"><b data-version>v1.10.0</b>Son sürümde neler değişti?</a>
    <h1><span>Sohbetin, oyunun, hikâyen</span> <span>yarım kalmasın.</span></h1>
-   <p class="lead">Discord, Roblox, Wattpad ve erişemediğin diğer sitelere yeniden ulaşmak için. Karmaşık ayarlarla uğraşmadan GoodbyeDPI aracılığıyla bağlan.</p>
+   <p class="lead">VPN kullanmadan Discord, Roblox, Wattpad ve engelli sitelere erişmeyi dene. Trafiğini uzak bir VPN sunucusuna yönlendirmeden, kendi internet bağlantın üzerinden bağlan.</p>
    <div class="actions">
     <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5l7.5-1v7H3zM11.5 4.4L21 3v8.5h-9.5zM3 12.5h7.5v7l-7.5-1zM11.5 12.5H21V21l-9.5-1.4z"/></svg>Ücretsiz indir · Windows</a>
     <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">GitHub’da incele</a>
@@ -179,8 +181,10 @@
   </div>
 
   <section id="ozellikler" aria-labelledby="ozellikler-baslik">
-   <h2 id="ozellikler-baslik">İhtiyacın olan ayarlar, tek yerde</h2>
-   <p class="section-lead">İlk kullanımda önerilen profille başlayabilirsin. Daha sonra bağlantını ve uygulamanın davranışını kendi ihtiyacına göre ayarla.</p>
+   <p class="feature-eyebrow">KONTROL SENDE</p>
+   <h2 id="ozellikler-baslik">Az uğraş. Daha çok kontrol.</h2>
+   <p class="section-lead">Profilini bul, DNS’ini seç, nerede çalışacağını belirle. Ayrıntıları merak ettiğinde kartları aç; günlük kullanımda tek tıkla devam et.</p>
+   <div class="feature-route" aria-label="Özellikleri keşfet"><a href="#dns-karti">01 · DNS’ini seç</a><a href="#site-karti">02 · Sitelerini belirle</a><a href="#profil-karti">03 · Profilini bul</a></div>
    <div class="feature-primary">
     <div class="card feature-card feature-dns"><h3>DNS seçimi sende</h3><p>AdGuard, Quad9, OpenDNS, CleanBrowsing veya Yandex. Tercih ettiğin DNS’i uygulamadan seç.</p><details class="feature-details"><summary>Nasıl çalışır?</summary><p>Filtresiz AdGuard hazır gelir. DNS seçimin yalnızca DNS yönlendirmesi kullanan profillerde uygulanır.</p></details></div>
     <div class="card feature-card feature-ads"><h3>Daha az reklam</h3><p>AdGuard’ın reklam filtreleyen DNS seçeneğiyle daha az reklamla karşılaş.</p><details class="feature-details"><summary>Nasıl çalışır?</summary><p>DNS listesinden “AdGuard · reklamsız” seçeneğini kullan. DNS üzerinden filtreleme tüm reklamları engellemez ve yalnızca DNS yönlendiren profillerde çalışır.</p></details></div>
@@ -196,9 +200,33 @@
 
   <section aria-labelledby="nasil-calisir">
    <h2 id="nasil-calisir">Nasıl çalışır?</h2>
+   <div class="flow-demo" data-flow data-step="idle">
+    <div class="flow-top"><span class="flow-label">ETKİLEŞİMLİ ŞEMA</span><button class="btn primary" type="button" data-flow-start>Başlat</button></div>
+    <p class="flow-disclaimer">İlk dört adım cihazında gerçekleşir. Sonrasında paketler internete çıkar.</p>
+    <div class="flow-diagram flow-detailed" aria-label="Paketin izlediği yol">
+     <button type="button" class="flow-node" data-flow-stage="0"><span class="flow-number">01</span><strong>Tarayıcı</strong><small>Bağlantı başlatır</small></button>
+     <button type="button" class="flow-node" data-flow-stage="1"><span class="flow-number">02</span><strong>WinDivert</strong><small>Paketi yakalar</small></button>
+     <button type="button" class="flow-node" data-flow-stage="2"><span class="flow-number">03</span><strong>GoodbyeDPI</strong><small>Profili uygular</small></button>
+     <button type="button" class="flow-node" data-flow-stage="3"><span class="flow-number">04</span><strong>WinDivert</strong><small>Ağa geri verir</small></button>
+     <button type="button" class="flow-node" data-flow-stage="4"><span class="flow-number">05</span><strong>DPI sistemi</strong><small>Trafiği inceler</small></button>
+     <button type="button" class="flow-node" data-flow-stage="5"><span class="flow-number">06</span><strong>Hedef site</strong><small>Bağlantıyı karşılar</small></button>
+    </div>
+    <div class="packet-example" aria-hidden="true"><span>Bağlantı verisi</span><i></i><i></i><i></i><span>Örnek paket akışı</span></div>
+    <p class="flow-status" role="status" aria-live="polite" data-flow-status>Başlat ile akışı izle veya bir adıma tıklayarak görevini öğren.</p>
+    <p class="flow-disclaimer">Teknik kaynaklar: <a href="https://github.com/ValdikSS/GoodbyeDPI">GoodbyeDPI</a> · <a href="https://reqrypt.org/windivert-doc.html">WinDivert belgeleri</a></p>
+    <p class="flow-disclaimer">Basitleştirilmiş bir anlatımdır; gerçek bağlantını test etmez veya değiştirmez. Başarılı erişim her ağda garanti değildir.</p>
+   </div>
    <p class="section-lead">GoodbyeDPI, internet sağlayıcısının trafiği inceleyerek uyguladığı bazı erişim engellerini aşmaya yardımcı olur. Verileri daha küçük parçalara bölmek gibi yöntemlerle, engelleme sisteminin bağlantıyı tanımasını zorlaştırır. Bu işlem bilgisayarında gerçekleşir.</p>
+   <h3>VPN olmadan, ek sunucuya uğramadan</h3>
+   <p>Bağlantın bir VPN sunucusundan geçmez. Böylece uzak bir VPN sunucusunun mesafesinden veya yoğunluğundan kaynaklanabilecek ek gecikme ve hız kaybını yaşamadan erişim sağlayabilirsin. Gerçek hız ve erişim sonucu internet sağlayıcına, seçtiğin profile ve bağlandığın siteye bağlıdır; her bağlantıda sıfır hız kaybı garanti edilmez.</p>
    <p>Engelleri aşmaya çalışan asıl araç GoodbyeDPI’dır. Biz GoodbyeDPI Tray ile bu aracı daha işlevsel ve pratik hâle getiriyoruz: başlatma, profil ve DNS seçimi, mola verme ve bağlantı testlerini kullanımı karmaşıklaştırmadan tek pencerede topluyoruz.</p>
-   <p class="note">VPN değildir; trafiğini bir VPN sunucusuna yönlendirmez, IP adresini değiştirmez ve bağlantını gizlemez. Her engeli aşamaz; sonuç internet sağlayıcına ve uygulanan engele göre değişebilir.</p>
+   <div class="capability-heading"><h3>Neler yapar, neler yapmaz?</h3><p>Merak ettiğin karta tıkla, farkı gör.</p></div>
+   <div class="capability-grid">
+    <details class="capability"><summary><span class="capability-tag">YAPAR</span><strong>Bazı erişim engellerini aşmaya yardımcı olur</strong></summary><p>DPI tabanlı engellerde trafiğin tanınmasını zorlaştıran yöntemler kullanır. Sonuç, internet sağlayıcına ve seçtiğin profile bağlıdır.</p></details>
+    <details class="capability"><summary><span class="capability-tag">YAPAR</span><strong>Bağlantını kendi cihazında işler</strong></summary><p>Trafiğin bir VPN sunucusuna yönlendirilmez. Profil, DNS ve site listesi ayarlarını uygulamadan yönetebilirsin.</p></details>
+    <details class="capability"><summary><span class="capability-tag limit">YAPMAZ</span><strong>IP adresini gizlemez veya değiştirmez</strong></summary><p>Bir VPN ya da anonimlik aracı değildir. Siteler gerçek bağlantının dış IP adresini görmeye devam eder; ek bir şifreli tünel oluşturmaz.</p></details>
+    <details class="capability"><summary><span class="capability-tag limit">YAPMAZ</span><strong>Her engelde erişim ve sabit hız garantisi vermez</strong></summary><p>Doğrudan IP engellerini aşamaz. Ağ koşulları, kullanılan yöntem ve hedef site hem erişimi hem de performansı etkileyebilir.</p></details>
+   </div>
   </section>
 
   <section id="kurulum" aria-labelledby="kurulum-baslik">
@@ -221,10 +249,10 @@
    <div class="release-heading"><div><h2 id="releases-title">Sürümler</h2><p class="section-lead">Son sürümdeki yeniliklere göz at. Eski sürümlere ve ayrıntılı notlara da buradan ulaşabilirsin.</p></div><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases">Tüm sürümleri GitHub’da gör</a></div>
    <div class="release-list" data-releases data-others="Diğer sürümler" data-prerelease="Ön sürüm" data-latest="Son sürüm" data-download="Bu sürümü indir" data-notes="Sürüm notları">
     <article class="release-card">
-     <div class="release-meta"><span class="release-badge">Son sürüm</span><time datetime="2026-11-05">5 Kasım 2026</time><span>Windows 10 / 11</span></div>
-     <h3><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0">v1.9.0</a></h3>
-     <ul class="release-highlights"><li>Yenilenen arayüz, temalar ve kart animasyonları.</li><li>DNS seçimi ve varsayılan AdGuard filtresiz.</li><li>Düzenlenebilir site listesi ve yalnızca listedeki sitelere uygulama.</li></ul>
-     <div class="actions"><a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.9.0/GoodbyeDPI-Installer-1.9.0.exe">Bu sürümü indir</a><a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0">GitHub</a></div>
+     <div class="release-meta"><span class="release-badge">Son sürüm</span><time datetime="2026-11-09">9 Kasım 2026</time><span>Windows 10 / 11</span></div>
+     <h3><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.10.0">v1.10.0</a></h3>
+     <ul class="release-highlights"><li>Yeni ana pencere: durum, bağlantı, ayarlar ve erişim için sade kartlar.</li><li>Başlık çubuğunda dil ve tema menüleri.</li><li>Açılış titremesi, yüksek ekran ölçeğinde kırpılan yazılar ve tepsiden açılma sorunları giderildi.</li></ul>
+     <div class="actions"><a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.10.0/GoodbyeDPI-Installer-1.10.0.exe">Bu sürümü indir</a><a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.10.0">GitHub</a></div>
     </article>
    </div>
    <p class="meta">Güncel sürüm notları GitHub’da yayımlandıkları dilde gösterilir.</p>
@@ -235,26 +263,26 @@
    <details><summary>GoodbyeDPI Tray bir VPN mi?</summary><p>Hayır. Trafiğini bir VPN sunucusuna yönlendirmez ve IP adresini değiştirmez. GoodbyeDPI motoruyla bazı erişim engellerini aşmaya yardımcı olur; VPN’in gizlilik özelliklerini sağlamaz.</p></details>
    <details><summary>Discord'a girmek için işe yarar mı?</summary><p>Discord’a erişmek için deneyebilirsin. Sonuç internet sağlayıcına, uygulanan engele ve seçtiğin profile bağlıdır. Önce Arx ile başla; ardından erişim testiyle kendi bağlantındaki sonucu kontrol et.</p></details>
    <details><summary>Hangi profili seçmeliyim?</summary><p>Önerilen Arx profili iyi bir başlangıçtır. Sonuç alamazsan Uygun profil bul ile seçenekleri karşılaştır. DNS sağlayıcısı seçimi yalnızca DNS yönlendiren profillerde kullanılır.</p></details>
-   <details><summary>Windows neden uyarı veriyor?</summary><p>Kurucuda Windows’un tanıdığı bir yayıncı imzası bulunmadığı için SmartScreen uyarısı görebilirsin. Dosyanın bu projenin GitHub sürümlerinden geldiğini kontrol et ve uyarının ayrıntısını oku. Kaynağından emin değilsen kuruluma devam etme.</p></details>
-   <details><summary>Chrome, Edge ya da Firefox indirirken neden uyarıyor?</summary><p>Az indirilen veya imzasız dosyalar tarayıcı uyarılarına neden olabilir. Uyarı tek başına dosyanın güvenli ya da zararlı olduğunu kanıtlamaz. Dosyanın kaynağını ve uyarının ne söylediğini kontrol et; kurucuyu projenin GitHub sürümlerinden indir.</p></details>
-   <details><summary>Uygulama güvenilir mi?</summary><p>Kaynak kodunu ve sürüm geçmişini GitHub’da inceleyebilirsin. Güncelleme kontrolü GitHub’a, erişim testleri ise test edilen sitelere bağlanır. Sorun bildirimi hazırlarsan raporu göndermeden önce düzenleyebilirsin. Açık kaynak olması tek başına güvenlik garantisi değildir.</p></details>
+   <details><summary>Windows neden uyarı veriyor?</summary><p>Kurucuda Windows’un tanıdığı bir yayıncı imzası bulunmadığı için SmartScreen uyarısı görebilirsin. Bu uyarı tek başına uygulamanın zararlı olduğu anlamına gelmez. Kurucuyu yalnızca bu projenin GitHub sürümlerinden indir ve uyarının ayrıntısını incele. Kaynağından emin olmadığın dosyaları çalıştırma.</p></details>
+   <details><summary>Chrome, Edge ya da Firefox indirirken neden uyarıyor?</summary><p>Yeni yayımlanmış, az indirilmiş veya imzasız kurucular tarayıcı uyarılarına neden olabilir. Açık kaynaklı bileşenler kullanılması bu uyarıları otomatik olarak kaldırmaz. Dosyayı bu projenin GitHub sürümlerinden indirdiğini doğrula ve uyarının nedenini kontrol et; her uyarıyı aynı kabul edip geçme.</p></details>
+   <details><summary>Uygulama güvenilir mi?</summary><p>GoodbyeDPI Tray, GoodbyeDPI ve WinDivert gibi açık kaynaklı projeler üzerinden geliştirilmiştir. Güvenli ve şeffaf bir kullanım sunmayı amaçlar; kaynak kodu GitHub’da mevcuttur. Tam güvenlik veya sorunsuz çalışma garantisi verilmez; kullanım sorumluluğu kullanıcıya aittir.</p></details>
    <details><summary>Daha önce GoodbyeDPI-Turkey kurduysam ne olur?</summary><p>Kurucu mevcut GoodbyeDPI hizmetini bulursa devralmak için onay ister. Onayladığında desteklenen profilin korunur. Eski klasörü silmeden önce yeni kurulumun çalıştığını kontrol et.</p></details>
    <details><summary>Nasıl kaldırırım?</summary><p>Uygulamadaki kaldırma seçeneğini veya Windows Ayarlar → Uygulamalar bölümünü kullanabilirsin. Kurucu, uygulamayla birlikte ayarlarını ve günlüklerini de temizler.</p></details>
    <p>Daha fazlası için <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/docs/KULLANIM.md">kullanım rehberine</a> bakabilirsin.</p>
   </section>
 
   <section aria-labelledby="hakkimda">
-   <h2 id="hakkimda">Birlikte daha kullanışlı</h2>
+   <h2 id="hakkimda">Hakkımda</h2>
    <div class="about">
     <a class="about-links" href="https://github.com/trfurkan" aria-label="GitHub profilim: trfurkan">
      <svg class="github-mark" viewBox="0 0 16 16" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
      <img class="avatar" src="https://avatars.githubusercontent.com/u/47176772?s=128&amp;v=4" width="64" height="64" alt="Furkan'ın GitHub profil fotoğrafı">
     </a>
     <div class="about-text">
-     <p>Merhaba, ben Furkan. GoodbyeDPI Tray’i, GoodbyeDPI’ı günlük hayatta daha kolay kullanabilmek için geliştiriyorum. Bir sorunla karşılaşırsan veya “şu da olsa iyi olur” dersen GitHub’da paylaşabilirsin. İşine yaradıysa projeye yıldız vermen de destek olmanın güzel bir yolu.</p>
+     <p>Merhaba, ben Furkan. Boş zamanlarımda günlük hayatı biraz daha kolaylaştıran, sade ve kullanışlı projeler geliştiriyorum. Yeni şeyler öğrenmek, farklı fikirleri denemek ve ortaya çıkanları paylaşmak hoşuma gidiyor. Projelerime GitHub’dan göz atabilir, geliştirme sürecimi takip edebilirsin.</p>
      <div class="about-actions">
-      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new">Geri bildirim paylaş</a>
-      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">GitHub’da yıldız ver</a>
+      <a class="btn" href="https://github.com/trfurkan">GitHub profilim</a>
+      <a class="btn" href="https://github.com/trfurkan?tab=repositories">Projelerime göz at</a>
      </div>
     </div>
    </div>
@@ -262,7 +290,7 @@
 
   <section aria-labelledby="sorumluluk">
    <h2 id="sorumluluk">Bilmen gerekenler</h2>
-   <p class="note">GoodbyeDPI Tray deneysel bir uygulamadır; her ağda veya her sitede çalışması garanti edilmez. Doğrudan IP engellerini aşamaz, IP adresini gizlemez ve VPN’in sağladığı gizliliğin yerini tutmaz. Bağlantında sorun yaşarsan uygulamayı durdurup tekrar kontrol edebilirsin. Proje bağımsızdır; GoodbyeDPI veya GoodbyeDPI-Turkey’nin resmî sürümü değildir. Kullanım sorumluluğu sana aittir.</p>
+   <p class="note">GoodbyeDPI Tray, açık kaynaklı GoodbyeDPI ve WinDivert bileşenlerinden yararlanan bağımsız bir projedir. Kaynak kodu ve sürüm geçmişi herkesin incelemesine açıktır. Uygulama garanti verilmeden sunulur; ağ koşullarına ve sistemine göre bağlantını etkileyebilir. IP adresini gizlemez ve VPN’in gizlilik özelliklerini sağlamaz. Kullanma kararı ve kullanımından doğabilecek sonuçların sorumluluğu kullanıcıya aittir. GoodbyeDPI veya GoodbyeDPI-Turkey’nin resmî sürümü değildir.</p>
   </section>
   <section class="closing-download" aria-labelledby="closing-title">
    <h2 id="closing-title">Kaldığın yerden devam et.</h2>
@@ -276,7 +304,9 @@
   <p><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/LICENSE">Apache 2.0 lisansı</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/THIRD_PARTY_NOTICES.md">Üçüncü taraf bildirimleri</a></p>
  </footer>
 </div>
-<script src="site.js?v=10"></script>
-<script src="demo.js?v=4"></script>
+<script src="site.js?v=12"></script>
+<script src="demo.js?v=6"></script>
+<script src="motion.js?v=1"></script>
+<script src="explore.js?v=3"></script>
 </body>
 </html>

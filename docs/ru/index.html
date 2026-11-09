@@ -3,17 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GoodbyeDPI Tray – приложение GoodbyeDPI для Windows</title>
-<meta name="description" content="GoodbyeDPI Tray — бесплатное приложение с открытым кодом для Windows, которое позволяет пользоваться GoodbyeDPI без командной строки. Discord и заблокированные сайты без VPN, в один клик.">
+<title>GoodbyeDPI Tray — бесплатный интерфейс GoodbyeDPI для Windows</title>
+<meta name="description" content="Пользуйтесь GoodbyeDPI без возни с командами. Скачайте бесплатный GoodbyeDPI Tray для Windows: выберите профиль, управляйте DNS и проверяйте подключение.">
 <link rel="canonical" href="https://trfurkan.github.io/GoodbyeDPI-Tray/ru/">
 <link rel="icon" href="../favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" href="../favicon-96.png" sizes="96x96">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg?v=2" sizes="any">
 <meta name="theme-color" content="#141413">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:site_name" content="GoodbyeDPI Tray">
 <meta property="og:title" content="GoodbyeDPI Tray – приложение GoodbyeDPI для Windows">
-<meta property="og:description" content="Discord и заблокированные сайты без VPN, в один клик. Бесплатное приложение с открытым кодом для Windows.">
+<meta property="og:description" content="Простой интерфейс GoodbyeDPI для Windows. Запускайте подключение, находите подходящий профиль и управляйте доступом в одном месте. Бесплатно и с открытым кодом.">
 <meta property="og:url" content="https://trfurkan.github.io/GoodbyeDPI-Tray/ru/">
 <meta property="og:image" content="https://trfurkan.github.io/GoodbyeDPI-Tray/images/ru/main-dark.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -53,15 +54,15 @@
    "name": "GoodbyeDPI Tray — это VPN?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Нет. Трафик не проходит через другой сервер, IP-адрес не меняется. Результат и скорость зависят от провайдера, сайта и выбранного профиля."
+    "text": "Нет. Он не направляет трафик через VPN-сервер и не меняет ваш IP-адрес. С помощью движка GoodbyeDPI он помогает обойти некоторые блокировки, но не даёт приватности, как VPN."
    }
   },
   {
    "@type": "Question",
-   "name": "Работает ли с Discord?",
+   "name": "Поможет ли он зайти в Discord?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Discord в Турции блокируется через DPI и DNS, поэтому у большинства провайдеров это работает. Какой профиль подойдёт, зависит от провайдера; проверка доступа в приложении помогает это увидеть."
+    "text": "Попробовать можно. Результат зависит от вашего провайдера, способа блокировки и выбранного профиля. Начните с Arx, а затем проверьте результат на своём подключении с помощью проверки доступа."
    }
   },
   {
@@ -69,7 +70,7 @@
    "name": "Какой профиль выбрать?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Начни с рекомендуемого профиля Arx. Если он не помогает, сравни варианты с помощью подбора профиля. Выбор DNS влияет только на профили, использующие DNS."
+    "text": "Рекомендуемый профиль Arx — хорошее начало. Если не помогает, сравните варианты через «Подобрать профиль». Выбранный DNS-провайдер используется только профилями, которые перенаправляют DNS."
    }
   },
   {
@@ -77,7 +78,7 @@
    "name": "Почему Windows показывает предупреждение?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Установщик не подписан цифровой подписью, поэтому Windows SmartScreen может предупредить. Нажми «Подробнее», затем «Выполнить в любом случае». Весь исходный код приложения открыт на GitHub."
+    "text": "У установщика нет подписи издателя, которую знает Windows, поэтому может появиться предупреждение SmartScreen. Само по себе оно не значит, что приложение вредное. Скачивайте установщик только из релизов этого проекта на GitHub и читайте подробности предупреждения. Не запускайте файлы, в источнике которых не уверены."
    }
   },
   {
@@ -85,7 +86,7 @@
    "name": "Почему Chrome, Edge или Firefox предупреждают при скачивании?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Браузеры предупреждают о неподписанных файлах, которые ещё мало кто скачивал. Это значит, что файл им пока незнаком, а не что в нём нашли проблему. В Chrome и Edge выбери «Сохранить» в списке загрузок, в Firefox — «Разрешить загрузку». Скачивай установщик только с этой страницы или со страницы Releases на GitHub."
+    "text": "Новые, редко скачиваемые или неподписанные установщики могут вызывать предупреждения браузера. Открытый код компонентов не убирает их автоматически. Убедитесь, что скачали файл из релизов этого проекта на GitHub, и проверьте причину предупреждения; не пропускайте все предупреждения подряд."
    }
   },
   {
@@ -93,15 +94,15 @@
    "name": "Можно ли доверять приложению?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Исходный код открыт на GitHub. Проверка обновлений обращается к GitHub, проверка доступа — к выбранным сайтам. Сообщение о проблеме открывает черновик, который можно проверить перед отправкой. Приложение экспериментальное и работает не во всех сетях."
+    "text": "GoodbyeDPI Tray построен на проектах с открытым кодом, таких как GoodbyeDPI и WinDivert. Он стремится к безопасному и прозрачному использованию; исходный код доступен на GitHub. Полная безопасность и безотказная работа не гарантируются; ответственность за использование лежит на пользователе."
    }
   },
   {
    "@type": "Question",
-   "name": "Что, если у меня уже установлен GoodbyeDPI-Turkey?",
+   "name": "Что если у меня уже установлен GoodbyeDPI-Turkey?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Установщик найдёт старую службу GoodbyeDPI и спросит, можно ли её перенять. Если согласишься, профиль сохранится, а старую папку потом можно удалить."
+    "text": "Если установщик найдёт существующую службу GoodbyeDPI, он спросит разрешения, прежде чем взять её на себя. После согласия ваш поддерживаемый профиль сохранится. Прежде чем удалять старую папку, убедитесь, что новая установка работает."
    }
   },
   {
@@ -109,7 +110,7 @@
    "name": "Как удалить приложение?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Нажми «Удалить приложение» в программе или удали его через Параметры Windows > Приложения. Приложение удаляется полностью, вместе с настройками и журналами."
+    "text": "Воспользуйтесь удалением в самом приложении или в «Параметры Windows» → «Приложения». Вместе с приложением удаляются его настройки и журналы."
    }
   }
  ]
@@ -121,15 +122,15 @@
 <link rel="alternate" hreflang="x-default" href="https://trfurkan.github.io/GoodbyeDPI-Tray/en/">
 <link rel="preload" href="../fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="../site.css?v=14">
-<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script><link rel="stylesheet" href="../motion.css?v=4">
 </head>
 <body>
 <div class="wrap">
  <header class="top">
-  <a class="brand" href="./"><img src="../images/icon-128.png" alt="" width="34" height="34"><span>GoodbyeDPI Tray</span></a>
-  <nav aria-label="На странице">
+  <a class="brand" href="./"><img src="../favicon.svg?v=2" alt="" width="34" height="34"><span>GoodbyeDPI Tray</span></a>
+  <nav aria-label="На этой странице">
    <a href="#features">Возможности</a>
-   <a href="#how-it-works">Как работает</a>
+   <a href="#how-it-works">Как это работает</a>
    <a href="#install">Установка</a>
    <a href="#releases">Версии</a>
    <a href="#faq">Вопросы</a>
@@ -140,7 +141,7 @@
     <div class="langs">
     <a href="../index.html" hreflang="tr" lang="tr"><img src="../images/flag-tr.png" alt="" width="18" height="18">Türkçe</a>
     <a href="../en/index.html" hreflang="en" lang="en"><img src="../images/flag-en.png" alt="" width="18" height="18">English</a>
-    <a href="./index.html" hreflang="ru" lang="ru" aria-current="page"><img src="../images/flag-ru.png" alt="" width="18" height="18">Русский</a>
+    <a href="index.html" hreflang="ru" lang="ru" aria-current="page"><img src="../images/flag-ru.png" alt="" width="18" height="18">Русский</a>
     </div>
    </details>
    <a class="btn primary bar-download" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Скачать</a>
@@ -150,99 +151,124 @@
    </button>
   </div>
  </header>
-
  <main>
   <div class="hero">
-   <a class="eyebrow" data-latest href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest"><b data-version>v1.9.0</b>Новый вид, выбор DNS и список сайтов</a>
-   <h1>GoodbyeDPI в один клик</h1>
-   <p class="lead">GoodbyeDPI Tray — приложение для Windows, которое открывает Discord и заблокированные сайты без VPN.</p>
+   <a class="eyebrow" data-latest href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest"><b data-version>v1.10.0</b>Что нового в последней версии?</a>
+   <h1><span>Чат, игра, история —</span> <span>пусть ничто не обрывается.</span></h1>
+   <p class="lead">Попробуйте открыть Discord, Roblox, Wattpad и заблокированные сайты без VPN. Подключайтесь через собственное интернет-соединение, не отправляя трафик на далёкий VPN-сервер.</p>
    <div class="actions">
-    <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5l7.5-1v7H3zM11.5 4.4L21 3v8.5h-9.5zM3 12.5h7.5v7l-7.5-1zM11.5 12.5H21V21l-9.5-1.4z"/></svg>Скачать для Windows</a>
-    <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">Исходный код</a>
+    <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5l7.5-1v7H3zM11.5 4.4L21 3v8.5h-9.5zM3 12.5h7.5v7l-7.5-1zM11.5 12.5H21V21l-9.5-1.4z"/></svg>Скачать бесплатно · Windows</a>
+    <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">Открыть на GitHub</a>
    </div>
    <p class="meta">Windows 10 / 11 · Бесплатно и с открытым кодом · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Что нового</a></p>
-   <div class="app-preview" data-demo role="img" aria-label="GoodbyeDPI работает. Профиль: Arx · рекомендуется. DNS-сервер: AdGuard · без рекламы. Пример интерфейса. Кнопки и списки показаны для иллюстрации; подключение не меняется.">
+   <div class="app-preview" data-demo role="img" aria-label="GoodbyeDPI работает. Профиль: Arx · рекомендуется. DNS-сервер: AdGuard · без рекламы. Пример вида приложения. Кнопки и выбор здесь только для показа; ваше подключение не меняется.">
     <div class="preview-content" aria-hidden="true">
      <div class="preview-status">
       <span class="preview-shield"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 3 6v6c0 5 5 8.5 9 10 4-1.5 9-5 9-10V6z"/></svg></span>
       <div class="preview-heading"><strong>GoodbyeDPI работает</strong><small>Активный профиль: Arx · рекомендуется · DNS: AdGuard · без рекламы</small></div>
-      <div class="preview-actions"><span>Пауза <b>⌄</b></span><span class="preview-stop">Остановить</span></div>
+      <div class="preview-actions"><span>Перерыв <b>⌄</b></span><span class="preview-stop">Остановить</span></div>
      </div>
      <div class="preview-connection">
       <strong>Подключение</strong>
       <div class="preview-fields">
-       <div class="preview-field"><div class="preview-label"><span>Профиль</span><span class="preview-find">Подобрать профиль</span></div><div class="preview-select">Arx · рекомендуется<span>⌄</span></div><small>Управляет DNS, не меняя настройки Windows.</small></div>
-       <div class="preview-field"><div class="preview-label"><span>DNS-сервер</span></div><div class="preview-select">AdGuard · без рекламы<span>⌄</span></div><small>Используется с Arx и профилями с DNS.</small></div>
+       <div class="preview-field"><div class="preview-label"><span>Профиль</span><span class="preview-find">Подобрать профиль</span></div><div class="preview-select">Arx · рекомендуется<span>⌄</span></div><small>Сам управляет DNS и не меняет настройки Windows.</small></div>
+       <div class="preview-field"><div class="preview-label"><span>DNS-сервер</span></div><div class="preview-select">AdGuard · без рекламы<span>⌄</span></div><small>Используется профилем Arx и профилями «с DNS».</small></div>
       </div>
      </div>
     </div>
    </div>
-   <p class="meta preview-caption">Это пример интерфейса. Он не влияет на твоё подключение.</p>
+   <p class="meta preview-caption">Пример вида приложения. На ваше реальное подключение не влияет.</p>
   </div>
 
   <section id="features" aria-labelledby="features-title">
-   <h2 id="features-title">Возможности</h2>
-   <p class="section-lead">Использует настройки GoodbyeDPI-Turkey и добавляет удобный интерфейс на каждый день.</p>
+   <p class="feature-eyebrow">ВСЁ ПОД ВАШИМ КОНТРОЛЕМ</p>
+   <h2 id="features-title">Меньше возни. Больше контроля.</h2>
+   <p class="section-lead">Найдите профиль, выберите DNS, решите, где он будет работать. Открывайте карточки, когда интересны подробности; в повседневном использовании всё делается в один клик.</p>
+   <div class="feature-route" aria-label="Обзор возможностей"><a href="#dns-karti">01 · Выберите DNS</a><a href="#site-karti">02 · Укажите сайты</a><a href="#profil-karti">03 · Найдите профиль</a></div>
    <div class="feature-primary">
-    <div class="card feature-card feature-dns"><h3>Выбирай свой DNS</h3><p>AdGuard, Quad9, OpenDNS, CleanBrowsing или Yandex. Выбирай DNS прямо в приложении.</p><details class="feature-details"><summary>Как это работает?</summary><p>По умолчанию используется AdGuard без фильтрации. Выбор действует только в профилях с перенаправлением DNS.</p></details></div>
-    <div class="card feature-card feature-ads"><h3>Меньше рекламы</h3><p>Используй DNS AdGuard с фильтрацией, чтобы видеть меньше рекламы.</p><details class="feature-details"><summary>Как это работает?</summary><p>Выбери «AdGuard · без рекламы» в списке DNS. Фильтрация блокирует не всю рекламу и требует профиля с перенаправлением DNS.</p></details></div>
-    <div class="card feature-card feature-sites"><h3>Решай, где применять</h3><p>Discord, Roblox и Wattpad уже добавлены. Добавляй адреса и выбирай сайты для работы GoodbyeDPI.</p><details class="feature-details"><summary>Как это работает?</summary><p>В режиме списка GoodbyeDPI обрабатывает только указанные домены. Выбор идёт не по названию приложения; можно добавить используемые им домены. Настройки DNS и QUIC не ограничиваются списком.</p></details></div>
+    <div class="card feature-card feature-dns"><h3>DNS выбираете вы</h3><p>AdGuard, Quad9, OpenDNS, CleanBrowsing или Yandex. Выберите нужный DNS прямо в приложении.</p><details class="feature-details"><summary>Как это работает?</summary><p>По умолчанию выбран AdGuard без фильтров. Выбранный DNS применяется только в профилях с перенаправлением DNS.</p></details></div>
+    <div class="card feature-card feature-ads"><h3>Меньше рекламы</h3><p>Встречайте меньше рекламы с DNS AdGuard, который её фильтрует.</p><details class="feature-details"><summary>Как это работает?</summary><p>Выберите «AdGuard · без рекламы» в списке DNS. Фильтрация через DNS убирает не всю рекламу и работает только в профилях, которые перенаправляют DNS.</p></details></div>
+    <div class="card feature-card feature-sites"><h3>Где работать — решаете вы</h3><p>Discord, Roblox и Wattpad уже в списке. Добавьте нужные адреса и укажите, на каких сайтах будет работать GoodbyeDPI.</p><details class="feature-details"><summary>Как это работает?</summary><p>В режиме списка GoodbyeDPI вмешивается только в домены из списка. Выбор идёт не по названию приложения; можно добавить домены, которые используют ваши приложения. Настройки DNS и QUIC этим списком не ограничиваются.</p></details></div>
    </div>
    <div class="feature-secondary">
-    <div class="card feature-card feature-power"><h3>Управление в один клик</h3><p>Запускай, останавливай или ставь на паузу. Те же действия доступны через значок в трее.</p></div>
-    <div class="card feature-card feature-test"><h3>Проверь подключение</h3><p>Смотри ответы сайтов и время подключения прямо в приложении.</p></div>
-    <div class="card feature-card feature-search"><h3>Подбор профиля</h3><p>Сравни семь профилей и найди подходящий для своего подключения.</p></div>
-    <div class="card feature-card feature-startup"><h3>Запуск вместе с Windows</h3><p>Включи автозапуск, чтобы GoodbyeDPI запускался вместе с компьютером.</p></div>
+    <div class="card feature-card feature-power"><h3>Управление в один клик</h3><p>Запустите, остановите или сделайте перерыв. Те же действия есть и в значке в трее.</p></div>
+    <div class="card feature-card feature-test"><h3>Проверьте подключение</h3><p>Смотрите в приложении, как отвечают сайты и сколько длится подключение.</p></div>
+    <div class="card feature-card feature-search"><h3>Подберите профиль</h3><p>Сравните семь профилей и найдите тот, что работает на вашем подключении.</p></div>
+    <div class="card feature-card feature-startup"><h3>Запуск вместе с Windows</h3><p>Включите автозапуск — GoodbyeDPI запустится вместе с компьютером.</p></div>
    </div>
   </section>
 
   <section aria-labelledby="how-it-works">
-   <h2 id="how-it-works">Как это работает?</h2>
-   <p class="section-lead">GoodbyeDPI помогает обходить некоторые ограничения провайдеров, основанные на анализе трафика. Например, разделение данных на небольшие части затрудняет распознавание соединения системой блокировки. Обработка происходит на твоём компьютере.</p>
-   <p>Обходом ограничений занимается сам GoodbyeDPI. GoodbyeDPI Tray делает его использование удобнее: простой запуск, выбор профиля и DNS, паузы и проверка подключения собраны в одном окне.</p>
-   <p class="note">Это не VPN: трафик не проходит через VPN-сервер, IP-адрес не меняется, а подключение не скрывается. Обойти все ограничения невозможно; результат зависит от провайдера и способа блокировки.</p>
+   <h2 id="how-it-works">Как это работает</h2>
+   <div class="flow-demo" data-flow data-step="idle">
+    <div class="flow-top"><span class="flow-label">ИНТЕРАКТИВНАЯ СХЕМА</span><button class="btn primary" type="button" data-flow-start>Запустить</button></div>
+    <p class="flow-disclaimer">Первые четыре шага происходят на вашем устройстве. Затем пакеты уходят в интернет.</p>
+    <div class="flow-diagram flow-detailed" aria-label="Путь пакета">
+     <button type="button" class="flow-node" data-flow-stage="0"><span class="flow-number">01</span><strong>Браузер</strong><small>Начинает подключение</small></button>
+     <button type="button" class="flow-node" data-flow-stage="1"><span class="flow-number">02</span><strong>WinDivert</strong><small>Перехватывает пакет</small></button>
+     <button type="button" class="flow-node" data-flow-stage="2"><span class="flow-number">03</span><strong>GoodbyeDPI</strong><small>Применяет профиль</small></button>
+     <button type="button" class="flow-node" data-flow-stage="3"><span class="flow-number">04</span><strong>WinDivert</strong><small>Возвращает в сеть</small></button>
+     <button type="button" class="flow-node" data-flow-stage="4"><span class="flow-number">05</span><strong>Система DPI</strong><small>Анализирует трафик</small></button>
+     <button type="button" class="flow-node" data-flow-stage="5"><span class="flow-number">06</span><strong>Целевой сайт</strong><small>Принимает подключение</small></button>
+    </div>
+    <div class="packet-example" aria-hidden="true"><span>Данные подключения</span><i></i><i></i><i></i><span>Пример потока пакетов</span></div>
+    <p class="flow-status" role="status" aria-live="polite" data-flow-status>Нажмите «Запустить», чтобы посмотреть поток, или щёлкните шаг, чтобы узнать, что он делает.</p>
+    <p class="flow-disclaimer">Технические источники: <a href="https://github.com/ValdikSS/GoodbyeDPI">GoodbyeDPI</a> · <a href="https://reqrypt.org/windivert-doc.html">документация WinDivert</a></p>
+    <p class="flow-disclaimer">Это упрощённое объяснение; оно не проверяет и не меняет ваше реальное подключение. Успешный доступ гарантирован не в каждой сети.</p>
+   </div>
+   <p class="section-lead">GoodbyeDPI помогает обойти некоторые блокировки, которые провайдер применяет, анализируя трафик. С помощью таких методов, как разбиение данных на более мелкие части, он мешает системе блокировки распознать подключение. Всё это происходит на вашем компьютере.</p>
+   <h3>Без VPN и лишнего сервера по пути</h3>
+   <p>Ваше подключение не проходит через VPN-сервер. Поэтому вы получаете доступ без дополнительной задержки и потери скорости, которые может дать далёкий или перегруженный VPN-сервер. Реальная скорость и доступ зависят от провайдера, выбранного профиля и сайта; нулевая потеря скорости гарантируется не для каждого подключения.</p>
+   <p>Блокировки обходит сам GoodbyeDPI. С GoodbyeDPI Tray мы делаем его удобнее и практичнее: запуск, выбор профиля и DNS, перерывы и проверка подключения собраны в одном окне без лишних сложностей.</p>
+   <div class="capability-heading"><h3>Что он делает и чего не делает</h3><p>Нажмите на интересующую карточку, чтобы увидеть разницу.</p></div>
+   <div class="capability-grid">
+    <details class="capability"><summary><span class="capability-tag">ДЕЛАЕТ</span><strong>Помогает обойти некоторые блокировки</strong></summary><p>Против блокировок на основе DPI использует методы, которые мешают распознать трафик. Результат зависит от провайдера и выбранного профиля.</p></details>
+    <details class="capability"><summary><span class="capability-tag">ДЕЛАЕТ</span><strong>Обрабатывает подключение на вашем устройстве</strong></summary><p>Трафик не направляется на VPN-сервер. Профиль, DNS и список сайтов настраиваются в приложении.</p></details>
+    <details class="capability"><summary><span class="capability-tag limit">НЕ ДЕЛАЕТ</span><strong>Не скрывает и не меняет IP-адрес</strong></summary><p>Это не VPN и не инструмент анонимности. Сайты по-прежнему видят внешний IP-адрес вашего подключения; дополнительный зашифрованный туннель не создаётся.</p></details>
+    <details class="capability"><summary><span class="capability-tag limit">НЕ ДЕЛАЕТ</span><strong>Не гарантирует обход любой блокировки и стабильную скорость</strong></summary><p>Не обходит прямые блокировки по IP. Условия сети, используемый метод и целевой сайт могут влиять и на доступ, и на скорость.</p></details>
+   </div>
   </section>
 
   <section id="install" aria-labelledby="install-title">
    <div class="split">
     <div>
-     <h2 id="install-title">Установка</h2>
-     <p class="section-lead">Один установщик. Нужны Windows 10/11 и .NET Framework 4.8.</p>
-     <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Скачать установщик</a>
+     <h2 id="install-title">Скачайте, установите, проверьте на своём подключении</h2>
+     <p class="section-lead">Установка одним файлом. Нужны Windows 10/11 и .NET Framework 4.8.</p>
+     <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Скачать бесплатный установщик</a>
     </div>
     <ol class="steps">
-     <li><strong>Открой установщик</strong><span>Если Windows SmartScreen предупредит, нажми <b>Подробнее → Выполнить в любом случае</b>.</span></li>
-     <li><strong>Нажми «Установить»</strong><span>Прочитай примечание, поставь галочку и подтверди запрос разрешения Windows.</span></li>
-     <li><strong>Запусти</strong><span>Открой приложение и нажми <b>Запустить</b>. Остальное приложение сделает само.</span></li>
-     <li><strong>Сделай проверку доступа</strong><span>Если сайты не открываются, выбери другой профиль.</span></li>
+     <li><strong>Откройте установщик</strong><span>Скачайте файл по ссылке на этой странице или из релизов проекта на GitHub. Если Windows покажет предупреждение, прочитайте пояснение ниже.</span></li>
+     <li><strong>Нажмите «Установить»</strong><span>Прочитайте примечание к установке, отметьте флажок и подтвердите запрос Windows на права администратора.</span></li>
+     <li><strong>Запустите</strong><span>Откройте приложение, выберите рекомендуемый профиль Arx и нажмите <b>Запустить</b>.</span></li>
+     <li><strong>Проверьте доступ</strong><span>Проверьте результат через <b>Проверку доступа</b>. Если подключиться не удаётся, попробуйте <b>Подобрать профиль</b>.</span></li>
     </ol>
    </div>
   </section>
 
   <section id="releases" aria-labelledby="releases-title">
-   <div class="release-heading"><div><h2 id="releases-title">Версии</h2><p class="section-lead">Узнайте, что нового, посмотрите последние версии и скачайте установщик.</p></div><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases">Все версии на GitHub</a></div>
-   <div class="release-list" data-releases data-others="Другие версии" data-prerelease="Предварительная версия" data-latest="Последняя версия" data-download="Скачать эту версию" data-notes="Что нового">
+   <div class="release-heading"><div><h2 id="releases-title">Версии</h2><p class="section-lead">Посмотрите, что нового в последней версии. Отсюда же можно перейти к старым версиям и подробным примечаниям.</p></div><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases">Все версии на GitHub</a></div>
+   <div class="release-list" data-releases data-others="Другие версии" data-prerelease="Предварительная версия" data-latest="Последняя версия" data-download="Скачать эту версию" data-notes="Примечания к версии">
     <article class="release-card">
-     <div class="release-meta"><span class="release-badge">Последняя версия</span><time datetime="2026-11-05">5 ноября 2026</time><span>Windows 10 / 11</span></div>
-     <h3><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0">v1.9.0</a></h3>
-     <ul class="release-highlights"><li>Обновлённый интерфейс, темы и анимация карточек.</li><li>Выбор DNS; AdGuard без фильтрации по умолчанию.</li><li>Редактируемый список сайтов и применение только к сайтам из списка.</li></ul>
-     <div class="actions"><a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.9.0/GoodbyeDPI-Installer-1.9.0.exe">Скачать эту версию</a><a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.9.0">GitHub</a></div>
+     <div class="release-meta"><span class="release-badge">Последняя версия</span><time datetime="2026-11-09">9 ноября 2026 г.</time><span>Windows 10 / 11</span></div>
+     <h3><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.10.0">v1.10.0</a></h3>
+     <ul class="release-highlights"><li>Новое главное окно: простые карточки для статуса, подключения, настроек и доступа.</li><li>Меню языка и темы в заголовке окна.</li><li>Исправлены мерцание при запуске, обрезанный текст при большом масштабе экрана и проблемы с открытием из трея.</li></ul>
+     <div class="actions"><a class="btn primary" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/download/v1.10.0/GoodbyeDPI-Installer-1.10.0.exe">Скачать эту версию</a><a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/tag/v1.10.0">GitHub</a></div>
     </article>
    </div>
-   <p class="meta">Актуальные примечания отображаются на языке публикации в GitHub.</p>
+   <p class="meta">Актуальные примечания показываются на том языке, на котором опубликованы на GitHub.</p>
   </section>
 
   <section id="faq" aria-labelledby="faq-title">
    <h2 id="faq-title">Частые вопросы</h2>
-   <details><summary>GoodbyeDPI Tray — это VPN?</summary><p>Нет. Трафик не проходит через другой сервер, IP-адрес не меняется. Результат и скорость зависят от провайдера, сайта и выбранного профиля.</p></details>
-   <details><summary>Работает ли с Discord?</summary><p>Discord в Турции блокируется через DPI и DNS, поэтому у большинства провайдеров это работает. Какой профиль подойдёт, зависит от провайдера; проверка доступа в приложении помогает это увидеть.</p></details>
-   <details><summary>Какой профиль выбрать?</summary><p>Начни с рекомендуемого профиля Arx. Если он не помогает, сравни варианты с помощью подбора профиля. Выбор DNS влияет только на профили, использующие DNS.</p></details>
-   <details><summary>Почему Windows показывает предупреждение?</summary><p>Установщик не подписан цифровой подписью, поэтому Windows SmartScreen может предупредить. Нажми <b>Подробнее → Выполнить в любом случае</b>. Весь исходный код приложения открыт на <a href="https://github.com/trfurkan/GoodbyeDPI-Tray">GitHub</a>.</p></details>
-   <details><summary>Почему Chrome, Edge или Firefox предупреждают при скачивании?</summary><p>Браузеры показывают предупреждения вроде «файл редко скачивают» или «может быть опасен» для неподписанных файлов, которые ещё мало кто скачивал. Это значит, что файл им пока незнаком, а не что в нём нашли проблему. В Chrome и Edge выбери <b>Сохранить</b> в меню рядом с файлом в списке загрузок, в Firefox — <b>Разрешить загрузку</b>. Скачивай установщик только с этой страницы или со страницы Releases на GitHub.</p></details>
-   <details><summary>Можно ли доверять приложению?</summary><p>Исходный код открыт на GitHub. Проверка обновлений обращается к GitHub, проверка доступа — к выбранным сайтам. Сообщение о проблеме открывает черновик, который можно проверить перед отправкой. Приложение экспериментальное и работает не во всех сетях.</p></details>
-   <details><summary>Что, если у меня уже установлен GoodbyeDPI-Turkey?</summary><p>Установщик найдёт старую службу GoodbyeDPI и спросит, можно ли её перенять. Если согласишься, профиль сохранится, а старую папку потом можно удалить.</p></details>
-   <details><summary>Как удалить приложение?</summary><p>Нажми <b>Удалить приложение</b> в программе или удали его через Параметры Windows &gt; Приложения. Приложение удаляется полностью, вместе с настройками и журналами.</p></details>
-   <p>Подробнее — в <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/docs/KULLANIM.md">руководстве</a> (на турецком).</p>
+   <details><summary>GoodbyeDPI Tray — это VPN?</summary><p>Нет. Он не направляет трафик через VPN-сервер и не меняет ваш IP-адрес. С помощью движка GoodbyeDPI он помогает обойти некоторые блокировки, но не даёт приватности, как VPN.</p></details>
+   <details><summary>Поможет ли он зайти в Discord?</summary><p>Попробовать можно. Результат зависит от вашего провайдера, способа блокировки и выбранного профиля. Начните с Arx, а затем проверьте результат на своём подключении с помощью проверки доступа.</p></details>
+   <details><summary>Какой профиль выбрать?</summary><p>Рекомендуемый профиль Arx — хорошее начало. Если не помогает, сравните варианты через «Подобрать профиль». Выбранный DNS-провайдер используется только профилями, которые перенаправляют DNS.</p></details>
+   <details><summary>Почему Windows показывает предупреждение?</summary><p>У установщика нет подписи издателя, которую знает Windows, поэтому может появиться предупреждение SmartScreen. Само по себе оно не значит, что приложение вредное. Скачивайте установщик только из релизов этого проекта на GitHub и читайте подробности предупреждения. Не запускайте файлы, в источнике которых не уверены.</p></details>
+   <details><summary>Почему Chrome, Edge или Firefox предупреждают при скачивании?</summary><p>Новые, редко скачиваемые или неподписанные установщики могут вызывать предупреждения браузера. Открытый код компонентов не убирает их автоматически. Убедитесь, что скачали файл из релизов этого проекта на GitHub, и проверьте причину предупреждения; не пропускайте все предупреждения подряд.</p></details>
+   <details><summary>Можно ли доверять приложению?</summary><p>GoodbyeDPI Tray построен на проектах с открытым кодом, таких как GoodbyeDPI и WinDivert. Он стремится к безопасному и прозрачному использованию; исходный код доступен на GitHub. Полная безопасность и безотказная работа не гарантируются; ответственность за использование лежит на пользователе.</p></details>
+   <details><summary>Что если у меня уже установлен GoodbyeDPI-Turkey?</summary><p>Если установщик найдёт существующую службу GoodbyeDPI, он спросит разрешения, прежде чем взять её на себя. После согласия ваш поддерживаемый профиль сохранится. Прежде чем удалять старую папку, убедитесь, что новая установка работает.</p></details>
+   <details><summary>Как удалить приложение?</summary><p>Воспользуйтесь удалением в самом приложении или в «Параметры Windows» → «Приложения». Вместе с приложением удаляются его настройки и журналы.</p></details>
+   <p>Подробнее — в <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/README.en.md">руководстве (на английском)</a>.</p>
   </section>
 
   <section aria-labelledby="about-me">
@@ -253,32 +279,34 @@
      <img class="avatar" src="https://avatars.githubusercontent.com/u/47176772?s=128&amp;v=4" width="64" height="64" alt="Фото профиля Furkan на GitHub">
     </a>
     <div class="about-text">
-     <p>Привет, я Фуркан. В свободное время в качестве хобби я делаю простые и удобные проекты, которые немного облегчают жизнь. Никаких профессиональных претензий у меня нет; если что-то из сделанного пригодилось вам — я очень рад. Спасибо за интерес и поддержку!</p>
+     <p>Привет, я Furkan. В свободное время я делаю простые и удобные проекты, которые немного облегчают повседневную жизнь. Мне нравится узнавать новое, пробовать разные идеи и делиться тем, что получается. Мои проекты можно посмотреть на GitHub и следить за их развитием.</p>
      <div class="about-actions">
-      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray/issues/new">🐞 Сообщить об ошибке или предложить идею</a>
-      <a class="btn" href="https://github.com/trfurkan/GoodbyeDPI-Tray">⭐ Поддержать звездой на GitHub</a>
+      <a class="btn" href="https://github.com/trfurkan">Мой профиль на GitHub</a>
+      <a class="btn" href="https://github.com/trfurkan?tab=repositories">Посмотреть мои проекты</a>
      </div>
     </div>
    </div>
   </section>
 
   <section aria-labelledby="disclaimer">
-   <h2 id="disclaimer">Важно знать</h2>
-   <p class="note">Приложение полностью экспериментальное и предоставляется без каких-либо гарантий. Оно может работать не во всех сетях и может повлиять на подключение. Решение об использовании и вся ответственность лежат на пользователе. GoodbyeDPI Tray — независимый проект, а не официальная версия ValdikSS/GoodbyeDPI или cagritaskn/GoodbyeDPI-Turkey.</p>
+   <h2 id="disclaimer">Что важно знать</h2>
+   <p class="note">GoodbyeDPI Tray — независимый проект, использующий компоненты GoodbyeDPI и WinDivert с открытым кодом. Исходный код и история версий открыты для всех. Приложение предоставляется без гарантий; в зависимости от условий сети и вашей системы оно может повлиять на подключение. Оно не скрывает IP-адрес и не даёт приватности, как VPN. Решение об использовании и ответственность за его последствия лежат на пользователе. Это не официальная версия GoodbyeDPI или GoodbyeDPI-Turkey.</p>
   </section>
   <section class="closing-download" aria-labelledby="closing-title">
-   <h2 id="closing-title">Продолжай с того же места.</h2>
-   <p>Скачай GoodbyeDPI Tray и попробуй на своём подключении.</p>
+   <h2 id="closing-title">Продолжайте с того места, где остановились.</h2>
+   <p>Скачайте GoodbyeDPI Tray и проверьте на своём подключении.</p>
    <a class="btn primary" data-installer href="https://github.com/trfurkan/GoodbyeDPI-Tray/releases/latest">Скачать бесплатно для Windows</a>
   </section>
  </main>
 
  <footer>
   <p>Движок: <a href="https://github.com/ValdikSS/GoodbyeDPI">GoodbyeDPI</a> (ValdikSS) · Профили для Турции: <a href="https://github.com/cagritaskn/GoodbyeDPI-Turkey">GoodbyeDPI-Turkey</a> (cagritaskn)</p>
-  <p><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/LICENSE">Лицензия Apache 2.0</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/THIRD_PARTY_NOTICES.md">Сторонние уведомления</a></p>
+  <p><a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/LICENSE">Лицензия Apache 2.0</a> · <a href="https://github.com/trfurkan/GoodbyeDPI-Tray/blob/main/THIRD_PARTY_NOTICES.md">Сторонние компоненты</a></p>
  </footer>
 </div>
-<script src="../site.js?v=10"></script>
-<script src="../demo.js?v=4"></script>
+<script src="../site.js?v=12"></script>
+<script src="../demo.js?v=6"></script>
+<script src="../motion.js?v=1"></script>
+<script src="../explore.js?v=3"></script>
 </body>
 </html>

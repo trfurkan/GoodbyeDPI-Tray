@@ -23,11 +23,26 @@
   document.querySelectorAll("img[data-light]").forEach(function (img) { img.src = img.getAttribute(theme === "dark" ? "data-dark" : "data-light"); });
  }
  var toggle = document.querySelector(".theme-toggle");
- if (toggle) toggle.addEventListener("click", function () {
+ var themeTransitionBusy = false;
+ if (toggle) toggle.addEventListener("click", function (event) {
+  if (themeTransitionBusy) return;
   var next = current() === "dark" ? "light" : "dark";
-  root.setAttribute("data-theme", next);
-  try { localStorage.setItem("theme", next); } catch (e) {}
-  swapImages();
+  function applyTheme() {
+   root.setAttribute("data-theme", next);
+   try { localStorage.setItem("theme", next); } catch (e) {}
+   swapImages();
+  }
+  if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) { applyTheme(); return; }
+  var bounds = toggle.getBoundingClientRect();
+  var x = event.detail ? event.clientX : bounds.left + bounds.width / 2;
+  var y = event.detail ? event.clientY : bounds.top + bounds.height / 2;
+  var radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  themeTransitionBusy = true;
+  var transition = document.startViewTransition(applyTheme);
+  transition.ready.then(function () {
+   return root.animate({ clipPath: ['circle(0px at '+x+'px '+y+'px)', 'circle('+radius+'px at '+x+'px '+y+'px)'] },
+    { duration: 720, easing: 'cubic-bezier(.22,1,.36,1)', pseudoElement: '::view-transition-new(root)' }).finished;
+  }).catch(function () {}).finally(function () { themeTransitionBusy = false; });
  });
  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { if (!root.getAttribute("data-theme")) swapImages(); });
  swapImages();
@@ -84,20 +99,26 @@
   var node = element("a", className, text); node.href = url; return node;
  }
  function fetchReleases(page) {
-  return fetch("https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases?per_page=100&page=" + page)
+  var controller = new AbortController();
+  var timeout = setTimeout(function () { controller.abort(); }, 12000);
+  return fetch("https://api.github.com/repos/trfurkan/GoodbyeDPI-Tray/releases?per_page=100&page=" + page, {
+   signal: controller.signal,
+   headers: { Accept: "application/vnd.github+json" },
+   cache: "no-cache"
+  })
    .then(function (response) {
     if (!response.ok) throw new Error("Releases unavailable");
     var more = /rel="next"/.test(response.headers.get("Link") || "");
     return response.json().then(function (items) {
+     clearTimeout(timeout);
      if (!Array.isArray(items)) throw new Error("Invalid releases response");
      return more ? fetchReleases(page + 1).then(function (rest) { return items.concat(rest); }) : items;
     });
-   });
+   }).finally(function () { clearTimeout(timeout); });
  }
- fetchReleases(1)
-  .then(function (data) {
+ function renderReleases(data) {
    if (!Array.isArray(data)) return;
-   var releases = data.filter(function (r) { return !r.draft && trusted(r.html_url); })
+   var releases = data.filter(function (r) { return r && !r.draft && trusted(r.html_url); })
     .sort(function (a, b) { return Date.parse(b.published_at) - Date.parse(a.published_at); });
    if (!releases.length) return;
    var stable = releases.filter(function (r) { return !r.prerelease; })[0];
@@ -148,6 +169,38 @@
    });
    if (older.childElementCount) fragment.appendChild(history);
    list.replaceChildren(fragment);
-  })
-  .catch(function () {});
+ }
+
+ // Share the last successful response across languages. API failures leave
+ // the cached release cards (or the static HTML on first visit) visible.
+ var releaseCacheKey = "goodbyedpi-tray:releases:v1";
+ var refreshInterval = 5 * 60 * 1000;
+ var lastAttempt = 0;
+ var fetchingReleases = false;
+ try {
+  var saved = JSON.parse(localStorage.getItem(releaseCacheKey));
+  if (saved && Array.isArray(saved.releases)) renderReleases(saved.releases);
+ } catch (e) { /* Storage may be disabled or contain an invalid old value. */ }
+
+ function refreshReleases(force) {
+  if (fetchingReleases || (!force && Date.now() - lastAttempt < refreshInterval)) return;
+  fetchingReleases = true;
+  lastAttempt = Date.now();
+  return fetchReleases(1).then(function (data) {
+   renderReleases(data);
+   if (data.some(function (r) { return r && !r.draft && trusted(r.html_url); })) {
+    try { localStorage.setItem(releaseCacheKey, JSON.stringify({ releases: data })); } catch (e) {}
+   }
+  }).catch(function () {
+   // Keep the working content and retry on the next interval or reconnection.
+  }).finally(function () { fetchingReleases = false; });
+ }
+ refreshReleases(true);
+ setInterval(function () {
+  if (!document.hidden) refreshReleases(false);
+ }, refreshInterval);
+ document.addEventListener("visibilitychange", function () {
+  if (!document.hidden) refreshReleases(false);
+ });
+ window.addEventListener("online", function () { refreshReleases(true); });
 })();

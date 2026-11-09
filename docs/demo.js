@@ -34,6 +34,7 @@
  var profiles = ['Arx · '+t[21], 'Nyx · '+t[22], 'Kitsune · '+t[22], 'Nyx · '+t[23], 'Kitsune · '+t[23], 'Raijin · '+t[23], 'Raijin · '+t[22]];
  var dnsNames = ['AdGuard · '+t[24], 'AdGuard · '+t[25], 'Quad9 · '+t[26], 'OpenDNS', 'CleanBrowsing · '+t[26], 'Yandex ('+t[27]+')'];
  var model = createDemo(Date.now), state = model.state;
+ state.mode = 'stopped';
  t[20] = {"tr":"Uygulamanın örnek görünümüdür. Gerçek bağlantını etkilemez.","en":"App preview only. It does not affect your actual connection.","ru":"Это пример интерфейса. Он не влияет на твоё подключение."}[language] || 'App preview only. It does not affect your actual connection.';
  root.setAttribute('role','group'); root.setAttribute('aria-label',t[20]);
  root.querySelector('.preview-content').removeAttribute('aria-hidden');
@@ -61,11 +62,37 @@
  document.addEventListener('click',function(e){ if(!pauseBox.contains(e.target)) closeMenu(); });
  pauseBox.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeMenu(); pause.focus(); } });
  var fields=root.querySelectorAll('.preview-field');
+ var pickers = [];
  function select(field, options, action) {
   var old=field.querySelector('.preview-select'), select=document.createElement('select'); select.className='preview-select';
   select.setAttribute('aria-label',field.querySelector('.preview-label > span').textContent);
   options.forEach(function(text,i){ var o=document.createElement('option'); o.value=i; o.textContent=text; select.appendChild(o); });
-  old.replaceWith(select); select.addEventListener('change',function(){ act(action,Number(select.value)); }); return select;
+  old.replaceWith(select); select.addEventListener('change',function(){ act(action,Number(select.value)); });
+  var box=document.createElement('div'); box.className='demo-picker'; select.replaceWith(box); box.appendChild(select); select.hidden=true;
+  var trigger=button('',box,function(){ if(panel.hidden) open(); else close(true); }); trigger.className='preview-select picker-trigger';
+  trigger.setAttribute('aria-haspopup','listbox'); trigger.setAttribute('aria-expanded','false');
+  var panel=document.createElement('div'); panel.className='picker-panel'; panel.hidden=true; panel.id='picker-'+action; panel.setAttribute('role','listbox'); panel.setAttribute('aria-label',select.getAttribute('aria-label')); trigger.setAttribute('aria-controls',panel.id); box.appendChild(panel);
+  var items=options.map(function(text,i){
+   var item=button(text,panel,function(){ select.value=i; close(true); act(action,i); });
+   item.className='picker-option'; item.setAttribute('role','option'); item.tabIndex=-1; return item;
+  });
+  function close(focus){ panel.hidden=true; trigger.setAttribute('aria-expanded','false'); if(focus) trigger.focus(); }
+  function open(){ pickers.forEach(function(p){p.close(false);}); panel.hidden=false; trigger.setAttribute('aria-expanded','true'); items[Number(select.value)].focus(); }
+  function sync(){ trigger.textContent=options[Number(select.value)]+'  ⌄'; trigger.disabled=select.disabled; trigger.setAttribute('aria-label',select.getAttribute('aria-label')+': '+options[Number(select.value)]); items.forEach(function(item,i){item.setAttribute('aria-selected',String(i===Number(select.value)));}); if(select.disabled) close(false); }
+  trigger.addEventListener('keydown',function(e){if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();open();}});
+  panel.addEventListener('keydown',function(e){
+   var index=items.indexOf(document.activeElement), next=index;
+   if(e.key==='Escape'){e.preventDefault();close(true);return;}
+   if(e.key==='ArrowDown') next=(index+1)%items.length;
+   else if(e.key==='ArrowUp') next=(index+items.length-1)%items.length;
+   else if(e.key==='Home') next=0; else if(e.key==='End') next=items.length-1;
+   else if(e.key.length===1 && !e.ctrlKey && !e.metaKey){for(var offset=1;offset<=items.length;offset++){var candidate=(index+offset)%items.length;if(options[candidate].toLocaleLowerCase().startsWith(e.key.toLocaleLowerCase())){next=candidate;break;}}}
+   else return;
+   e.preventDefault(); items[next].focus();
+  });
+  box.addEventListener('focusout',function(e){if(!box.contains(e.relatedTarget))close(false);});
+  document.addEventListener('click',function(e){if(!box.contains(e.target))close(false);});
+  pickers.push({sync:sync,close:close}); return select;
  }
  var profile=select(fields[0],profiles,'profile'), dns=select(fields[1],dnsNames,'dns');
  var dnsHint=fields[1].querySelector('small'), originalHint=dnsHint.textContent;
@@ -74,7 +101,7 @@
  var pendingAction = null;
  var resetRow=document.createElement('div'); resetRow.className='preview-reset-row'; root.appendChild(resetRow);
  var reset=button(({tr:'Sıfırla',en:'Reset',ru:'Сбросить'})[language] || 'Reset',resetRow,function(){
-  clearTimeout(pendingAction); pendingAction=null; closeMenu(); model.reset();
+  clearTimeout(pendingAction); pendingAction=null; closeMenu(); model.reset(); state.mode='stopped';
   profile.classList.remove('selection-flash'); dns.classList.remove('selection-flash'); paint();
  });
  function paint() {
@@ -87,6 +114,7 @@
   pauseLabel.textContent=t[state.mode==='paused'?8:7]; endPause.hidden=state.mode!=='paused';
   profile.disabled=state.busy; dns.disabled=state.busy || !model.usesDns(); find.disabled=state.busy || state.mode==='paused';
   profile.value=state.profile; dns.value=state.dns;
+  pickers.forEach(function(p){p.sync();});
   dnsHint.textContent=model.usesDns()?originalHint:t[16];
  }
  function act(action,value) {
