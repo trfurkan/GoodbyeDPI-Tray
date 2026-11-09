@@ -325,7 +325,7 @@ namespace GoodbyeTray {
    toggle.Accent=contrast?foreground:AppPalette.Accent; toggle.AccentInk=contrast?background:AppPalette.AccentInk;
    toggle.Retheme();
   }
-  // "v1.9.0 · güncel" in the footer; a new release turns it into the accent-colored download link.
+  // "v1.10.0 · güncel" in the footer; a new release turns it into the accent-colored download link.
   void ShowVersion() {
    string state=updateState==UpdateState.Current?L.T("güncel"):updateState==UpdateState.Available?L.T("yeni sürüm var"):null;
    versionLink.Text="v"+AppInfo.Version+(state==null?"":" · "+state);
