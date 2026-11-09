@@ -8,7 +8,7 @@ using Microsoft.Win32;
 namespace GoodbyeTray {
  // Interface language. Turkish text in the code is the key; Table holds its English and Russian forms.
  // A missing entry falls back to Turkish, and tests check that every L.T text has one.
- // Turkish uses friendly UI and notification copy (LangKanka.cs).
+ // Turkish uses friendly UI and notification copy (LangTr.cs).
  static partial class L {
   internal static readonly string[] Codes={"tr","en","ru"};
   internal static readonly string[] Names={"Türkçe","English","Русский"};
@@ -25,7 +25,7 @@ namespace GoodbyeTray {
   internal static void Save(string code) { Current=code; using(var key=Registry.CurrentUser.CreateSubKey(PreferencesKey)) key.SetValue("Language",Current); }
   internal static string T(string turkish) {
    if(turkish==null) return null;
-   if(Current=="tr") { string friendly; return Kanka.TryGetValue(turkish,out friendly)?friendly:turkish; }
+   if(Current=="tr") { string friendly; return Turkish.TryGetValue(turkish,out friendly)?friendly:turkish; }
    string[] forms; return Table.TryGetValue(turkish,out forms)?forms[Current=="en"?0:1]:turkish;
   }
   internal static bool Has(string turkish) { return Table.ContainsKey(turkish); }

@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 
 namespace GoodbyeTray {
- // Default Turkish: friendly UI, setup and Windows notification copy.
+ // Turkish as the app shows it: friendly UI, setup and Windows notification copy.
  // Keep actions and errors explicit; use light humor in status messages.
  // Missing entries fall back to Turkish. Keep source keys exactly as written in the code.
  static partial class L {
-  static readonly Dictionary<string,string> Kanka=new Dictionary<string,string> {
+  static readonly Dictionary<string,string> Turkish=new Dictionary<string,string> {
    //  Success and confirmation
    {"Profil uygulandı.","Tamamdır! Yeni profil devrede."},
    {"GoodbyeDPI başlatıldı.","GoodbyeDPI iş başında. Hazırsan devam!"},
@@ -189,7 +189,7 @@ namespace GoodbyeTray {
    {"Eklenecek bilgiler","Kayda eklenecekler"},
    {"Panoya kopyalandı.","Panoya kopyaladık, yapıştırman yeter."},
   };
-  internal static bool HasKanka(string turkish) { return Kanka.ContainsKey(turkish); }
-  internal static IEnumerable<string> KankaKeys { get { return Kanka.Keys; } }
+  internal static bool HasTurkish(string turkish) { return Turkish.ContainsKey(turkish); }
+  internal static IEnumerable<string> TurkishKeys { get { return Turkish.Keys; } }
  }
 }

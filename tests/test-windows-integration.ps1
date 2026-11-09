@@ -155,7 +155,7 @@ if($missing.Count) { throw "Cevirisi olmayan metinler:`n$($missing -join "`n")" 
 # Friendly Turkish copy must refer to a text the code actually shows.
 $used=@{}
 foreach($file in Get-ChildItem (Join-Path $root 'src') -Filter *.cs) { if($file.Name -like 'Lang*.cs') { continue }; foreach($m in [regex]::Matches([IO.File]::ReadAllText($file.FullName,[Text.Encoding]::UTF8),'L\.T\("((?:[^"\\]|\\.)*)"\)')) { $used[[regex]::Unescape($m.Groups[1].Value)]=$true } }
-$stale=@($lang.GetProperty('KankaKeys',$static).GetValue($null) | Where-Object { -not $used.ContainsKey($_) })
+$stale=@($lang.GetProperty('TurkishKeys',$static).GetValue($null) | Where-Object { -not $used.ContainsKey($_) })
 if($stale.Count) { throw "Kodda kullanilmayan Turkce metinleri:`n$($stale -join "`n")" }
 $translate=$lang.GetMethod('T',$static)
 $language=$lang.GetProperty('Current',$static)
@@ -163,7 +163,7 @@ foreach($code in 'tr','kanka') {
  $language.SetValue($null,$code)
  if($language.GetValue($null) -ne 'tr' -or $translate.Invoke($null,[object[]]@('Profil uygulandı.')) -ne 'Tamamdır! Yeni profil devrede.') { throw 'Varsayilan Turkce veya eski dil tercihi uyumsuz' }
 }
-foreach($key in $lang.GetProperty('KankaKeys',$static).GetValue($null)) {
+foreach($key in $lang.GetProperty('TurkishKeys',$static).GetValue($null)) {
  $copy=$translate.Invoke($null,[object[]]@($key))
  if($copy -match '[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|\u23F3|\uFE0F') { throw "Turkce metinde emoji kaldi: $key" }
 }
