@@ -180,7 +180,7 @@ namespace GoodbyeTray {
   // The wheel works over every part of the list, and eases to its stop instead of jumping.
   void Hook(Control control) { control.MouseWheel+=delegate(object sender,MouseEventArgs e) { target-=e.Delta/120f*80; Place(); if(Motion.Enabled) glide.Start(); else { offset=target; Place(); } }; foreach(Control child in control.Controls) Hook(child); }
   internal AccessTestForm(bool darkTheme,Func<bool> running) {
-   engineRunning=running; Text=L.T("GoodbyeDPI — Erişim Testi"); Icon=Program.AppIcon; Font=new Font("Segoe UI",10); AutoScaleMode=AutoScaleMode.Dpi;
+   engineRunning=running; Text=L.T("GoodbyeDPI — Erişim Testi"); Icon=Program.AppIcon; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi;
    ClientSize=new Size(720,548); MinimumSize=new Size(640,584); StartPosition=FormStartPosition.CenterParent;
    var layout=outer; layout.Dock=DockStyle.Fill; layout.Padding=new Padding(16); layout.ColumnCount=1; layout.RowCount=3;
    layout.RowStyles.Add(new RowStyle(SizeType.Absolute,62)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,44)); Controls.Add(layout);

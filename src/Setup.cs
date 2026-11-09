@@ -419,19 +419,19 @@ namespace GoodbyeTray {
    Color accent=contrast?SystemColors.Highlight:AppPalette.Accent, accentInk=contrast?SystemColors.HighlightText:AppPalette.AccentInk; line=contrast?SystemColors.WindowText:AppPalette.Border(dark);
    int width=remove?560:600, height=remove?380:600, bottom=height-72;
    Text=remove?L.T("GoodbyeDPI — Kaldır"):L.T("GoodbyeDPI — Kurulum"); ClientSize=new Size(width,height); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; MinimizeBox=true; StartPosition=FormStartPosition.CenterScreen;
-   Font=new Font("Segoe UI",10); BackColor=background; ForeColor=text; Icon=Program.AppIcon; DoubleBuffered=true;
+   Font=new Font(Fonts.Ui,10); BackColor=background; ForeColor=text; Icon=Program.AppIcon; DoubleBuffered=true;
    // Header: icon, name and version.
    var logo=new Panel { Bounds=new Rectangle(30,26,52,52),BackColor=background }; logo.Paint+=delegate(object sender,PaintEventArgs e) { e.Graphics.DrawImageUnscaled(Program.Logo(52),0,0); }; Controls.Add(logo);
-   Controls.Add(new Label { Text="GoodbyeDPI Tray",Font=new Font("Segoe UI",19,FontStyle.Bold),Bounds=new Rectangle(94,24,width-124,38),ForeColor=text });
-   Controls.Add(new Label { Text=L.T("Sürüm ")+AppInfo.Version+L.T("  ·  Geliştirici: Furkan"),Bounds=new Rectangle(96,62,width-126,22),ForeColor=muted,Font=new Font("Segoe UI",9.5f) });
+   Controls.Add(new Label { Text="GoodbyeDPI Tray",Font=new Font(Fonts.Ui,19,FontStyle.Bold),Bounds=new Rectangle(94,24,width-124,38),ForeColor=text });
+   Controls.Add(new Label { Text=L.T("Sürüm ")+AppInfo.Version+L.T("  ·  Geliştirici: Furkan"),Bounds=new Rectangle(96,62,width-126,22),ForeColor=muted,Font=new Font(Fonts.Ui,9.5f) });
    var pages=new Rectangle(0,104,width,bottom-112);
    welcome.Bounds=pages; working.Bounds=pages; welcome.BackColor=working.BackColor=background; Controls.Add(welcome); Controls.Add(working); working.Visible=false;
    // Welcome page.
-   welcome.Controls.Add(new Label { Text=remove?L.T("GoodbyeDPI'ı kaldır"):wasInstalled?L.T("Güncellemeye hazır"):L.T("Kuruluma hazır"),Font=new Font("Segoe UI",13,FontStyle.Bold),Bounds=new Rectangle(30,0,width-60,30),ForeColor=text });
+   welcome.Controls.Add(new Label { Text=remove?L.T("GoodbyeDPI'ı kaldır"):wasInstalled?L.T("Güncellemeye hazır"):L.T("Kuruluma hazır"),Font=new Font(Fonts.Ui,13,FontStyle.Bold),Bounds=new Rectangle(30,0,width-60,30),ForeColor=text });
    var card=new SoftPanel { Bounds=new Rectangle(30,38,width-60,remove?70:64),Fill=surface,Edge=line,BackColor=background,Padding=Padding.Empty }; welcome.Controls.Add(card);
    if(remove) card.Controls.Add(new Label { Text=L.T("GoodbyeDPI Tray, ayarları ve günlükleriyle birlikte bilgisayarından tamamen kaldırılacak."),Bounds=new Rectangle(18,12,card.Width-36,46),ForeColor=text,BackColor=surface });
    else {
-    card.Controls.Add(new Label { Text=L.T("Kurulum konumu"),Bounds=new Rectangle(18,12,card.Width-(wasInstalled?36:150),20),ForeColor=muted,BackColor=surface,Font=new Font("Segoe UI",9) });
+    card.Controls.Add(new Label { Text=L.T("Kurulum konumu"),Bounds=new Rectangle(18,12,card.Width-(wasInstalled?36:150),20),ForeColor=muted,BackColor=surface,Font=new Font(Fonts.Ui,9) });
     var path=new Label { Text=Program.InstallDir,Bounds=new Rectangle(18,32,card.Width-(wasInstalled?36:150),22),ForeColor=text,BackColor=surface,AutoEllipsis=true }; card.Controls.Add(path);
     if(!wasInstalled) {
      var change=new SoftButton { Text=L.T("Değiştir"),Bounds=new Rectangle(card.Width-122,15,104,34),BackColor=surface,Fill=background,Ink=text,Edge=line,AccessibleName=L.T("Kurulum konumunu değiştir") }; card.Controls.Add(change); change.BringToFront();
@@ -448,14 +448,14 @@ namespace GoodbyeTray {
       }
      };
     }
-    welcome.Controls.Add(new Label { Text=L.T("Kullanmadan önce"),Bounds=new Rectangle(30,118,width-60,22),ForeColor=muted,Font=new Font("Segoe UI",9.5f,FontStyle.Bold) });
+    welcome.Controls.Add(new Label { Text=L.T("Kullanmadan önce"),Bounds=new Rectangle(30,118,width-60,22),ForeColor=muted,Font=new Font(Fonts.Ui,9.5f,FontStyle.Bold) });
     var notice=new NoticeView { Text=AppInfo.Notice,ThumbColor=muted,EdgeColor=line,BackColor=surface,ForeColor=text,TabStop=true,FocusFrame=false,Bounds=new Rectangle(30,142,width-60,132) };
     notice.AccessibleName=L.T("Kullanmadan önce"); welcome.Controls.Add(notice);
     consent.Text=L.T("Okudum, anladım."); consent.Bounds=new Rectangle(30,286,width-60,32); consent.Checked=false; consent.BackColor=background; consent.ForeColor=text; consent.Box=muted; consent.Accent=accent; consent.AccentInk=accentInk; welcome.Controls.Add(consent);
    }
    // Progress page.
    stateIcon.Bounds=new Rectangle(30,6,30,30); stateIcon.BackColor=background; stateIcon.State=UpdateState.Checking; working.Controls.Add(stateIcon);
-   title.Font=new Font("Segoe UI",16,FontStyle.Bold); title.Bounds=new Rectangle(72,2,width-102,38); title.ForeColor=text; title.Text=remove?L.T("GoodbyeDPI kaldırılıyor"):L.T("GoodbyeDPI kuruluyor"); working.Controls.Add(title);
+   title.Font=new Font(Fonts.Ui,16,FontStyle.Bold); title.Bounds=new Rectangle(72,2,width-102,38); title.ForeColor=text; title.Text=remove?L.T("GoodbyeDPI kaldırılıyor"):L.T("GoodbyeDPI kuruluyor"); working.Controls.Add(title);
    info.Bounds=new Rectangle(32,52,width-64,remove?48:64); info.ForeColor=muted; info.Text=remove?L.T("Bu birkaç saniye sürer."):L.T("Dosyalar kopyalanıyor ve GoodbyeDPI hizmeti hazırlanıyor. Bu birkaç saniye sürer."); working.Controls.Add(info);
    int barTop=remove?104:124;
    step.Bounds=new Rectangle(32,barTop,width-150,24); step.ForeColor=text; working.Controls.Add(step);

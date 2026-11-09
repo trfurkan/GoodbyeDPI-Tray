@@ -19,7 +19,7 @@ namespace GoodbyeTray {
    BackColor=contrast?SystemColors.Window:AppPalette.Background(dark);
    surface=contrast?SystemColors.Window:AppPalette.Surface(dark); ink=contrast?SystemColors.WindowText:AppPalette.Text(dark);
    muted=contrast?ink:AppPalette.Muted(dark); edge=contrast?SystemColors.WindowText:AppPalette.Border(dark); accent=contrast?SystemColors.Highlight:AppPalette.Accent;
-   Text=L.T("Uygun profil bul"); Icon=Program.AppIcon; Font=new Font("Segoe UI",10); ForeColor=ink; AutoScaleMode=AutoScaleMode.Dpi;
+   Text=L.T("Uygun profil bul"); Icon=Program.AppIcon; Font=new Font(Fonts.Ui,10); ForeColor=ink; AutoScaleMode=AutoScaleMode.Dpi;
    ClientSize=new Size(720,680); MinimumSize=new Size(650,650); StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=6 };
    foreach(int h in new[]{46,104,54,14}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));

@@ -72,7 +72,7 @@ namespace GoodbyeTray {
   CancellationTokenSource cancellation;
   bool active,closeRequested;
   internal UpdateDownloadForm(bool dark,UpdateAsset download) {
-   asset=download; Text=L.T("Güncelleme indiriliyor"); Icon=Program.AppIcon; Font=new Font("Segoe UI",10); AutoScaleMode=AutoScaleMode.Dpi;
+   asset=download; Text=L.T("Güncelleme indiriliyor"); Icon=Program.AppIcon; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi;
    ClientSize=new Size(540,260); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; MinimizeBox=false; StartPosition=FormStartPosition.CenterParent;
    bool contrast=SystemInformation.HighContrast; BackColor=contrast?SystemColors.Window:AppPalette.Background(dark); ForeColor=contrast?SystemColors.WindowText:AppPalette.Text(dark);
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=4 };

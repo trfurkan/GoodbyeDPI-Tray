@@ -20,7 +20,7 @@ namespace GoodbyeTray {
   readonly List<string> paths=new List<string>();
   public LicenseForm(string folder,bool dark,Color background,Color surface,Color foreground,Color secondary,Color border) {
    Text=L.T("GoodbyeDPI — Lisanslar"); ClientSize=new Size(900,560); MinimumSize=new Size(600,360); StartPosition=FormStartPosition.CenterParent;
-   Font=new Font("Segoe UI",10); Icon=Program.AppIcon; BackColor=background; ForeColor=foreground; MaximizeBox=true; MinimizeBox=false; ShowInTaskbar=false;
+   Font=new Font(Fonts.Ui,10); Icon=Program.AppIcon; BackColor=background; ForeColor=foreground; MaximizeBox=true; MinimizeBox=false; ShowInTaskbar=false;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Padding=new Padding(14),BackColor=background };
    layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,230)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
    list.Dock=DockStyle.Fill; list.Margin=new Padding(0,0,12,0); list.BackColor=background; list.ForeColor=foreground; list.SelectedColor=surface; list.EdgeColor=border;

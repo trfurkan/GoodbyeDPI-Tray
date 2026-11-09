@@ -276,13 +276,13 @@ namespace GoodbyeTray {
    // Sizes are written at 100 %; the menu's own screen scale grows them with the text.
    float f=menu.DeviceDpi/96f; Func<int,int> s=delegate(int px) { return (int)Math.Round(px*f); }; width=s(width);
    menu.ShowCheckMargin=false; menu.ShowImageMargin=false; menu.Padding=new Padding(4); menu.DropShadowEnabled=true;
-   menu.BackColor=surface; menu.ForeColor=ink; menu.Font=Fonts.Get("Segoe UI",10f); menu.MinimumSize=new Size(width,0);
+   menu.BackColor=surface; menu.ForeColor=ink; menu.Font=Fonts.Get(Fonts.Ui.Name,10f); menu.MinimumSize=new Size(width,0);
    menu.Renderer=new MenuRenderer(surface,ink,border) { Rounded=true,Modern=true };
    foreach(ToolStripItem item in menu.Items) {
-    item.AutoSize=false; item.Margin=Padding.Empty; item.BackColor=surface; item.ForeColor=ink; item.Font=Fonts.Get("Segoe UI",10f);
+    item.AutoSize=false; item.Margin=Padding.Empty; item.BackColor=surface; item.ForeColor=ink; item.Font=Fonts.Get(Fonts.Ui.Name,10f);
     if(item is ToolStripSeparator) { item.Size=new Size(width-s(8),s(9)); continue; }
     int height=s(32);
-    if(!String.IsNullOrEmpty(item.AccessibleDescription)) height=Math.Max(s(60),s(8+22)+TextRenderer.MeasureText(item.AccessibleDescription,Fonts.Get("Segoe UI",8.5f),new Size(Math.Max(40,width-s(8+16+20)),Int32.MaxValue),TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix).Height+s(8));
+    if(!String.IsNullOrEmpty(item.AccessibleDescription)) height=Math.Max(s(60),s(8+22)+TextRenderer.MeasureText(item.AccessibleDescription,Fonts.Get(Fonts.Ui.Name,8.5f),new Size(Math.Max(40,width-s(8+16+20)),Int32.MaxValue),TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix).Height+s(8));
     item.Size=new Size(width-s(8),height);
     var parent=item as ToolStripMenuItem;
     if(parent!=null && parent.HasDropDownItems) { var sub=parent.DropDown as ToolStripDropDownMenu; if(sub!=null) PrepareTree(sub,surface,ink,border,(int)Math.Round(width/f)); }
@@ -297,12 +297,12 @@ namespace GoodbyeTray {
    foreach(ToolStripItem item in menu.Items) {
     item.AutoSize=false; item.Margin=Padding.Empty; item.BackColor=surface; item.ForeColor=ink;
     if(item is ToolStripSeparator) { item.Size=new Size(width-s(10),s(11)); continue; }
-    if(item is ToolStripMenuItem) item.Font=Fonts.Get("Segoe UI",10f,Convert.ToString(item.Tag)=="accent"?FontStyle.Bold:FontStyle.Regular);
+    if(item is ToolStripMenuItem) item.Font=Fonts.Get(Fonts.Ui.Name,10f,Convert.ToString(item.Tag)=="accent"?FontStyle.Bold:FontStyle.Regular);
     bool described=!String.IsNullOrEmpty(item.AccessibleDescription) && !(item is ToolStripLabel);
     if(item is ToolStripLabel) continue;
     // A description wraps to as many lines as it needs under the name.
     int height=s(36);
-    if(described) { bool icon=item.Image!=null || Convert.ToString(item.Tag)=="accent"; int textWidth=Math.Max(40,width-s(10+(icon?42:16)+20)); height=s(8+22)+TextRenderer.MeasureText(item.AccessibleDescription,Fonts.Get("Segoe UI",8.5f),new Size(textWidth,Int32.MaxValue),TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix).Height+s(8); }
+    if(described) { bool icon=item.Image!=null || Convert.ToString(item.Tag)=="accent"; int textWidth=Math.Max(40,width-s(10+(icon?42:16)+20)); height=s(8+22)+TextRenderer.MeasureText(item.AccessibleDescription,Fonts.Get(Fonts.Ui.Name,8.5f),new Size(textWidth,Int32.MaxValue),TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix).Height+s(8); }
     item.Size=new Size(width-s(10),height);
    }
   }

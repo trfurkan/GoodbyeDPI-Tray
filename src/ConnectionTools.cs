@@ -35,7 +35,7 @@ namespace GoodbyeTray {
    MenuRenderer.Prepare(menu,surface,foreground,border,width);
    menu.Renderer=new PauseMenuRenderer(surface,foreground,border,paused) { Rounded=true,Modern=true };
    foreach(ToolStripItem item in menu.Items) {
-    item.Font=Fonts.Get("Segoe UI",10f);
+    item.Font=Fonts.Get(Fonts.Ui.Name,10f);
     float f=menu.DeviceDpi/96f; item.Size=new Size(Math.Max(width,(int)Math.Round(width*f))-(int)Math.Round(10*f),(int)Math.Round((item is ToolStripLabel?(paused?34:56):38)*f));
    }
    return menu;

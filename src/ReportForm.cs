@@ -89,7 +89,7 @@ namespace GoodbyeTray {
   internal ReportForm(bool dark) {
    bool contrast=SystemInformation.HighContrast;
    Color background=contrast?SystemColors.Window:AppPalette.Background(dark),surface=contrast?SystemColors.Window:AppPalette.Surface(dark),ink=contrast?SystemColors.WindowText:AppPalette.Text(dark),muted=contrast?ink:AppPalette.Muted(dark),edge=contrast?ink:AppPalette.Border(dark),accent=contrast?SystemColors.Highlight:AppPalette.Accent;
-   BackColor=background; ForeColor=ink; Font=new Font("Segoe UI",10); AutoScaleMode=AutoScaleMode.Dpi; Icon=Program.AppIcon;
+   BackColor=background; ForeColor=ink; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi; Icon=Program.AppIcon;
    Text=L.T("Sorun bildir"); ClientSize=new Size(660,600); MinimumSize=new Size(560,520); StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=7 };
    foreach(int h in new[]{46,48,26}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));

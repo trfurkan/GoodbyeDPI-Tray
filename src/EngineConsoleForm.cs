@@ -16,7 +16,7 @@ namespace GoodbyeTray {
   bool reading,disposed;
   string lastFrame; bool lastRunning;
   internal EngineConsoleForm(bool dark) {
-   Text=L.T("GoodbyeDPI — Motor konsolu"); Icon=Program.AppIcon; Font=new Font("Segoe UI",10); ClientSize=new Size(860,480); MinimumSize=new Size(540,300); StartPosition=FormStartPosition.CenterParent;
+   Text=L.T("GoodbyeDPI — Motor konsolu"); Icon=Program.AppIcon; Font=new Font(Fonts.Ui,10); ClientSize=new Size(860,480); MinimumSize=new Size(540,300); StartPosition=FormStartPosition.CenterParent;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(16),ColumnCount=1,RowCount=4 };
    layout.RowStyles.Add(new RowStyle(SizeType.Absolute,30)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,36)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,44)); Controls.Add(layout);
    caption.Dock=DockStyle.Fill; caption.Font=new Font(Font.FontFamily,13,FontStyle.Bold); caption.Text=L.T("Motor çıktısı"); layout.Controls.Add(caption);

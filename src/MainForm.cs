@@ -364,7 +364,7 @@ namespace GoodbyeTray {
   bool sizing,stateReadPending;
   Form diagnosticsWindow;
   readonly SoftButton themeButton=new SoftButton(), languageButton=new SoftButton();
-  readonly ContextMenuStrip languageMenu=new ContextMenuStrip { ShowImageMargin=true,ShowCheckMargin=true,ImageScalingSize=new Size(20,20),MinimumSize=new Size(200,0),Padding=new Padding(5),Font=new Font("Segoe UI",10) };
+  readonly ContextMenuStrip languageMenu=new ContextMenuStrip { ShowImageMargin=true,ShowCheckMargin=true,ImageScalingSize=new Size(20,20),MinimumSize=new Size(200,0),Padding=new Padding(5),Font=new Font(Fonts.Ui,10) };
   // Every text is read once when windows are built, so a new language takes effect by reopening the app.
   internal void ChangeLanguage(string code) {
    if(busy) return;
@@ -375,7 +375,7 @@ namespace GoodbyeTray {
    catch(Exception ex) { ReportError(ex); return; }
    quitting=true; Close();
   }
-  readonly ContextMenuStrip themeMenu=new ContextMenuStrip { ShowImageMargin=true,ShowCheckMargin=true,ImageScalingSize=new Size(20,20),MinimumSize=new Size(300,0),Padding=new Padding(5),Font=new Font("Segoe UI",10) };
+  readonly ContextMenuStrip themeMenu=new ContextMenuStrip { ShowImageMargin=true,ShowCheckMargin=true,ImageScalingSize=new Size(20,20),MinimumSize=new Size(300,0),Padding=new Padding(5),Font=new Font(Fonts.Ui,10) };
   string themePreference="black";
   static readonly string[] ThemeModes=AppPalette.Modes, ThemeNames={L.T("Aydınlık"),L.T("Karanlık"),L.T("Okyanus"),"Sakura",L.T("Güneş Batımı"),"Android",L.T("Şampanya"),L.T("Sistem")}, ThemeLabels={L.T("Aydınlık"),L.T("Karanlık"),L.T("Okyanus"),"Sakura",L.T("Güneş Batımı"),"Android",L.T("Şampanya"),L.T("Windows'a uy")};
   static string ThemeName(string mode) { int i=Array.IndexOf(ThemeModes,mode); return i<0?ThemeNames[0]:ThemeNames[i]; }
@@ -400,7 +400,7 @@ namespace GoodbyeTray {
 
   public MainForm(bool withTray) : this(withTray,null) {}
   public MainForm(bool withTray,bool? previewDark) {
-   themeOverride=previewDark; Text="GoodbyeDPI"; FormBorderStyle=FormBorderStyle.Sizable; ControlBox=true; MinimizeBox=true; MaximizeBox=true; Font=new Font("Segoe UI",10); AutoScaleMode=AutoScaleMode.Dpi; DoubleBuffered=true; SetStyle(ControlStyles.ResizeRedraw,true);
+   themeOverride=previewDark; Text="GoodbyeDPI"; FormBorderStyle=FormBorderStyle.Sizable; ControlBox=true; MinimizeBox=true; MaximizeBox=true; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi; DoubleBuffered=true; SetStyle(ControlStyles.ResizeRedraw,true);
    themePreference=AppPalette.SavedTheme();
    ClientSize=new Size(900,Math.Min(760,Screen.PrimaryScreen.WorkingArea.Height-70)); MinimumSize=new Size(760,740); StartPosition=FormStartPosition.CenterScreen; Icon=Program.AppIcon;
    var scroll=dashboardHost; scroll.Dock=DockStyle.Fill; scroll.AutoScroll=false; Controls.Add(scroll); BuildPageHost();
@@ -411,18 +411,18 @@ namespace GoodbyeTray {
    // Title bar: Windows' caption is folded into the window (see WndProc), so the app draws the icon and name,
    // the language and theme menus and the minimize, maximize and close buttons in one strip. Dragging, double-click,
    // the system menu and resizing from the top edge still go through Windows.
-   titleBar.Dock=DockStyle.Top; titleBar.Height=40; titleBar.Font=new Font("Segoe UI Semibold",9.5f); Controls.Add(titleBar);
+   titleBar.Dock=DockStyle.Top; titleBar.Height=40; titleBar.Font=new Font(Fonts.Semibold,9.5f); Controls.Add(titleBar);
    var header=new HitThroughFlow { Dock=DockStyle.Right,AutoSize=true,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Margin=Padding.Empty,Padding=Padding.Empty }; titleBar.Controls.Add(header);
    closeButton.Click+=delegate { Close(); }; maximizeButton.HitThrough=true; minimizeButton.Click+=delegate { WindowState=FormWindowState.Minimized; };
    header.Controls.Add(closeButton); header.Controls.Add(maximizeButton); header.Controls.Add(minimizeButton);
    Resize+=delegate { maximizeButton.Restore=WindowState==FormWindowState.Maximized; };
    for(int i=0;i<ThemeModes.Length;i++) { string choice=ThemeModes[i]; var item=new ToolStripMenuItem(ThemeLabels[i]) { Tag=choice,Image=ThemeSwatch(choice),AutoSize=false,Size=new Size(300,choice=="system"?72:40),Padding=new Padding(8,6,12,6) };
     if(choice=="system") { item.AccessibleDescription=L.T("Temayı (Karanlık/Aydınlık) sistem tercihlerine göre otomatik ayarlar."); item.ImageAlign=ContentAlignment.TopCenter; } item.Click+=delegate { try { SetThemePreference(choice,true); notice.Text=L.T("Tema kaydedildi."); } catch(Exception ex) { ReportError(ex); } }; if(choice=="system") themeMenu.Items.Add(new ToolStripSeparator()); themeMenu.Items.Add(item); }
-   themeButton.Size=new Size(112,26); themeButton.Margin=new Padding(0,7,10,7); themeButton.Circle=true; themeButton.AccessibleName=L.T("Görünüm teması"); themeButton.Glyph="swatch"; themeButton.Font=new Font("Segoe UI",8.75f);
+   themeButton.Size=new Size(112,26); themeButton.Margin=new Padding(0,7,10,7); themeButton.Circle=true; themeButton.AccessibleName=L.T("Görünüm teması"); themeButton.Glyph="swatch"; themeButton.Font=new Font(Fonts.Ui,8.75f);
    themeButton.Click+=delegate { foreach(ToolStripItem entry in themeMenu.Items) { var item=entry as ToolStripMenuItem; if(item!=null) item.Checked=Convert.ToString(item.Tag)==themePreference; } MenuRenderer.Prepare(themeMenu,surface,foreground,border,250); if(!themeMenu.Visible) themeMenu.Show(themeButton,new Point(themeButton.Width-250,themeButton.Height+6)); };
    // Language picker left of the theme menu: the globe, the language's name and a menu of the languages with their flags.
    int current=Array.IndexOf(L.Codes,L.Current);
-   languageButton.Size=new Size(98,26); languageButton.Margin=new Padding(0,7,6,7); languageButton.Circle=true; languageButton.AccessibleName=L.T("Dil")+": "+L.Names[current]; languageButton.Glyph="flag"; languageButton.GlyphImage=L.Flag(L.Current); languageButton.Font=new Font("Segoe UI",8.75f); languageButton.Text=L.Names[current]+"  ▾"; tips.SetToolTip(languageButton,L.T("Dil")+": "+L.Names[current]);
+   languageButton.Size=new Size(98,26); languageButton.Margin=new Padding(0,7,6,7); languageButton.Circle=true; languageButton.AccessibleName=L.T("Dil")+": "+L.Names[current]; languageButton.Glyph="flag"; languageButton.GlyphImage=L.Flag(L.Current); languageButton.Font=new Font(Fonts.Ui,8.75f); languageButton.Text=L.Names[current]+"  ▾"; tips.SetToolTip(languageButton,L.T("Dil")+": "+L.Names[current]);
    for(int i=0;i<L.Codes.Length;i++) { string code=L.Codes[i]; var item=new ToolStripMenuItem(L.Names[i]) { Tag=code,Image=L.Flag(code),AutoSize=false,Size=new Size(200,40),Padding=new Padding(8,6,12,6) }; item.Click+=delegate { ChangeLanguage(code); }; languageMenu.Items.Add(item); }
    languageButton.Click+=delegate { foreach(ToolStripItem entry in languageMenu.Items) { var item=(ToolStripMenuItem)entry; item.Checked=Convert.ToString(item.Tag)==L.Current; } MenuRenderer.Prepare(languageMenu,surface,foreground,border,190); if(!languageMenu.Visible) languageMenu.Show(languageButton,new Point(0,languageButton.Height+6)); };
    FitPill(languageButton); header.Controls.Add(themeButton); header.Controls.Add(languageButton);
@@ -432,11 +432,11 @@ namespace GoodbyeTray {
    var heroLayout=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,BackColor=Color.Transparent };
    heroRows=heroLayout; heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); heroLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,330)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,62)); heroLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); hero.Controls.Add(heroLayout);
    status.Dock=DockStyle.Fill; status.Font=new Font(Font.FontFamily,15.5f,FontStyle.Bold); status.MarkScale=1.3f; status.TextAlign=ContentAlignment.MiddleLeft; status.Margin=Padding.Empty; heroLayout.Controls.Add(status,0,0);
-   detail.Dock=DockStyle.Fill; detail.Tag="muted"; detail.AutoEllipsis=true; detail.Font=new Font("Segoe UI",9.5f); detail.Margin=new Padding(70,0,0,0); heroLayout.Controls.Add(detail,0,1);
+   detail.Dock=DockStyle.Fill; detail.Tag="muted"; detail.AutoEllipsis=true; detail.Font=new Font(Fonts.Ui,9.5f); detail.Margin=new Padding(70,0,0,0); heroLayout.Controls.Add(detail,0,1);
    var actions=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Margin=Padding.Empty,Padding=new Padding(0,4,0,0),BackColor=Color.Transparent };
    restart.Text=L.T("Yeniden başlat"); restart.Glyph="restart"; restart.Click+=delegate { Execute("restart",0); };
    pauseButton.Text=L.T("Mola ver");
-   toggle.Size=new Size(326,50); toggle.Margin=Padding.Empty; toggle.Font=new Font("Segoe UI Semibold",11.5f);
+   toggle.Size=new Size(326,50); toggle.Margin=Padding.Empty; toggle.Font=new Font(Fonts.Semibold,11.5f);
    toggle.PrimaryClick+=delegate { Execute(running?"stop":"start",0); }; toggle.BreakClick+=delegate { ShowPauseMenu(); };
    toggle.HoverChanged+=delegate(int part) { tips.SetToolTip(toggle,part==0?toggle.BreakText:part==1?toggle.Text:null); };
    actions.Controls.Add(toggle);
@@ -453,11 +453,11 @@ namespace GoodbyeTray {
    consoleButton.Text=L.T("Konsol"); consoleButton.Glyph="console"; tips.SetToolTip(consoleButton,L.T("Motor konsolu"));
    reportButton.Text=L.T("Sorun bildir"); reportButton.Glyph="bug";
    int slot=0;
-   foreach(var button in new[]{consoleButton,reportButton}) { button.Dock=DockStyle.Fill; button.Corner=8; button.Margin=new Padding(slot==0?0:4,0,slot==1?0:4,0); button.Font=new Font("Segoe UI",10); button.AccessibleName=button.Text; actionRow.Controls.Add(button,slot++,0); }
+   foreach(var button in new[]{consoleButton,reportButton}) { button.Dock=DockStyle.Fill; button.Corner=8; button.Margin=new Padding(slot==0?0:4,0,slot==1?0:4,0); button.Font=new Font(Fonts.Ui,10); button.AccessibleName=button.Text; actionRow.Controls.Add(button,slot++,0); }
    consoleButton.Click+=delegate { ShowDiagnostics(); }; reportButton.Click+=delegate { ShowReport(); };
    layout.Controls.Add(actionRow,0,6);
    // Footer: developer link on the left; the version with its update state and the About link on the right.
-   footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=FooterHeight; footerPanel.Padding=new Padding(0,2,0,0); footerPanel.Font=new Font("Segoe UI",8.75f);
+   footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=FooterHeight; footerPanel.Padding=new Padding(0,2,0,0); footerPanel.Font=new Font(Fonts.Ui,8.75f);
    // A hairline above the footer sets it apart from the buttons, with room on both sides of it.
    footerPanel.Paint+=delegate(object sender,PaintEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,4,0,footerPanel.Width-5,0); }; footerPanel.ColumnCount=3; footerPanel.RowCount=1; footerPanel.Margin=Padding.Empty;
    footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -496,11 +496,11 @@ namespace GoodbyeTray {
    DpiChanged+=delegate(object sender,DpiChangedEventArgs e) { ui=e.DeviceDpiNew/96f; FitPill(languageButton); FitPill(themeButton); FitDashboard(); };
    SetOpeningSize(); ApplyTheme(true); FitDashboard(); if(withTray) { Shown+=delegate { RefreshStateAsync(); }; } else RefreshState();
   }
-  static Label LabelOf(string text,float size,bool bold) { return new Label { Text=text,Dock=DockStyle.Fill,Font=new Font("Segoe UI",size,bold?FontStyle.Bold:FontStyle.Regular),AutoEllipsis=true }; }
+  static Label LabelOf(string text,float size,bool bold) { return new Label { Text=text,Dock=DockStyle.Fill,Font=new Font(Fonts.Ui,size,bold?FontStyle.Bold:FontStyle.Regular),AutoEllipsis=true }; }
   // A section heading: the title in plain bold, as in the old window.
   static Control SectionTitle(string glyph,string text) {
    var row=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.LeftToRight,WrapContents=false,Margin=Padding.Empty,Padding=Padding.Empty };
-   row.Controls.Add(new Label { Text=text,Font=new Font("Segoe UI",11.5f,FontStyle.Bold),AutoSize=true,Margin=new Padding(0,1,0,0) });
+   row.Controls.Add(new Label { Text=text,Font=new Font(Fonts.Ui,11.5f,FontStyle.Bold),AutoSize=true,Margin=new Padding(0,1,0,0) });
    return row;
   }
   TableLayoutPanel Section(TableLayoutPanel parent,string glyph,string title,int[] rows) {
@@ -547,11 +547,11 @@ namespace GoodbyeTray {
    var content=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=4,RowCount=2,BackColor=Color.Transparent,Margin=Padding.Empty };
    content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); content.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
    content.RowStyles.Add(new RowStyle(SizeType.Absolute,40)); content.RowStyles.Add(new RowStyle(SizeType.Percent,100)); box.Controls.Add(content);
-   var title=new Label { Text=L.T("Erişim"),Font=new Font("Segoe UI",11.5f,FontStyle.Bold),AutoSize=true,Anchor=AnchorStyles.Left,Margin=new Padding(0,0,14,0) }; content.Controls.Add(title,0,0);
+   var title=new Label { Text=L.T("Erişim"),Font=new Font(Fonts.Ui,11.5f,FontStyle.Bold),AutoSize=true,Anchor=AnchorStyles.Left,Margin=new Padding(0,0,14,0) }; content.Controls.Add(title,0,0);
    var chips=new FlowLayoutPanel { AutoSize=true,WrapContents=false,Anchor=AnchorStyles.Left,Margin=Padding.Empty,BackColor=Color.Transparent };
-   for(int i=0;i<QuickSites.Length;i++) { accessChips[i]=new AccessChip(QuickSites[i],QuickColors[i]) { Font=new Font("Segoe UI",9.5f) }; accessChips[i].Size=accessChips[i].GetPreferredSize(Size.Empty); accessChips[i].Margin=new Padding(0,0,6,0); accessChips[i].Cursor=Cursors.Hand; accessChips[i].Click+=delegate { RunAccessCheck(); }; tips.SetToolTip(accessChips[i],L.T("Henüz denenmedi")); chips.Controls.Add(accessChips[i]); }
+   for(int i=0;i<QuickSites.Length;i++) { accessChips[i]=new AccessChip(QuickSites[i],QuickColors[i]) { Font=new Font(Fonts.Ui,9.5f) }; accessChips[i].Size=accessChips[i].GetPreferredSize(Size.Empty); accessChips[i].Margin=new Padding(0,0,6,0); accessChips[i].Cursor=Cursors.Hand; accessChips[i].Click+=delegate { RunAccessCheck(); }; tips.SetToolTip(accessChips[i],L.T("Henüz denenmedi")); chips.Controls.Add(accessChips[i]); }
    content.Controls.Add(chips,1,0); accessChipRow=chips;
-   accessSummary.AutoSize=false; accessSummary.AutoEllipsis=true; accessSummary.Anchor=AnchorStyles.Left|AnchorStyles.Right; accessSummary.Height=20; accessSummary.TextAlign=ContentAlignment.MiddleLeft; accessSummary.Tag="muted"; accessSummary.Font=new Font("Segoe UI",9); accessSummary.Margin=new Padding(8,0,8,0); accessSummary.Text=L.T("Sitelerin bu profille açılıp açılmadığını dene."); content.Controls.Add(accessSummary,2,0);
+   accessSummary.AutoSize=false; accessSummary.AutoEllipsis=true; accessSummary.Anchor=AnchorStyles.Left|AnchorStyles.Right; accessSummary.Height=20; accessSummary.TextAlign=ContentAlignment.MiddleLeft; accessSummary.Tag="muted"; accessSummary.Font=new Font(Fonts.Ui,9); accessSummary.Margin=new Padding(8,0,8,0); accessSummary.Text=L.T("Sitelerin bu profille açılıp açılmadığını dene."); content.Controls.Add(accessSummary,2,0);
    var buttons=new FlowLayoutPanel { AutoSize=true,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Anchor=AnchorStyles.Right,Margin=Padding.Empty,BackColor=Color.Transparent };
    accessRun.Glyph="list"; accessRun.Text=L.T("Ayrıntılı test"); accessRun.Size=new Size(140,36); accessRun.Corner=8; accessRun.Margin=Padding.Empty; accessRun.Click+=delegate { ToggleAccess(); }; tips.SetToolTip(accessRun,AccessProbe.Domains.Length+L.T(" site, tek tek sonuç ve süre")); buttons.Controls.Add(accessRun);
    // A small refresh button runs the quick check of the three sites again; it spins while the check runs.
@@ -653,7 +653,7 @@ namespace GoodbyeTray {
   // A quiet caption above each choice.
   static Control ChoiceTitle(string glyph,string text) {
    var row=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.LeftToRight,WrapContents=false,Margin=Padding.Empty,Padding=Padding.Empty };
-   row.Controls.Add(new Label { Text=text,Font=new Font("Segoe UI",10),AutoSize=true,Tag="muted",Margin=new Padding(0,4,0,0) });
+   row.Controls.Add(new Label { Text=text,Font=new Font(Fonts.Ui,10),AutoSize=true,Tag="muted",Margin=new Padding(0,4,0,0) });
    return row;
   }
   // The connection card under the status: the profile on the left, the DNS server on the right.
@@ -694,7 +694,7 @@ namespace GoodbyeTray {
    dnsServer.Dock=DockStyle.Top; dnsServer.Height=42; dnsServer.Corner=8; dnsServer.Margin=new Padding(0,2,0,2); dnsServer.AccessibleName=L.T("DNS sunucusu");
    foreach(int id in DnsChoice.Order) dnsServer.Items.Add(L.T(DnsChoice.Names[id]));
    dnsServer.SelectedIndex=DnsChoice.Position; right.Controls.Add(dnsServer,0,1);
-   dnsHelp.Text=L.T("Standart ve \"DNS ile\" profillerinde kullanılır."); dnsHelp.Dock=DockStyle.Fill; dnsHelp.Font=new Font("Segoe UI",9); dnsHelp.AutoEllipsis=true; dnsHelp.Tag="muted"; right.Controls.Add(dnsHelp,0,2);
+   dnsHelp.Text=L.T("Standart ve \"DNS ile\" profillerinde kullanılır."); dnsHelp.Dock=DockStyle.Fill; dnsHelp.Font=new Font(Fonts.Ui,9); dnsHelp.AutoEllipsis=true; dnsHelp.Tag="muted"; right.Controls.Add(dnsHelp,0,2);
    dnsServer.SelectedIndexChanged+=delegate { if(!refreshing && dnsServer.SelectedIndex>=0) Execute("dns",DnsChoice.Order[dnsServer.SelectedIndex]); };
    choices.Controls.Add(right,1,0);
   }
@@ -732,7 +732,7 @@ namespace GoodbyeTray {
     var side=new FlowLayoutPanel { AutoSize=true,WrapContents=false,Margin=Padding.Empty,BackColor=Color.Transparent,Anchor=AnchorStyles.Right };
     side.Controls.Add(info); if(i==3) side.Controls.Add(sitesLink);
     row.Controls.Add(side,1,0);
-    var help=helpLabels[i]; help.Font=new Font("Segoe UI",9); help.Tag="muted"; help.Dock=DockStyle.Fill; help.Margin=new Padding(Math.Max(16,(int)Math.Round(box.Font.Height*0.95))+10,0,0,0);
+    var help=helpLabels[i]; help.Font=new Font(Fonts.Ui,9); help.Tag="muted"; help.Dock=DockStyle.Fill; help.Margin=new Padding(Math.Max(16,(int)Math.Round(box.Font.Height*0.95))+10,0,0,0);
     row.Controls.Add(help,0,1); row.SetColumnSpan(help,2);
     tips.SetToolTip(box,help.Text); grid.Controls.Add(row,0,i);
    }
@@ -1092,7 +1092,7 @@ namespace GoodbyeTray {
    var bar=new TableLayoutPanel { Dock=DockStyle.Top,Height=56,ColumnCount=2,RowCount=1,Margin=Padding.Empty,BackColor=Color.Transparent };
    bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,130)); bar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
    pageBack.Glyph="back"; pageBack.Text=L.T("Geri"); pageBack.Size=new Size(118,44); pageBack.Margin=new Padding(0,4,12,4); pageBack.Click+=delegate { ClosePage(); }; tips.SetToolTip(pageBack,L.T("Ana ekrana dön (Esc)")); bar.Controls.Add(pageBack,0,0);
-   pageTitle.Dock=DockStyle.Fill; pageTitle.Font=new Font("Segoe UI",16,FontStyle.Bold); pageTitle.TextAlign=ContentAlignment.MiddleLeft; bar.Controls.Add(pageTitle,1,0);
+   pageTitle.Dock=DockStyle.Fill; pageTitle.Font=new Font(Fonts.Ui,16,FontStyle.Bold); pageTitle.TextAlign=ContentAlignment.MiddleLeft; bar.Controls.Add(pageTitle,1,0);
    pageBody.Dock=DockStyle.Fill; pageHost.Controls.Add(pageBody); pageHost.Controls.Add(bar);
   }
   void ShowPage(Form page,string title) {

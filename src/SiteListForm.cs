@@ -21,7 +21,7 @@ namespace GoodbyeTray {
    contrast=SystemInformation.HighContrast;
    background=contrast?SystemColors.Window:AppPalette.Background(dark); surface=contrast?SystemColors.Window:AppPalette.Surface(dark); ink=contrast?SystemColors.WindowText:AppPalette.Text(dark);
    muted=contrast?ink:AppPalette.Muted(dark); edge=contrast?ink:AppPalette.Border(dark); accent=contrast?SystemColors.Highlight:AppPalette.Accent;
-   BackColor=background; ForeColor=ink; Font=new Font("Segoe UI",10); AutoScaleMode=AutoScaleMode.Dpi; Icon=Program.AppIcon;
+   BackColor=background; ForeColor=ink; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi; Icon=Program.AppIcon;
    Text=L.T("Engelli siteler"); ClientSize=new Size(620,600); MinimumSize=new Size(520,500); StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=8 };
    foreach(int h in new[]{46,48,26}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
@@ -36,7 +36,7 @@ namespace GoodbyeTray {
    layout.Controls.Add(custom);
    var entry=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,Margin=Padding.Empty };
    entry.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); entry.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,120)); entry.RowStyles.Add(new RowStyle(SizeType.Absolute,44)); entry.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-   input.Dock=DockStyle.Fill; input.Font=new Font("Segoe UI",11); input.BackColor=surface; input.ForeColor=ink; input.BorderStyle=BorderStyle.FixedSingle; input.Margin=new Padding(0,8,0,0); input.MaxLength=200; input.AccessibleName=L.T("Eklenecek site");
+   input.Dock=DockStyle.Fill; input.Font=new Font(Fonts.Ui,11); input.BackColor=surface; input.ForeColor=ink; input.BorderStyle=BorderStyle.FixedSingle; input.Margin=new Padding(0,8,0,0); input.MaxLength=200; input.AccessibleName=L.T("Eklenecek site");
    input.TextChanged+=delegate { if(!working) message.Text=""; };
    entry.Controls.Add(input,0,0);
    add.Text=L.T("Ekle"); add.Dock=DockStyle.Fill; add.Margin=new Padding(10,4,0,2); Style(add,true); add.Click+=delegate { Change(true,input.Text); }; entry.Controls.Add(add,1,0);

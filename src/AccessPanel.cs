@@ -34,7 +34,7 @@ namespace GoodbyeTray {
    if(icon!=null) g.DrawImage(icon,box);
    else {
     using(var b=new SolidBrush(brand)) g.FillEllipse(b,box);
-    { var font=Fonts.Get("Segoe UI",9.5f,FontStyle.Bold); TextRenderer.DrawText(g,Text.Substring(0,1),font,Rectangle.Round(box),Color.White,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding); }
+    { var font=Fonts.Get(Fonts.Ui.Name,9.5f,FontStyle.Bold); TextRenderer.DrawText(g,Text.Substring(0,1),font,Rectangle.Round(box),Color.White,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding); }
    }
    if(phase==Phase.Testing) using(var pen=new Pen(tone,2f) { StartCap=LineCap.Round,EndCap=LineCap.Round }) g.DrawArc(pen,box.X-3,box.Y-3,box.Width+6,box.Height+6,Motion.Enabled?(Motion.Now%900)/900f*360:0,250);
    if(done) {

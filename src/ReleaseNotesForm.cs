@@ -7,7 +7,7 @@ namespace GoodbyeTray {
   internal ReleaseNotesForm(bool dark,string version,string notes) {
    bool contrast=SystemInformation.HighContrast;
    Color background=contrast?SystemColors.Window:AppPalette.Background(dark),surface=contrast?SystemColors.Window:AppPalette.Surface(dark),ink=contrast?SystemColors.WindowText:AppPalette.Text(dark),muted=contrast?ink:AppPalette.Muted(dark),edge=contrast?ink:AppPalette.Border(dark);
-   BackColor=background; ForeColor=ink; Font=new Font("Segoe UI",10); AutoScaleMode=AutoScaleMode.Dpi; Icon=Program.AppIcon;
+   BackColor=background; ForeColor=ink; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi; Icon=Program.AppIcon;
    Text=L.T("Neler değişti?"); ClientSize=new Size(640,520); MinimumSize=new Size(550,440); StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=4 };
    layout.RowStyles.Add(new RowStyle(SizeType.Absolute,48)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,52)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,60)); Controls.Add(layout);
