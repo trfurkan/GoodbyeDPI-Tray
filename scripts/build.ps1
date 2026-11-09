@@ -11,8 +11,6 @@ $version = [regex]::Match([IO.File]::ReadAllText((Join-Path $sourceDir 'AppInfo.
 $notes = Join-Path $root "docs/RELEASE-v$version.md"
 if (-not (Test-Path -LiteralPath $notes)) { throw "Missing release notes: $notes" }
 $branding += "/resource:$notes,GoodbyeTray.ReleaseNotes"
-# The website's typeface, used in every window (SIL Open Font License; the license ships in the installer's licenses folder).
-$branding += "/resource:$(Join-Path $root 'docs\fonts\Manrope-Variable.ttf'),GoodbyeTray.Manrope"
 $vendorDir = Join-Path $root 'vendor\goodbyedpi'
 $appDir = Join-Path $root $(if($IncludeZapret) { 'build\experimental\app' } else { 'build\app' })
 $features = @()
@@ -37,7 +35,6 @@ $resources = @("/resource:$output,payload/GoodbyeDPI.Tray.exe", "/resource:$outp
 $resources += "/resource:$root\LICENSE,payload/licenses/LICENSE-goodbyedpi-tray.txt"
 $resources += "/resource:$root\NOTICE,payload/licenses/NOTICE-goodbyedpi-tray.txt"
 $resources += "/resource:$root\THIRD_PARTY_NOTICES.md,payload/licenses/THIRD_PARTY_NOTICES.md"
-$resources += "/resource:$root\docs\fonts\Manrope-OFL.txt,payload/licenses/LICENSE-manrope.txt"
 foreach ($folder in @('x86','x86_64','licenses')) {
  foreach ($file in Get-ChildItem -LiteralPath (Join-Path $vendorDir $folder) -File) {
   $resources += '/resource:{0},payload/{1}/{2}' -f $file.FullName,$folder,$file.Name

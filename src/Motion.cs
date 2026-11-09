@@ -18,36 +18,17 @@ namespace GoodbyeTray {
   internal static Font Get(FontFamily family,float size) { return Get(family.Name,size); }
   internal static Font Get(string family,float size,GraphicsUnit unit) { return Get(family,size,FontStyle.Regular,unit); }
   internal static Font Get(Font prototype,FontStyle style) { return Get(prototype.FontFamily.Name,prototype.Size,style,prototype.Unit); }
-  // Dialog and card headings: Manrope ExtraBold, as on the website.
-  internal static Font Serif(float size) { return Get(Heading,size,Heading==Ui?FontStyle.Bold:FontStyle.Regular); }
+  // Dialog and card headings: bold Segoe UI, like the rest of the window.
+  internal static Font Serif(float size) { return Get(Heading,size,FontStyle.Bold); }
 
-  // The app uses the website's typeface, Manrope (SIL Open Font License, see licenses\LICENSE-manrope.txt). It ships
-  // inside the exe and is loaded into this process only: GDI gets it for TextRenderer, GDI+ for Font objects. Fonts made
-  // from a private collection must be created from its FontFamily objects, never by name, so every name goes through
-  // Family(). If anything fails, Segoe UI is used, as before.
-  [DllImport("gdi32.dll")] static extern IntPtr AddFontMemResourceEx(IntPtr data,uint length,IntPtr reserved,out uint fonts);
-  static readonly System.Drawing.Text.PrivateFontCollection embedded=new System.Drawing.Text.PrivateFontCollection();
-  static IntPtr memory;
-  internal static readonly FontFamily Ui=Load("Manrope") ?? new FontFamily("Segoe UI");
-  internal static readonly FontFamily Semibold=(Ui.Name=="Manrope"?Pick("Manrope SemiBold"):null) ?? SystemFamily("Segoe UI Semibold");
-  internal static readonly FontFamily Heading=(Ui.Name=="Manrope"?Pick("Manrope ExtraBold"):null) ?? Ui;
-  static FontFamily Load(string name) {
-   try {
-    using(var stream=typeof(Fonts).Assembly.GetManifestResourceStream("GoodbyeTray.Manrope")) {
-     if(stream==null) return null;
-     var bytes=new byte[stream.Length]; int read=0; while(read<bytes.Length) { int n=stream.Read(bytes,read,bytes.Length-read); if(n<=0) break; read+=n; }
-     // The memory stays allocated for the life of the process: both font tables point into it.
-     memory=Marshal.AllocCoTaskMem(bytes.Length); Marshal.Copy(bytes,0,memory,bytes.Length);
-     uint count; AddFontMemResourceEx(memory,(uint)bytes.Length,IntPtr.Zero,out count);
-     embedded.AddMemoryFont(memory,bytes.Length);
-    }
-    return Pick(name);
-   } catch(Exception ex) { AppInfo.Log("Yazı tipi yüklenemedi: "+ex.Message); return null; }
-  }
-  static FontFamily Pick(string name) { foreach(var family in embedded.Families) if(family.Name==name) return family; return null; }
-  static FontFamily SystemFamily(string name) { try { return new FontFamily(name); } catch(ArgumentException) { return Ui; } }
-  // A family by name: the embedded Manrope faces first, then the installed fonts.
-  internal static FontFamily Family(string name) { return Pick(name) ?? SystemFamily(name); }
+  // The app uses Windows' own typeface, Segoe UI. Every window takes its families from here, so the typeface is
+  // chosen in one place.
+  internal static readonly FontFamily Ui=SystemFamily("Segoe UI",FontFamily.GenericSansSerif);
+  internal static readonly FontFamily Semibold=SystemFamily("Segoe UI Semibold",Ui);
+  internal static readonly FontFamily Heading=Ui;
+  static FontFamily SystemFamily(string name,FontFamily fallback) { try { return new FontFamily(name); } catch(ArgumentException) { return fallback; } }
+  // A family by name from the installed fonts; Segoe UI when it is missing.
+  internal static FontFamily Family(string name) { return SystemFamily(name,Ui); }
  } // One UI-thread timer drives every animation: tweens that ease to a target and controls that loop (pulse, spin, shimmer).
  // With Windows' "Animation effects" off, tweens jump to their target and loops draw a still frame.
  static class Motion {

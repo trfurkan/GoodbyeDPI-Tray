@@ -15,7 +15,7 @@ The components below retain their own copyright notices and licenses.
 | WinDivert DLLs and drivers | [basil00/WinDivert](https://github.com/basil00/WinDivert) | [LGPL v3 text supplied with the distribution](vendor/goodbyedpi/licenses/LICENSE-windivert.txt) |
 | uthash used by the motor | [troydhanson/uthash](https://github.com/troydhanson/uthash) | [Original copyright and redistribution terms](vendor/goodbyedpi/licenses/LICENSE-uthash.txt) |
 | getline used by the motor | NetBSD Foundation / Christos Zoulas | [Original BSD terms](vendor/goodbyedpi/licenses/LICENSE-getline.txt) |
-| Manrope typeface (app windows and website) | [google/fonts: ofl/manrope](https://github.com/google/fonts/tree/main/ofl/manrope) | [SIL Open Font License 1.1](docs/fonts/Manrope-OFL.txt), installed as `licenses/LICENSE-manrope.txt` |
+| Manrope typeface (website only) | [google/fonts: ofl/manrope](https://github.com/google/fonts/tree/main/ofl/manrope) | [SIL Open Font License 1.1](docs/fonts/Manrope-OFL.txt) |
 
 ## Bundled files
 
