@@ -100,11 +100,7 @@ vendor/goodbyedpi/    Motor, sürücüler ve üçüncü taraf lisansları
 docs/                Web sitesi, kullanım rehberi ve sürüm notları
 ```
 
-## Katkı
-
-Hata bildirimleri, kullanım geri bildirimleri ve pull request’ler kabul edilir. Kapsamlı bir değişiklik düşünüyorsan önce [issue açarak](https://github.com/trfurkan/GoodbyeDPI-Tray/issues) yaklaşımını paylaş. Pull request’inde değişikliğin amacını ve yaptığın kontrolleri belirt.
-
-Projeyi [Furkan](https://github.com/trfurkan) geliştiriyor. İşine yarıyorsa GitHub’da yıldız vererek destek olabilirsin.
+İşine yaradıysa GitHub’da yıldız vererek destek olabilirsin.
 
 ## Lisans ve kaynak projeler
 
