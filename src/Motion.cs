@@ -37,9 +37,10 @@ namespace GoodbyeTray {
   static readonly List<Tween> tweens=new List<Tween>();
   static readonly List<Control> loops=new List<Control>();
   static Timer timer;
-  // Endless animations (spinners, steam, the flowing packets) repaint at this pace: about 30 frames a second while
-  // the window is in front, 10 behind another window, none while it is minimized or hidden. Tweens always run at full rate.
-  internal const int Front=33, Behind=100, Stopped=Int32.MaxValue;
+  // Endless animations (spinners, steam, the flowing packets) repaint at this pace: every frame of the shared timer
+  // (about 60 a second) whenever the window can be seen, focused or not, and none while it is minimized or hidden.
+  // Tweens always run at full rate.
+  internal const int Front=15, Stopped=Int32.MaxValue;
   static int pace=Front, lastLoop;
   internal static int Pace { get { return pace; } }
   internal static void SetPace(int interval) { if(pace==interval) return; pace=interval; if(pace!=Stopped && loops.Count>0) Ensure(); }
@@ -101,6 +102,26 @@ namespace GoodbyeTray {
    Repaint(); return t<1;
   }
   void Repaint() { if(!owner.IsDisposed && owner.IsHandleCreated) owner.Invalidate(); }
+ }
+ // The short line under a picker. A new text fades in while it rises a few pixels into place, so a change of profile
+ // or DNS is noticed without anything jumping. Accent marks a line that asks for something (a choice not applied yet).
+ sealed class HintLabel : Label {
+  readonly Tween show;
+  bool accent; internal Color AccentColor=Color.Empty;
+  internal bool Accent { get { return accent; } set { if(accent==value) return; accent=value; Invalidate(); } }
+  public HintLabel() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.SupportsTransparentBackColor,true); show=new Tween(this,1); UseMnemonic=false; }
+  protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); if(Text.Length>0) { show.Jump(0); show.To(1,320); } }
+  Color Host() { for(Control c=this;c!=null;c=c.Parent) if(c.BackColor.A==255) return c.BackColor; return SystemColors.Control; }
+  protected override void OnPaint(PaintEventArgs e) {
+   if(Text.Length==0) return;
+   float t=show.Value; Color ink=accent && AccentColor!=Color.Empty?AccentColor:ForeColor;
+   var g=e.Graphics; g.SmoothingMode=SmoothingMode.AntiAlias;
+   int lift=(int)Math.Round((1-t)*5), dot=accent?7:0, x=Padding.Left;
+   Color shown=Motion.Mix(Host(),ink,t);
+   if(dot>0) using(var brush=new SolidBrush(shown)) g.FillEllipse(brush,x+1,(Height-dot)/2+lift,dot,dot);
+   var bounds=new Rectangle(x+(dot>0?dot+7:0),lift,Math.Max(1,Width-x-(dot>0?dot+7:0)),Height);
+   TextRenderer.DrawText(g,Text,Font,bounds,shown,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+  }
  }
  // Standard square checkboxes, colored by the app rather than Windows' accent.
  // The settings check box in the app's style: a rounded square that fills with the accent color, a tick that draws

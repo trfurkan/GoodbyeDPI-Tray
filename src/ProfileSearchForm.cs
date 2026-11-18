@@ -22,9 +22,9 @@ namespace GoodbyeTray {
    Text=L.T("Uygun profil bul"); Icon=Program.AppIcon; Font=new Font(Fonts.Ui,10); ForeColor=ink; AutoScaleMode=AutoScaleMode.Dpi;
    ClientSize=new Size(720,680); MinimumSize=new Size(650,650); StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=6 };
-   foreach(int h in new[]{46,104,54,14}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
+   foreach(int h in new[]{38,64,40,14}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
    layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,58)); Controls.Add(layout);
-   heading.Text=L.T("Sana uygun profili bulalım"); heading.Font=new Font(Font.FontFamily,20,FontStyle.Bold); heading.Dock=DockStyle.Fill; layout.Controls.Add(heading);
+   heading.Text=L.T("Sana uygun profili bulalım"); heading.Font=Fonts.Get(Fonts.Ui,15,FontStyle.Bold); heading.TextAlign=ContentAlignment.MiddleLeft; heading.Dock=DockStyle.Fill; layout.Controls.Add(heading);
    description.Text=L.T("Seçtiğin motorun profilleriyle Discord, Roblox ve Wattpad erişimini deneyeceğiz. Google ile bağlantını kontrol edeceğiz. Test sonunda eski motorun ve profilin geri yüklenir."); description.Dock=DockStyle.Fill; description.ForeColor=muted; layout.Controls.Add(description);
    phase.Text=L.T("Hazırsan başlayalım. Bu işlem birkaç dakika sürebilir."); phase.Dock=DockStyle.Fill; phase.ForeColor=muted; layout.Controls.Add(phase);
    bar.Dock=DockStyle.Top; bar.Height=6; bar.Margin=new Padding(0,4,0,0); bar.Maximum=candidates.Length; bar.Style=ProgressBarStyle.Continuous; bar.BackColor=BackColor; bar.ForeColor=accent; bar.Track=edge; layout.Controls.Add(bar);

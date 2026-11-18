@@ -133,8 +133,8 @@ namespace GoodbyeTray {
   void SetSummary(string text,string tip) { Summary=L.T("Ayrıntılı test")+" · "+text; SummaryTip=tip.Length>0?L.T("Ayrıntılı test")+" · "+tip:""; state.Text=tip.Length>0?tip.Replace("\n"," · "):Summary; tips.SetToolTip(state,SummaryTip.Length>0?SummaryTip:Summary); if(SummaryChanged!=null) SummaryChanged(); }
   AccessContext CurrentContext() { return Context!=null?Context():AccessContext.Capture(Program.Profile(),engineRunning()); }
   readonly TableLayoutPanel outer=new TableLayoutPanel(), siteList=new TableLayoutPanel();
-  // Shown inside a card of the main window instead of as its own window: no frame, tighter rows so every site fits.
-  internal void Embed() {
+  // Lives only inside the main window's access card, never as its own window: no frame, tighter rows so every site fits.
+  void Embed() {
    TopLevel=false; FormBorderStyle=FormBorderStyle.None; Dock=DockStyle.Fill; MinimumSize=Size.Empty;
    outer.Padding=new Padding(4,2,4,4); embedded=true; outer.RowStyles[0].Height=Scale(46); heading.Invalidate();
    // 9: rows follow the screen scale, so text and buttons keep their room at 150-200 %.
@@ -180,8 +180,7 @@ namespace GoodbyeTray {
   // The wheel works over every part of the list, and eases to its stop instead of jumping.
   void Hook(Control control) { control.MouseWheel+=delegate(object sender,MouseEventArgs e) { target-=e.Delta/120f*80; Place(); if(Motion.Enabled) glide.Start(); else { offset=target; Place(); } }; foreach(Control child in control.Controls) Hook(child); }
   internal AccessTestForm(bool darkTheme,Func<bool> running) {
-   engineRunning=running; Text=L.T("GoodbyeDPI — Erişim Testi"); Icon=Program.AppIcon; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi;
-   ClientSize=new Size(720,548); MinimumSize=new Size(640,584); StartPosition=FormStartPosition.CenterParent;
+   engineRunning=running; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi;
    var layout=outer; layout.Dock=DockStyle.Fill; layout.Padding=new Padding(16); layout.ColumnCount=1; layout.RowCount=3;
    layout.RowStyles.Add(new RowStyle(SizeType.Absolute,62)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,44)); Controls.Add(layout);
    var top=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty };
@@ -196,16 +195,12 @@ namespace GoodbyeTray {
    }
    list.RowStyles.Add(new RowStyle(SizeType.Percent,100));
    card.Controls.Add(list); layout.Controls.Add(card);
-   state.Text=L.T("Durum: Testi başlatmak için Tümünü Test Et'e ya da bir sitenin yanındaki yenile simgesine bas."); layout.Controls.Add(state);
+   layout.Controls.Add(state);
    spinner.Tick+=delegate { foreach(var row in rows) if(row.State==AccessRow.Phase.Testing) { row.Angle=(row.Angle+18)%360; row.Invalidate(); } };
-   ApplyPalette(darkTheme);
+   ApplyPalette(darkTheme); Embed();
   }
   void PaintHeading(object sender,PaintEventArgs e) {
-   var g=e.Graphics; g.SmoothingMode=SmoothingMode.AntiAlias; Color ink=ForeColor;
-   if(embedded) { TextRenderer.DrawText(g,L.T("Siteler sadece sen test edince denenir; sonuçlar hiçbir yere gönderilmez."),Font,new Rectangle(2,0,heading.Width-4,heading.Height),AppPalette.Muted(dark),TextFormatFlags.NoPrefix|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis); return; }
-   using(var pen=new Pen(dark?AppPalette.Mint:AppPalette.Accent,2f)) { g.DrawEllipse(pen,2,10,26,26); g.DrawEllipse(pen,9,10,12,26); g.DrawLine(pen,3,23,27,23); g.DrawArc(pen,5,4,20,12,30,120); g.DrawArc(pen,5,30,20,12,210,120); }
-   { var title=Fonts.Get(Font.FontFamily,13,FontStyle.Bold); TextRenderer.DrawText(g,L.T("Ağ Tanılama & Erişim Testi"),title,new Point(40,2),ink,TextFormatFlags.NoPrefix); }
-   TextRenderer.DrawText(g,L.T("Siteler sadece sen test edince denenir; sonuçlar hiçbir yere gönderilmez."),Font,new Point(41,32),AppPalette.Muted(dark),TextFormatFlags.NoPrefix);
+   TextRenderer.DrawText(e.Graphics,L.T("Siteler sadece sen test edince denenir; sonuçlar hiçbir yere gönderilmez."),Font,new Rectangle(2,0,heading.Width-4,heading.Height),AppPalette.Muted(dark),TextFormatFlags.NoPrefix|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
   }
   void TestAll() { for(int i=0;i<rows.Length;i++) Test(i); }
   Task flush;
@@ -262,8 +257,6 @@ namespace GoodbyeTray {
    }
    view.BackColor=surface; bar.BackColor=surface; bar.Thumb=muted; bar.Invalidate();
    heading.Invalidate(); card.Invalidate(); testAll.Invalidate();
-   WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor);
-   if(!IsHandleCreated) HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); };
   }
   protected override void Dispose(bool disposing) { if(disposing && !disposed) { disposed=true; spinner.Dispose(); tips.Dispose(); glide.Dispose(); } base.Dispose(disposing); }
  }

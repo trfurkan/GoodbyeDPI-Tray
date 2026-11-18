@@ -25,7 +25,7 @@ namespace GoodbyeTray {
   internal static LinkLabel Create(string text,string url,Color color,bool githubIcon=false) {
    LinkLabel link=githubIcon?(LinkLabel)new GitHubProfileLink():new LinkLabel();
    link.Text=(githubIcon?"":"↗  ")+text; link.AutoSize=false; link.Height=32; link.LinkColor=link.ActiveLinkColor=link.VisitedLinkColor=color; link.LinkBehavior=LinkBehavior.HoverUnderline; link.AccessibleName=text+L.T(" — tarayıcıda aç"); link.Tag=url; link.TextAlign=ContentAlignment.MiddleLeft;
-   link.LinkClicked+=delegate { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute=true }); } catch(Exception ex) { AppInfo.Log(ex.ToString()); MessageBox.Show(link.FindForm(),L.T("Bağlantı açılamadı. Adresi tarayıcına yazabilirsin:\n")+url,L.T("Bağlantı"),MessageBoxButtons.OK,MessageBoxIcon.Information); } }; return link;
+   link.LinkClicked+=delegate { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute=true }); } catch(Exception ex) { AppInfo.Log(ex.ToString()); AppMessage.Show(link.FindForm(),L.T("Bağlantı açılamadı. Adresi tarayıcına yazabilirsin:\n")+url,L.T("Bağlantı"),MessageBoxButtons.OK,MessageBoxIcon.Information); } }; return link;
   }
  }
  static class AppPalette {

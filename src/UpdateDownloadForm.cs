@@ -73,10 +73,11 @@ namespace GoodbyeTray {
   bool active,closeRequested;
   internal UpdateDownloadForm(bool dark,UpdateAsset download) {
    asset=download; Text=L.T("Güncelleme indiriliyor"); Icon=Program.AppIcon; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi;
-   ClientSize=new Size(540,260); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; MinimizeBox=false; StartPosition=FormStartPosition.CenterParent;
+   ClientSize=new Size(540,290); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; MinimizeBox=false; StartPosition=FormStartPosition.CenterParent;
    bool contrast=SystemInformation.HighContrast; BackColor=contrast?SystemColors.Window:AppPalette.Background(dark); ForeColor=contrast?SystemColors.WindowText:AppPalette.Text(dark);
-   var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=4 };
-   layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,28)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,32)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,48)); Controls.Add(layout);
+   var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=5 };
+   layout.RowStyles.Add(new RowStyle(SizeType.Absolute,38)); layout.Controls.Add(DialogKit.Title(L.T("Güncelleme indiriliyor")));
+   layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); status.ForeColor=contrast?ForeColor:AppPalette.Muted(dark); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,28)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,32)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,48)); Controls.Add(layout);
    status.Dock=DockStyle.Fill; status.Text=L.T("İndirme hazırlanıyor…"); layout.Controls.Add(status);
    progress.Dock=DockStyle.Top; progress.Height=8; progress.Margin=new Padding(0,10,0,0); progress.Style=ProgressBarStyle.Continuous; progress.BackColor=BackColor; progress.ForeColor=contrast?SystemColors.Highlight:AppPalette.Accent; progress.Track=contrast?SystemColors.GrayText:AppPalette.Border(dark); layout.Controls.Add(progress);
    amount.Dock=DockStyle.Fill; amount.TextAlign=ContentAlignment.MiddleLeft; layout.Controls.Add(amount);

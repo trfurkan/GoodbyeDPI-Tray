@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Drawing;
 using System.IO;
 using System.ServiceProcess;
@@ -9,6 +11,79 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 
 namespace GoodbyeTray {
+ // Finds the app behind a DPI engine another tool started, so the user knows what to close. It only reads the process
+ // tree and the list of running services, which normal users can see, and walks up from the engine: the first service
+ // or app found owns it. Nothing is named after a particular tool, so new ones are covered too.
+ static class EngineOwner {
+  [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Unicode)]
+  struct ProcessEntry { public int Size,Usage,ProcessId; public IntPtr HeapId; public int ModuleId,Threads,ParentId,Priority,Flags; [MarshalAs(UnmanagedType.ByValTStr,SizeConst=260)] public string ExeFile; }
+  [StructLayout(LayoutKind.Sequential)]
+  struct ServiceEntry { public IntPtr Name,DisplayName; public int Type,State,Controls,ExitCode,SpecificExitCode,CheckPoint,WaitHint,ProcessId,Flags; }
+  [DllImport("kernel32.dll",SetLastError=true)] static extern IntPtr CreateToolhelp32Snapshot(int flags,int processId);
+  [DllImport("kernel32.dll",EntryPoint="Process32FirstW",CharSet=CharSet.Unicode)] static extern bool First(IntPtr snapshot,ref ProcessEntry entry);
+  [DllImport("kernel32.dll",EntryPoint="Process32NextW",CharSet=CharSet.Unicode)] static extern bool Next(IntPtr snapshot,ref ProcessEntry entry);
+  [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr handle);
+  [DllImport("advapi32.dll",EntryPoint="OpenSCManagerW",CharSet=CharSet.Unicode,SetLastError=true)] static extern IntPtr OpenManager(string machine,string database,int access);
+  [DllImport("advapi32.dll",EntryPoint="EnumServicesStatusExW",CharSet=CharSet.Unicode,SetLastError=true)] static extern bool EnumServices(IntPtr manager,int level,int type,int state,IntPtr buffer,int size,out int needed,out int count,ref int resume,string group);
+  [DllImport("advapi32.dll")] static extern bool CloseServiceHandle(IntPtr handle);
+  // Hosts and shells say nothing about who started the engine; a script shell means a .bat or .cmd file did.
+  static readonly string[] Scripts={"cmd.exe","powershell.exe","pwsh.exe","wscript.exe","cscript.exe","conhost.exe"};
+  static readonly string[] Stops={"explorer.exe","services.exe","svchost.exe","wininit.exe","System"};
+  internal static string Name(int engine) { var owner=Find(engine); return owner==null || owner.Ours?null:owner.Name; }
+  // Who runs an engine: our own service, another service (with its service name), an app, or a script.
+  internal sealed class Owner { internal string Name,Service; internal bool Ours,Script; }
+  internal static Owner Find(int engine) {
+   try {
+    var parents=new Dictionary<int,int>(); var files=new Dictionary<int,string>();
+    IntPtr snapshot=CreateToolhelp32Snapshot(2,0); // TH32CS_SNAPPROCESS
+    if(snapshot==IntPtr.Zero || snapshot==new IntPtr(-1)) return null;
+    try { var entry=new ProcessEntry { Size=Marshal.SizeOf(typeof(ProcessEntry)) }; for(bool more=First(snapshot,ref entry);more;more=Next(snapshot,ref entry)) { parents[entry.ProcessId]=entry.ParentId; files[entry.ProcessId]=entry.ExeFile; } }
+    finally { CloseHandle(snapshot); }
+    var services=Services();
+    for(int step=0,current=engine;step<5 && current>4;step++) {
+     string[] service;
+     if(services.TryGetValue(current,out service)) return new Owner { Name=service[1],Service=service[0],Ours=step>0 && String.Equals(service[0],Program.ServiceName,StringComparison.OrdinalIgnoreCase) };
+     string file; files.TryGetValue(current,out file);
+     if(step>0 && file!=null) {
+      if(Array.Exists(Stops,s => s.Equals(file,StringComparison.OrdinalIgnoreCase))) break;
+      // Above a script shell sits whatever opened it (Explorer, a terminal), which is not the tool itself.
+      if(Array.Exists(Scripts,s => s.Equals(file,StringComparison.OrdinalIgnoreCase))) return new Owner { Name=L.T("bir komut dosyası (.bat/.cmd)"),Script=true };
+      return new Owner { Name=Describe(current,file) };
+     }
+     int parent; if(!parents.TryGetValue(current,out parent) || parent==current) break; current=parent;
+    }
+    return null;
+   } catch(Exception) { return null; }
+  }
+  // Running services by process, for callers outside this class.
+  internal static Dictionary<int,string[]> RunningServices() { try { return Services(); } catch(Exception) { return new Dictionary<int,string[]>(); } }
+  // An app's own description ("SplitWire Turkey"), else its file name without .exe.
+  static string Describe(int processId,string file) {
+   try { using(var process=Process.GetProcessById(processId)) { var info=FileVersionInfo.GetVersionInfo(process.MainModule.FileName); string text=!String.IsNullOrWhiteSpace(info.FileDescription)?info.FileDescription:info.ProductName; if(!String.IsNullOrWhiteSpace(text)) return text.Trim(); } }
+   catch(Exception) { } // An elevated or exited process cannot be read; its file name still says enough.
+   return Path.GetFileNameWithoutExtension(file);
+  }
+  // Running services by process: their name and display name.
+  static Dictionary<int,string[]> Services() {
+   var result=new Dictionary<int,string[]>();
+   IntPtr manager=OpenManager(null,null,4); // SC_MANAGER_ENUMERATE_SERVICE
+   if(manager==IntPtr.Zero) return result;
+   IntPtr buffer=IntPtr.Zero;
+   try {
+    int needed,count,resume=0;
+    EnumServices(manager,0,0x30,1,IntPtr.Zero,0,out needed,out count,ref resume,null); // SC_ENUM_PROCESS_INFO, SERVICE_WIN32, SERVICE_ACTIVE
+    if(needed<=0) return result;
+    buffer=Marshal.AllocHGlobal(needed); resume=0;
+    if(!EnumServices(manager,0,0x30,1,buffer,needed,out needed,out count,ref resume,null)) return result;
+    int size=Marshal.SizeOf(typeof(ServiceEntry));
+    for(int i=0;i<count;i++) {
+     var entry=(ServiceEntry)Marshal.PtrToStructure(new IntPtr(buffer.ToInt64()+(long)i*size),typeof(ServiceEntry));
+     if(entry.ProcessId!=0 && !result.ContainsKey(entry.ProcessId)) result[entry.ProcessId]=new[]{Marshal.PtrToStringUni(entry.Name),Marshal.PtrToStringUni(entry.DisplayName)};
+    }
+   } finally { if(buffer!=IntPtr.Zero) Marshal.FreeHGlobal(buffer); CloseServiceHandle(manager); }
+   return result;
+  }
+ }
  static class Program {
   internal static readonly Icon AppIcon=LoadIcon();
   // The logo at an exact pixel size, for drawing inside the window. Graphics.DrawIcon shrinks the 128 px frame with
@@ -50,21 +125,29 @@ namespace GoodbyeTray {
   static string[] Available(string[] catalog) { if(ZapretEnabled) return catalog; var result=new string[ZapretStart]; Array.Copy(catalog,result,result.Length); return result; }
   internal static int UpgradeProfile(int profile) { return profile>=0 && profile<Args.Length?profile:0; }
   internal static string MotorName(int profile) { return profile>=ZapretStart?"Zapret 2":"GoodbyeDPI"; }
-  // GoodbyeDPI profiles are shown light to strong, each with DNS first. The ids themselves never change (see above).
+  // GoodbyeDPI profiles are shown in the order worth trying, each with DNS first. The ids themselves never change (see above).
   static readonly int[] GoodbyeOrder={0,3,1,4,2,5,6};
   internal static int[] MotorProfiles(int profile) { if(profile<ZapretStart) return (int[])GoodbyeOrder.Clone(); int count=Args.Length-ZapretStart; var ids=new int[count]; for(int i=0;i<count;i++) ids[i]=ZapretStart+i; return ids; }
-  // The hover text for a GoodbyeDPI profile: where its name comes from, what it does and how it treats DNS. Null for Zapret.
+  // The hover text for a GoodbyeDPI profile: what it does and how it treats DNS. The name's meaning is shown under the
+  // picker instead. Null for Zapret.
   internal static string Describe(int profile) {
    if(profile<0 || profile>=ZapretStart) return null;
-   string name=profile==0?L.T("Arx: Latince \"kale\"."):profile==1 || profile==3?L.T("Nyx: Yunan gece tanrıçası."):profile==2 || profile==4?L.T("Kitsune: Japon dokuz kuyruklu tilki ruhu."):L.T("Raijin: Japon gök gürültüsü tanrısı.");
-   string work=profile==0?L.T("GoodbyeDPI-Turkey'nin standart ayarı (Mod 5, TTL 5). Önce bunu dene."):profile==1 || profile==3?L.T("Sahte paketleri kısa ömürlü gönderir (TTL 3)."):profile==2 || profile==4?L.T("TTL kullanmaz (Mod 5). Sayfalar yavaş açılıyorsa dene."):L.T("En kapsamlı ayar (Mod 9). Diğerleri işe yaramazsa dene.");
-   return name+"\n"+work+"\n"+(Args[profile].EndsWith(Dns)?L.T("DNS'i kendisi yönlendirir."):L.T("DNS'e dokunmaz."));
+   string work=profile==0?L.T("GoodbyeDPI-Turkey'nin standart ayarı (Mod 5, TTL 5). Önce bunu dene."):profile==1 || profile==3?L.T("Sahte paketleri kısa ömürlü gönderir (TTL 3)."):profile==2 || profile==4?L.T("TTL kullanmaz (Mod 5). Sayfalar yavaş açılıyorsa dene."):L.T("Mod 9 ayarı. Diğerleri işe yaramazsa dene.");
+   return work+"\n"+(Args[profile].EndsWith(Dns)?L.T("DNS'i kendisi yönlendirir."):L.T("DNS'e dokunmaz."));
   }
   // Every profile in the order menus show them.
   internal static int[] DisplayOrder() { var list=new System.Collections.Generic.List<int>(GoodbyeOrder); if(Args.Length>ZapretStart) list.AddRange(MotorProfiles(ZapretStart)); return list.ToArray(); }
   internal static string EngineFor(int profile) { if(profile<0 || profile>=Args.Length) throw new ArgumentOutOfRangeException("profile"); return profile<ZapretStart?Engine:Path.Combine(InstallDir,"zapret2",Environment.Is64BitOperatingSystem?"x86_64":"x86","winws2.exe"); }
   internal static void ValidateEngine(int profile) { string path=EngineFor(profile); if(!File.Exists(path)) throw new FileNotFoundException(L.T("Motor dosyaları eksik. Güncel kurucuyla uygulamayı onar."),path); if(profile>=ZapretStart) foreach(string file in new[]{"cygwin1.dll","WinDivert.dll",Environment.Is64BitOperatingSystem?"WinDivert64.sys":"WinDivert32.sys","zapret-lib.lua","zapret-antidpi.lua"}) if(!File.Exists(Path.Combine(Path.GetDirectoryName(path),file))) throw new FileNotFoundException(L.T("Motor dosyaları eksik. Güncel kurucuyla uygulamayı onar."),file); }
-  internal static void CheckOtherEngines() { foreach(string name in new[]{"goodbyedpi","winws","winws2"}) foreach(var process in Process.GetProcessesByName(name)) using(process) { if(!process.HasExited) throw new InvalidOperationException(L.T("Başka bir DPI motoru çalışıyor. Önce onu kapatıp tekrar dene.")); } }
+  // Another tool's engine usually runs as a service, so a normal user may not open it: that still means it is running.
+  // The message names no product; the app behind it goes to the log only.
+  internal static void CheckOtherEngines() {
+   foreach(string name in new[]{"goodbyedpi","winws","winws2"}) foreach(var process in Process.GetProcessesByName(name)) using(process) {
+    bool running; try { running=!process.HasExited; } catch(System.ComponentModel.Win32Exception) { running=true; } catch(InvalidOperationException) { running=false; }
+    if(running) { string owner=EngineOwner.Name(process.Id); if(owner!=null) AppInfo.Log("Diğer DPI motoru: "+owner); throw new InvalidOperationException(OtherEngineMessage()); }
+   }
+  }
+  internal static string OtherEngineMessage() { return L.T("Başka bir DPI motoru çalışıyor. İkisi aynı anda çalışamaz; onu başlatan uygulamayı kapat ya da kaldır, sonra tekrar dene."); }
   internal static string DefaultInstallDir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GoodbyeDPI Tray"); } }
   static string installDir;
   // The folder the installer recorded (HKLM, admin-only), else Program Files. A first install with a chosen folder sets it before copying.
@@ -192,13 +275,13 @@ namespace GoodbyeTray {
     // A tray start with the tray turned off would leave a running app with nothing on screen.
     if(Array.IndexOf(args,"--tray")>=0 && !WindowsIntegration.TrayStartupEnabled()) return 0;
     bool created; using(var mutex=new Mutex(true,@"Local\GoodbyeDPI.Tray.UI",out created)) {
-     if(!created) { if(Array.IndexOf(args,"--tray")<0 && !AppCommands.Send(command)) { try { using(var signal=EventWaitHandle.OpenExisting(MainForm.RevealEvent)) signal.Set(); } catch(WaitHandleCannotBeOpenedException) { MessageBox.Show(L.T("Uygulama açılıyor, saatin yanındaki simgeden ulaşabilirsin."),"GoodbyeDPI"); } } return 0; }
+     if(!created) { if(Array.IndexOf(args,"--tray")<0 && !AppCommands.Send(command)) { try { using(var signal=EventWaitHandle.OpenExisting(MainForm.RevealEvent)) signal.Set(); } catch(WaitHandleCannotBeOpenedException) { AppMessage.Show(L.T("Uygulama açılıyor, saatin yanındaki simgeden ulaşabilirsin."),"GoodbyeDPI"); } } return 0; }
      if(command=="exit") return 0;
      System.Threading.Tasks.Task.Run(delegate { UpdateDownload.CleanOld(); });
      using(var form=new MainForm(true)) { if(Array.IndexOf(args,"--tray")>=0) { form.WindowState=FormWindowState.Minimized; form.ShowInTaskbar=false; form.BeginStartupNotification(); } else form.Shown+=delegate { form.DispatchCommand(command); }; form.Shown+=delegate { form.BeginInvoke(new Action(form.ShowStartupReleaseNotes)); }; Application.Run(form); }
     }
     return 0;
-   } catch(Exception ex) { AppInfo.Log(ex.ToString()); if(Array.IndexOf(args,"--quiet")<0) MessageBox.Show(ex.Message,"GoodbyeDPI Tray",MessageBoxButtons.OK,MessageBoxIcon.Error); return 1; }
+   } catch(Exception ex) { AppInfo.Log(ex.ToString()); if(Array.IndexOf(args,"--quiet")<0) AppMessage.Show(ex.Message,"GoodbyeDPI Tray",MessageBoxButtons.OK,MessageBoxIcon.Error); return 1; }
   }
  }
 

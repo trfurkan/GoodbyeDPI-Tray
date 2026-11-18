@@ -323,7 +323,7 @@ namespace GoodbyeTray {
     Application.Run(new SetupForm(remove));
     if(Array.IndexOf(args,"--temporary")>=0) DeleteSelfLater();
     return 0;
-   } catch(Exception ex) { string message=Stage+"\n"+ex.Message+L.T("\nGünlük: ")+AppInfo.LogPath; AppInfo.Log(message+"\n"+ex); if(Array.IndexOf(args,"--quiet")<0) MessageBox.Show(message,"GoodbyeDPI Kurulum",MessageBoxButtons.OK,MessageBoxIcon.Error); return 1; }
+   } catch(Exception ex) { string message=Stage+"\n"+ex.Message+L.T("\nGünlük: ")+AppInfo.LogPath; AppInfo.Log(message+"\n"+ex); if(Array.IndexOf(args,"--quiet")<0) AppMessage.Show(message,"GoodbyeDPI Kurulum",MessageBoxButtons.OK,MessageBoxIcon.Error); return 1; }
   }
  }
  // Thin rounded progress track in the theme colors.
@@ -442,7 +442,7 @@ namespace GoodbyeTray {
        string picked=picker.SelectedPath.TrimEnd('\\');
        string target=String.Equals(Path.GetFileName(picked),"GoodbyeDPI Tray",StringComparison.OrdinalIgnoreCase)?picked:Path.Combine(picked,"GoodbyeDPI Tray");
        string problem=Setup.CheckLocation(target);
-       if(problem!=null) { MessageBox.Show(this,problem,L.T("Kurulum konumu"),MessageBoxButtons.OK,MessageBoxIcon.Warning); return; }
+       if(problem!=null) { AppMessage.Show(this,problem,L.T("Kurulum konumu"),MessageBoxButtons.OK,MessageBoxIcon.Warning); return; }
        Program.InstallDir=target; path.Text=Program.InstallDir;
        chosenLocation=String.Equals(Program.InstallDir,Program.DefaultInstallDir,StringComparison.OrdinalIgnoreCase)?null:Program.InstallDir;
       }
@@ -480,7 +480,7 @@ namespace GoodbyeTray {
     if(busy || completed || (!remove && !consent.Checked)) return;
     bool replaceForeign=false;
     if(!remove && Program.ForeignProfile()>=0) {
-     if(MessageBox.Show(this,L.T("Bilgisayarda daha önce kurulmuş başka bir GoodbyeDPI hizmeti var:\n\n")+Program.ServicePath()+L.T("\n\nBu hizmeti GoodbyeDPI Tray'e devredelim mi? Eski hizmet durdurulur ve artık bu uygulama yönetir. Eski klasörü sonra silebilirsin."),"GoodbyeDPI Kurulum",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button1)!=DialogResult.Yes) return;
+     if(AppMessage.Show(this,L.T("Bilgisayarda daha önce kurulmuş başka bir GoodbyeDPI hizmeti var:\n\n")+Program.ServicePath()+L.T("\n\nBu hizmeti GoodbyeDPI Tray'e devredelim mi? Eski hizmet durdurulur ve artık bu uygulama yönetir. Eski klasörü sonra silebilirsin."),"GoodbyeDPI Kurulum",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button1)!=DialogResult.Yes) return;
      replaceForeign=true;
     }
     busy=true; progressBar.Value=0; start.Enabled=false; cancel.Enabled=false;

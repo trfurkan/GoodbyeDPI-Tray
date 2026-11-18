@@ -82,24 +82,27 @@ namespace GoodbyeTray {
   }
  }
  sealed class ReportForm : Form {
-  readonly TextBox what=new TextBox(), details=new TextBox();
+  readonly FieldBox whatField=new FieldBox(true), detailsField=new FieldBox(true);
+  readonly TextBox what, details;
   readonly SoftButton open=new SoftButton(), copy=new SoftButton(), close=new SoftButton();
   readonly Label state=new Label();
   bool ready;
   internal ReportForm(bool dark) {
+   what=whatField.Box; details=detailsField.Box;
    bool contrast=SystemInformation.HighContrast;
    Color background=contrast?SystemColors.Window:AppPalette.Background(dark),surface=contrast?SystemColors.Window:AppPalette.Surface(dark),ink=contrast?SystemColors.WindowText:AppPalette.Text(dark),muted=contrast?ink:AppPalette.Muted(dark),edge=contrast?ink:AppPalette.Border(dark),accent=contrast?SystemColors.Highlight:AppPalette.Accent;
    BackColor=background; ForeColor=ink; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi; Icon=Program.AppIcon;
    Text=L.T("Sorun bildir"); ClientSize=new Size(660,600); MinimumSize=new Size(560,520); StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false;
    var layout=new TableLayoutPanel { Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=7 };
-   foreach(int h in new[]{46,48,26}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
-   layout.RowStyles.Add(new RowStyle(SizeType.Percent,40)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,32)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,60)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,60)); Controls.Add(layout);
-   layout.Controls.Add(new Label { Text=L.T("Sorun bildir"),Dock=DockStyle.Fill,Font=Fonts.Serif(22),AutoEllipsis=true });
+   foreach(int h in new[]{38,48,30}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
+   layout.RowStyles.Add(new RowStyle(SizeType.Percent,40)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,34)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,60)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,60)); Controls.Add(layout);
+   layout.Controls.Add(DialogKit.Title(L.T("Sorun bildir")));
    layout.Controls.Add(new Label { Text=L.T("Ne olduğunu yaz, gerisini biz ekleyelim. GitHub'da bir hata kaydı açılır; göndermeden önce orada da görüp düzenleyebilirsin."),Dock=DockStyle.Fill,ForeColor=muted });
-   layout.Controls.Add(new Label { Text=L.T("Ne oldu?"),Dock=DockStyle.Fill,Font=new Font(Font.FontFamily,10,FontStyle.Bold),TextAlign=ContentAlignment.BottomLeft });
-   what.Multiline=true; what.ScrollBars=ScrollBars.Vertical; what.AcceptsReturn=true; what.Dock=DockStyle.Fill; what.BackColor=surface; what.ForeColor=ink; what.BorderStyle=BorderStyle.FixedSingle; what.AccessibleName=L.T("Ne oldu?"); layout.Controls.Add(what);
-   state.Text=L.T("Bilgiler toplanıyor…"); state.Dock=DockStyle.Fill; state.Font=new Font(Font.FontFamily,10,FontStyle.Bold); state.TextAlign=ContentAlignment.BottomLeft; layout.Controls.Add(state);
-   details.Multiline=true; details.ReadOnly=true; details.ScrollBars=ScrollBars.Vertical; details.WordWrap=true; details.Dock=DockStyle.Fill; details.BackColor=surface; details.ForeColor=muted; details.BorderStyle=BorderStyle.FixedSingle; details.Font=new Font("Consolas",9); details.AccessibleName=L.T("Eklenecek bilgiler"); layout.Controls.Add(details);
+   var whatTitle=DialogKit.Section(L.T("Ne oldu?")); whatTitle.Padding=new Padding(0,0,0,4); layout.Controls.Add(whatTitle);
+   whatField.Dock=DockStyle.Fill; whatField.Margin=new Padding(0,2,0,2); whatField.Theme(background,surface,ink,edge,accent); what.AccessibleName=L.T("Ne oldu?"); layout.Controls.Add(whatField);
+   state.Text=L.T("Bilgiler toplanıyor…"); state.Dock=DockStyle.Fill; state.Font=Fonts.Get(Fonts.Ui,10,FontStyle.Bold); state.TextAlign=ContentAlignment.BottomLeft; state.Padding=new Padding(0,0,0,4); layout.Controls.Add(state);
+   details.ReadOnly=true; details.WordWrap=true; details.Font=new Font("Consolas",9); details.AccessibleName=L.T("Eklenecek bilgiler");
+   detailsField.Dock=DockStyle.Fill; detailsField.Margin=new Padding(0,2,0,2); detailsField.Theme(background,surface,muted,edge,accent); layout.Controls.Add(detailsField);
    var actions=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=4,RowCount=1,Margin=Padding.Empty };
    actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,100)); actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,110)); actions.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,168)); layout.Controls.Add(actions);
    close.Text=L.T("Kapat"); copy.Text=L.T("Kopyala"); open.Text=L.T("GitHub'da aç");
@@ -127,7 +130,7 @@ namespace GoodbyeTray {
    catch(Exception ex) {
     AppInfo.Log(ex.ToString());
     try { Clipboard.SetText(ProblemReport.Body(what.Text,details.Text)); } catch(Exception) {}
-    MessageBox.Show(this,L.T("Tarayıcı açılamadı. Bilgileri panoya kopyaladık; şu adreste yeni bir kayıt açıp yapıştırabilirsin:\n")+ProblemReport.IssueUrl,L.T("Sorun bildir"),MessageBoxButtons.OK,MessageBoxIcon.Information);
+    AppMessage.Show(this,L.T("Tarayıcı açılamadı. Bilgileri panoya kopyaladık; şu adreste yeni bir kayıt açıp yapıştırabilirsin:\n")+ProblemReport.IssueUrl,L.T("Sorun bildir"),MessageBoxButtons.OK,MessageBoxIcon.Information);
    }
   }
  }

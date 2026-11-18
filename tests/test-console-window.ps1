@@ -25,10 +25,12 @@ foreach($dark in @($false,$true)){
   for($i=0;$i -lt 80 -and $terminal.Text.Length -eq 0;$i++){[Windows.Forms.Application]::DoEvents(); Start-Sleep -Milliseconds 25}
   if($terminal.Text -ne $expected){throw 'Viewer does not show the exact real motor output'}
   if($form.Text -notlike '*Konsol'){throw 'Console title missing'}
-  $follow=$type.GetField('follow',$flags).GetValue($form); $follow.Checked=$false; if($follow.Checked){throw 'Live follow did not pause'}
+  # The console is always live: no pause switch, a copy button in the header.
+  if($type.GetField('follow',$flags)){throw 'Live follow switch should be gone'}
+  if($type.GetField('copy',$flags).GetValue($form).Text -ne 'Kopyala'){throw 'Copy button missing'}
   $mode=if($dark){'dark'}else{'light'}
   $bitmap=[Drawing.Bitmap]::new($form.Width,$form.Height)
   try{$form.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$form.Width,$form.Height)); $bitmap.Save((Join-Path $root "build\previews\engine-console-$mode.png"))}finally{$bitmap.Dispose()}
  }finally{$form.Dispose()}
 }
-Write-Output 'PASS: Seven profile frame mappings, invalid-frame rejection, exact real motor text in light/dark console viewer and pause control.'
+Write-Output 'PASS: Seven profile frame mappings, invalid-frame rejection, exact real motor text in light/dark console viewer, always live with a copy button.'

@@ -265,7 +265,8 @@ namespace GoodbyeTray {
   readonly EventWaitHandle reveal;
   readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();
   readonly StatusLabel status=new StatusLabel();
-  readonly Label detail=new Label(), notice=new Label(), hint=new Label(), pending=new Label(), dnsHelp=new Label();
+  readonly Label detail=new Label(), notice=new Label(), pending=new Label();
+  readonly HintLabel hint=new HintLabel(), dnsHelp=new HintLabel();
   readonly ProfilePicker profiles=new ProfilePicker();
   readonly ProfilePicker motors=new ProfilePicker();
   // The picker lists a motor's profiles in display order, so its position maps to an id through MotorProfiles.
@@ -403,7 +404,7 @@ namespace GoodbyeTray {
    themeOverride=previewDark; Text="GoodbyeDPI"; FormBorderStyle=FormBorderStyle.Sizable; ControlBox=true; MinimizeBox=true; MaximizeBox=true; Font=new Font(Fonts.Ui,10); AutoScaleMode=AutoScaleMode.Dpi; DoubleBuffered=true; SetStyle(ControlStyles.ResizeRedraw,true);
    themePreference=AppPalette.SavedTheme();
    ClientSize=new Size(900,Math.Min(760,Screen.PrimaryScreen.WorkingArea.Height-70)); MinimumSize=new Size(760,740); StartPosition=FormStartPosition.CenterScreen; Icon=Program.AppIcon;
-   var scroll=dashboardHost; scroll.Dock=DockStyle.Fill; scroll.AutoScroll=false; Controls.Add(scroll); BuildPageHost();
+   var scroll=dashboardHost; scroll.Dock=DockStyle.Fill; scroll.AutoScroll=false; Controls.Add(scroll);
    var layout=dashboard; layout.Dock=DockStyle.Fill; layout.AutoSize=false; layout.Padding=new Padding(20,10,20,8); layout.ColumnCount=1; layout.RowCount=8;
    // Rows: (unused, the menus moved to the title bar), status card, notice (no height), connection card, settings, access, action buttons, footer.
    foreach(int height in new[]{0,HeroHeight,0,ChoicesHeight,SettingsHeight,72,ActionRowHeight}) layout.RowStyles.Add(new RowStyle(SizeType.Absolute,height));
@@ -483,11 +484,12 @@ namespace GoodbyeTray {
     trayHelp.Text=TrayHelp(showTray);
    }
    if(withTray) Shown+=async delegate { await Task.Delay(4000); if(!IsDisposed && !accessExpanded) PrepareAccessFull(); };
+   if(withTray) Shown+=delegate { CheckOtherToolsSoon(); };
    Shown+=delegate { if(withTray) WindowsIntegration.RegisterJumpList(); if(WindowState==FormWindowState.Minimized && TrayShown) { Hide(); ShowInTaskbar=false; } };
    Resize+=delegate { if(WindowState==FormWindowState.Minimized && TrayShown) HideToTray(); };
    FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(busy && e.CloseReason==CloseReason.UserClosing) { e.Cancel=true; return; } if(!quitting && e.CloseReason==CloseReason.UserClosing && TrayShown) { e.Cancel=true; HideToTray(); } };
    SystemEvents.UserPreferenceChanged+=ThemeChanged;
-   // Animation pace follows the window: full in front, slow behind other windows, off when minimized or in the tray.
+   // Animation pace follows the window: full while it can be seen, off when minimized or in the tray.
    Activated+=delegate { UpdatePace(); }; Deactivate+=delegate { UpdatePace(); }; VisibleChanged+=delegate { UpdatePace(); }; Resize+=delegate { UpdatePace(); };
    timer.Interval=250; timer.Tick+=delegate { if(reveal!=null && reveal.WaitOne(0)) Reveal(); string command=commands==null?null:commands.Poll(); if(command!=null) DispatchCommand(command); TryStartupNotification(); if(++refreshTicks>=(Visible && WindowState!=FormWindowState.Minimized?8:40)) { refreshTicks=0; if(!busy && !sizing) RefreshStateAsync(); if(!sizing && Visible) ApplyTheme(false); if(DateTime.UtcNow>=nextUpdateCheck && !startupNoticePending) CheckForUpdateAsync(); } }; if(withTray) timer.Start();
    SizeChanged+=delegate { if(WindowState!=FormWindowState.Minimized) FitDashboard(); }; ResizeBegin+=delegate { sizing=true; }; ResizeEnd+=delegate { sizing=false; FitDashboard(); };
@@ -576,7 +578,7 @@ namespace GoodbyeTray {
    accessExpanded=!accessExpanded;
    if(accessExpanded) {
     PrepareAccessFull();
-    if(accessFull==null) { accessFull=new AccessTestForm(dark,delegate { return running; }); accessFull.Context=CaptureAccessContext; accessFull.SummaryChanged=ShowAccessSummary; accessFull.Embed(); accessHost.Controls.Add(accessFull); accessFull.Show(); ApplyTheme(false); }
+    if(accessFull==null) { accessFull=new AccessTestForm(dark,delegate { return running; }); accessFull.Context=CaptureAccessContext; accessFull.SummaryChanged=ShowAccessSummary; accessHost.Controls.Add(accessFull); accessFull.Show(); ApplyTheme(false); }
     accessHost.Visible=true; accessChipRow.Visible=false; accessRun.Visible=false; quickRun.Visible=false; accessCollapse.Visible=true;
    }
    ShowAccessSummary();
@@ -592,7 +594,7 @@ namespace GoodbyeTray {
   // a few seconds after the window shows, so the first click opens it at once.
   void PrepareAccessFull() {
    if(accessFull!=null || IsDisposed) return;
-   accessFull=new AccessTestForm(dark,delegate { return running; }); accessFull.Context=CaptureAccessContext; accessFull.SummaryChanged=ShowAccessSummary; accessFull.Embed(); accessHost.Controls.Add(accessFull); accessFull.Show(); ApplyTheme(false);
+   accessFull=new AccessTestForm(dark,delegate { return running; }); accessFull.Context=CaptureAccessContext; accessFull.SummaryChanged=ShowAccessSummary; accessHost.Controls.Add(accessFull); accessFull.Show(); ApplyTheme(false);
   }
   void StepAccessMove() {
    // The first pass lays the new content out at the start position (the slow part), then the clock starts.
@@ -694,7 +696,7 @@ namespace GoodbyeTray {
    dnsServer.Dock=DockStyle.Top; dnsServer.Height=42; dnsServer.Corner=8; dnsServer.Margin=new Padding(0,2,0,2); dnsServer.AccessibleName=L.T("DNS sunucusu");
    foreach(int id in DnsChoice.Order) dnsServer.Items.Add(L.T(DnsChoice.Names[id]));
    dnsServer.SelectedIndex=DnsChoice.Position; right.Controls.Add(dnsServer,0,1);
-   dnsHelp.Text=L.T("Standart ve \"DNS ile\" profillerinde kullanılır."); dnsHelp.Dock=DockStyle.Fill; dnsHelp.Font=new Font(Fonts.Ui,9); dnsHelp.AutoEllipsis=true; dnsHelp.Tag="muted"; right.Controls.Add(dnsHelp,0,2);
+   dnsHelp.Dock=DockStyle.Fill; dnsHelp.AutoEllipsis=true; dnsServer.SelectedIndexChanged+=delegate { UpdateSelection(); }; dnsHelp.Tag="muted"; right.Controls.Add(dnsHelp,0,2);
    dnsServer.SelectedIndexChanged+=delegate { if(!refreshing && dnsServer.SelectedIndex>=0) Execute("dns",DnsChoice.Order[dnsServer.SelectedIndex]); };
    choices.Controls.Add(right,1,0);
   }
@@ -757,7 +759,7 @@ namespace GoodbyeTray {
   }
   // Replaceable so tests can answer without a dialog.
   internal Func<bool> ConfirmTrayOff;
-  bool AskTrayOff() { return MessageBox.Show(this,L.T("GoodbyeDPI bilgisayar açılınca arka planda çalışmaya devam edecek, ama simge olmadan çalıştığını göremezsin. Durumunu görmek için uygulamayı Başlat menüsünden açman gerekir.\n\nSimge yine de gizlensin mi?"),L.T("Simgeyi gizle"),MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)==DialogResult.Yes; }
+  bool AskTrayOff() { return AppMessage.Show(this,L.T("GoodbyeDPI bilgisayar açılınca arka planda çalışmaya devam edecek, ama simge olmadan çalıştığını göremezsin. Durumunu görmek için uygulamayı Başlat menüsünden açman gerekir.\n\nSimge yine de gizlensin mi?"),L.T("Simgeyi gizle"),MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)==DialogResult.Yes; }
   void Uninstall() {
    if(busy) return;
    try { Process.Start(new ProcessStartInfo(Path.Combine(Program.InstallDir,"GoodbyeDPI.Tray.exe"),"--uninstall") { UseShellExecute=true }); }
@@ -765,7 +767,8 @@ namespace GoodbyeTray {
   }
   void UpdatePace() {
    bool away=!Visible || WindowState==FormWindowState.Minimized;
-   Motion.SetPace(away?Motion.Stopped:Form.ActiveForm!=null?Motion.Front:Motion.Behind);
+   // A visible window animates at full rate even when another window has the focus; only hiding it stops the loops.
+   Motion.SetPace(away?Motion.Stopped:Motion.Front);
    if(away) TrimSoon(); else trimmed=false;
   }
   // Out of sight the app hands its unused memory back to Windows (Task Manager then shows a few MB instead of tens).
@@ -901,14 +904,32 @@ namespace GoodbyeTray {
    // A profile that leaves DNS alone does not use the chosen server: the picker goes quiet and says why.
    bool usesDns=DnsChoice.Uses(SelectedProfile);
    dnsServer.Enabled=available && !busy && !transition && usesDns;
-   dnsHelp.Text=usesDns || SelectedProfile<0?L.T("Standart ve \"DNS ile\" profillerinde kullanılır."):L.T("Bu profil DNS'e dokunmaz, seçim şu an kullanılmıyor.");
+   // Under each picker, one short line on what the choice does; it fades in anew whenever the choice changes.
    int i=SelectedProfile;
-   hint.Text=(i>=Program.ZapretStart||i==1||i==2||i==6)?L.T("Bu profil DNS'e dokunmaz; gerekirse Windows'tan DNS ayarla."):L.T("DNS'i kendisi yönlendirir, Windows ayarların değişmez.");
-   if(i==10) hint.Text=L.T("Superonline için TLS alternatifi; DNS ayarlarını değiştirmez.");
-   if(i==11) hint.Text=L.T("QUIC başlangıcını engeller; destekleyen uygulamalar TCP'ye döner. DNS değişmez.");   bool dirty=available && i!=activeProfile;
-   // Silent while the chosen profile is the active one; it only speaks up when there is something to apply.
+   int dns=dnsServer.SelectedIndex>=0 && dnsServer.SelectedIndex<DnsChoice.Order.Length?DnsChoice.Order[dnsServer.SelectedIndex]:DnsChoice.Selected;
+   dnsHelp.Accent=false; dnsHelp.Text=i<0?"":usesDns?DnsHint(dns):L.T("Bu profil DNS kullanmıyor.");
+   bool dirty=available && i!=activeProfile;
    pending.Text=dirty?L.T("Seçtiğin profil henüz uygulanmadı."):available?"":L.T("Kurulumdan sonra profil seçebilirsin.");
-   if(pending.Text.Length>0) hint.Text=pending.Text;
+   // A choice that is not applied yet takes the line, in the accent color with a dot, until it is.
+   hint.AccentColor=AppPalette.Accent; hint.Accent=dirty; hint.Text=pending.Text.Length>0?pending.Text:ProfileHint(i);
+  }
+  static string ProfileHint(int profile) {
+   if(profile<0) return "";
+   if(profile==10) return L.T("Superonline için TLS alternatifi; DNS ayarlarını değiştirmez.");
+   if(profile==11) return L.T("QUIC başlangıcını engeller; destekleyen uygulamalar TCP'ye döner. DNS değişmez.");
+   if(profile>=Program.ZapretStart) return "";
+   // What the profile's name means; what it does is in the menu's hover text.
+   return profile==0?L.T("Latince \"kale\" demek."):profile==1 || profile==3?L.T("Yunan mitolojisinde gece tanrıçası."):profile==2 || profile==4?L.T("Japon efsanelerindeki dokuz kuyruklu tilki."):L.T("Japon mitolojisinde gök gürültüsü tanrısı.");
+  }
+  static string DnsHint(int dns) {
+   switch(dns) {
+    case 0: return L.T("Hızlı · Roblox görselleri açılmayabilir");
+    case 1: return L.T("Reklamları ve izleyicileri engeller");
+    case 3: return L.T("Zararlı siteleri engeller");
+    case 4: return L.T("Kimlik avı sitelerine karşı korur");
+    case 5: return L.T("Zararlı ve kimlik avı sitelerini engeller");
+    default: return L.T("Filtresiz · önerilen");
+   }
   }
   async void Execute(string action,int profile) {
    if(busy) return;
@@ -918,6 +939,11 @@ namespace GoodbyeTray {
    done=done.Replace("GoodbyeDPI",Program.MotorName(action=="profile"?profile:activeProfile));
    try {
     Program.RequireOwned();
+    // Starting next to another tool's engine would only fail in the service; say which tool it is and how to close it.
+    if(action=="start" || action=="restart" || (action=="profile" && running)) {
+     var other=await Task.Run(delegate { return OtherTools.Running(); });
+     if(other!=null) { notice.Text=OtherTools.Short(other); OtherTools.Show(this,other); return; }
+    }
     bool applied=await Task.Run(delegate { return UserServiceControl.TryRun(action,profile); });
     if(applied) { notice.Text=done; if(action=="profile") profiles.Flash(); else if(action=="dns") dnsServer.Flash(); if(action=="profile" || action=="dns" || action=="start" || action=="restart" || action.StartsWith("sites")) RecheckAccessSoon(); }
     else {
@@ -933,7 +959,18 @@ namespace GoodbyeTray {
    catch(Exception ex) { ReportError(ex); }
    finally { busy=false; if(!IsDisposed) RefreshState(); }
   }
-  void ReportError(Exception ex) { AppInfo.Log(ex.ToString()); notice.Text=L.T("İşlem tamamlanamadı: ")+ex.Message; MessageBox.Show(this,ex.Message,L.T("İşlem tamamlanamadı"),MessageBoxButtons.OK,MessageBoxIcon.Warning); }
+  // Once per launch: another DPI tool that runs or starts with Windows is named in the notice line, and in a
+  // message too when the window is on screen (not when Windows starts the app quietly in the tray).
+  async void CheckOtherToolsSoon() {
+   await Task.Delay(2500); if(IsDisposed) return;
+   OtherTools.Conflict other;
+   try { other=await Task.Run(delegate { return OtherTools.Running() ?? OtherTools.Installed(); }); } catch(Exception ex) { AppInfo.Log("Diğer araçlar: "+ex.Message); return; }
+   if(other==null || IsDisposed) return;
+   AppInfo.Log("Diğer DPI aracı: "+other.Name+(other.Service==null?"":" ("+other.Service+")"));
+   notice.Text=OtherTools.Short(other);
+   if(Visible && WindowState!=FormWindowState.Minimized && !busy) OtherTools.Show(this,other);
+  }
+  void ReportError(Exception ex) { AppInfo.Log(ex.ToString()); notice.Text=L.T("İşlem tamamlanamadı: ")+ex.Message; AppMessage.Show(this,ex.Message,L.T("İşlem tamamlanamadı"),MessageBoxButtons.OK,MessageBoxIcon.Warning); }
   void ShowSiteList() {
    if(busy) return;
    using(var dialog=new SiteListForm(dark)) {
@@ -946,21 +983,31 @@ namespace GoodbyeTray {
   void ShowReport() { using(var dialog=new ReportForm(dark)) dialog.ShowDialog(this); }
   void ShowAbout() { using(var dialog=CreateAboutDialog()) dialog.ShowDialog(this); }
   internal Form CreateAboutDialog() {
-   var dialog=new Form { Text=L.T("GoodbyeDPI — Hakkında"),ClientSize=new Size(540,480),Font=Font,BackColor=background,ForeColor=foreground,Icon=Program.AppIcon,StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false };
-   var heading=new Label { Text="GoodbyeDPI Tray",Font=new Font(Font.FontFamily,20,FontStyle.Bold),Location=new Point(24,20),Size=new Size(490,40) }; dialog.Controls.Add(heading);
-   dialog.Controls.Add(new Label { Text=L.T("Sürüm ")+AppInfo.Version+L.T("  ·  Geliştirici: Furkan"),Location=new Point(26,66),Size=new Size(488,26),ForeColor=secondary });
-   dialog.Controls.Add(new Label { Text=AppInfo.Purpose,Location=new Point(26,108),Size=new Size(488,82) });
+   // Laid out like the main window: a header with the logo, then rounded cards. The cards are painted by the dialog
+   // itself so every control stays a direct child of it.
+   var dialog=new Form { Text=L.T("GoodbyeDPI — Hakkında"),ClientSize=new Size(540,470),Font=Font,BackColor=background,ForeColor=foreground,Icon=Program.AppIcon,StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false };
+   bool plain=SystemInformation.HighContrast; Color card=plain?background:surface;
+   var cards=new[]{new Rectangle(20,98,500,196),new Rectangle(20,306,500,92)};
+   dialog.Paint+=delegate(object sender,PaintEventArgs e) {
+    e.Graphics.SmoothingMode=SmoothingMode.AntiAlias; e.Graphics.InterpolationMode=InterpolationMode.HighQualityBicubic;
+    e.Graphics.DrawImage(Program.Logo(48),24,24,48,48);
+    foreach(var r in cards) using(var path=SoftButton.Round(r,24)) using(var brush=new SolidBrush(card)) using(var pen=new Pen(border)) { e.Graphics.FillPath(brush,path); e.Graphics.DrawPath(pen,path); }
+    using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,46,192,494,192);
+   };
+   var heading=new Label { Text="GoodbyeDPI Tray",Font=Fonts.Get(Fonts.Ui,17,FontStyle.Bold),Location=new Point(84,22),Size=new Size(430,32),UseMnemonic=false }; dialog.Controls.Add(heading);
+   dialog.Controls.Add(new Label { Text=L.T("Sürüm ")+AppInfo.Version+L.T("  ·  Geliştirici: Furkan"),Location=new Point(86,54),Size=new Size(428,24),ForeColor=secondary });
+   dialog.Controls.Add(new Label { Text=AppInfo.Purpose,Location=new Point(42,116),Size=new Size(456,66),BackColor=card });
    Color linkColor=SystemInformation.HighContrast?SystemColors.HotTrack:dark?AppPalette.Mint:AppPalette.Accent;
-   var developer=ProjectLinks.Create(L.T("Geliştirici · Furkan / trfurkan"),AppInfo.DeveloperUrl,linkColor); developer.SetBounds(26,204,488,34); dialog.Controls.Add(developer);
-   dialog.Controls.Add(new Label { Text=L.T("Motor: GoodbyeDPI-Turkey 0.2.3rc3"),Location=new Point(26,260),Size=new Size(488,26),ForeColor=secondary });
-   var licenses=new LinkLabel { Text=L.T("Lisanslar"),Location=new Point(26,290),Size=new Size(488,28),LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor };
+   var developer=ProjectLinks.Create(L.T("Geliştirici · Furkan / trfurkan"),AppInfo.DeveloperUrl,linkColor); developer.SetBounds(40,200,240,30); developer.BackColor=card; dialog.Controls.Add(developer);
+   var licenses=new LinkLabel { Text=L.T("Lisanslar"),Location=new Point(290,200),Size=new Size(90,30),TextAlign=ContentAlignment.MiddleLeft,BackColor=card,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor };
    licenses.LinkClicked+=delegate { using(var window=new LicenseForm(Path.Combine(Program.InstallDir,"licenses"),dark,background,surface,foreground,secondary,border)) window.ShowDialog(dialog); };
    dialog.Controls.Add(licenses);
-   var notesLink=new LinkLabel { Text=L.T("Neler değişti?"),Location=new Point(26,318),Size=new Size(488,26),LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor };
+   var notesLink=new LinkLabel { Text=L.T("Neler değişti?"),Location=new Point(384,200),Size=new Size(120,30),TextAlign=ContentAlignment.MiddleLeft,BackColor=card,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor };
    notesLink.LinkClicked+=delegate { ShowReleaseNotes(); }; dialog.Controls.Add(notesLink);
-   var statusIcon=new UpdateStatusIcon { Location=new Point(26,350),Size=new Size(22,22),BackColor=background };
-   var statusText=new Label { Location=new Point(56,346),Size=new Size(300,30),TextAlign=ContentAlignment.MiddleLeft };
-   var checkNow=new LinkLabel { Location=new Point(356,346),Size=new Size(158,30),TextAlign=ContentAlignment.MiddleRight,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor,DisabledLinkColor=secondary };
+   dialog.Controls.Add(new Label { Text=L.T("Motor: GoodbyeDPI-Turkey 0.2.3rc3"),Location=new Point(42,240),Size=new Size(456,40),ForeColor=secondary,BackColor=card });
+   var statusIcon=new UpdateStatusIcon { Location=new Point(40,322),Size=new Size(22,22),BackColor=card };
+   var statusText=new Label { Location=new Point(70,318),Size=new Size(270,30),TextAlign=ContentAlignment.MiddleLeft,BackColor=card };
+   var checkNow=new LinkLabel { Location=new Point(340,318),Size=new Size(160,30),TextAlign=ContentAlignment.MiddleRight,BackColor=card,LinkBehavior=LinkBehavior.HoverUnderline,LinkColor=linkColor,ActiveLinkColor=linkColor,VisitedLinkColor=linkColor,DisabledLinkColor=secondary };
    checkNow.LinkClicked+=delegate { if(updateState==UpdateState.Available) DownloadUpdate(); else CheckForUpdateAsync(true,true); };
    Action showState=delegate {
     if(dialog.IsDisposed) return;
@@ -972,10 +1019,10 @@ namespace GoodbyeTray {
    };
    showState(); UpdateStateChanged+=showState; dialog.Disposed+=delegate { UpdateStateChanged-=showState; };
    dialog.Controls.Add(statusIcon); dialog.Controls.Add(statusText); dialog.Controls.Add(checkNow);
-   var updates=new CheckBox { Text=L.T("Yeni sürüm çıkınca haber ver"),Location=new Point(26,390),Size=new Size(488,30),Checked=UpdateCheck.Enabled };
+   var updates=new ThemeCheckBox { Text=L.T("Yeni sürüm çıkınca haber ver"),Location=new Point(40,354),Size=new Size(460,30),Checked=UpdateCheck.Enabled,BackColor=card,Accent=AppPalette.Accent,Tick=AppPalette.AccentInk,Edge=border,Muted=secondary };
    updates.CheckedChanged+=delegate { try { UpdateCheck.Enabled=updates.Checked; if(updates.Checked) nextUpdateCheck=DateTime.UtcNow; } catch(Exception ex) { ReportError(ex); } };
    dialog.Controls.Add(updates);
-   var removeApp=new LinkLabel { Text=L.T("Uygulamayı kaldır"),Location=new Point(26,432),Size=new Size(488,28),LinkBehavior=LinkBehavior.HoverUnderline }; removeApp.LinkColor=removeApp.ActiveLinkColor=removeApp.VisitedLinkColor=SystemInformation.HighContrast?SystemColors.HotTrack:dark?Color.FromArgb(255,128,128):AppPalette.Danger;
+   var removeApp=new LinkLabel { Text=L.T("Uygulamayı kaldır"),Location=new Point(26,420),Size=new Size(488,28),TextAlign=ContentAlignment.MiddleLeft,LinkBehavior=LinkBehavior.HoverUnderline }; removeApp.LinkColor=removeApp.ActiveLinkColor=removeApp.VisitedLinkColor=SystemInformation.HighContrast?SystemColors.HotTrack:dark?Color.FromArgb(255,128,128):AppPalette.Danger;
    removeApp.LinkClicked+=delegate { dialog.Close(); Uninstall(); }; dialog.Controls.Add(removeApp);
    // Opening About in the running app checks right away if nothing is known yet.
    if(commands!=null && updateState==UpdateState.Unknown) dialog.Shown+=delegate { CheckForUpdateAsync(true); };
@@ -1077,40 +1124,22 @@ namespace GoodbyeTray {
   }
   void ShowDiagnostics() {
    try {
-    if(diagnosticsWindow==null || diagnosticsWindow.IsDisposed) diagnosticsWindow=new EngineConsoleForm(dark);
-    ShowPage(diagnosticsWindow,L.T("Motor konsolu"));
+    // A window of its own like "Sorun bildir", but not modal: the dashboard stays usable while the output runs.
+    // A second click brings the open console to the front instead of opening another one.
+    if(!Visible || WindowState==FormWindowState.Minimized) Reveal();
+    if(diagnosticsWindow==null || diagnosticsWindow.IsDisposed) { diagnosticsWindow=new EngineConsoleForm(dark); diagnosticsWindow.FormClosed+=delegate { diagnosticsWindow=null; }; CenterOver(diagnosticsWindow); diagnosticsWindow.Show(this); }
+    else { if(diagnosticsWindow.WindowState==FormWindowState.Minimized) diagnosticsWindow.WindowState=FormWindowState.Normal; diagnosticsWindow.Activate(); }
    } catch(Exception ex) { ReportError(ex); }
   }
-  // A page fills the window in place of the dashboard; Back or Esc returns. The console and the access test are
-  // ordinary forms shown here as child windows, so they behave exactly as on their own.
-  readonly Panel dashboardHost=new Panel(), pageHost=new Panel(), pageBody=new Panel();
-  readonly SoftButton pageBack=new SoftButton();
-  readonly Label pageTitle=new Label();
-  Form currentPage;
-  void BuildPageHost() {
-   pageHost.Dock=DockStyle.Fill; pageHost.Visible=false; pageHost.Padding=new Padding(20,14,20,24); Controls.Add(pageHost);
-   var bar=new TableLayoutPanel { Dock=DockStyle.Top,Height=56,ColumnCount=2,RowCount=1,Margin=Padding.Empty,BackColor=Color.Transparent };
-   bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,130)); bar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-   pageBack.Glyph="back"; pageBack.Text=L.T("Geri"); pageBack.Size=new Size(118,44); pageBack.Margin=new Padding(0,4,12,4); pageBack.Click+=delegate { ClosePage(); }; tips.SetToolTip(pageBack,L.T("Ana ekrana dön (Esc)")); bar.Controls.Add(pageBack,0,0);
-   pageTitle.Dock=DockStyle.Fill; pageTitle.Font=new Font(Fonts.Ui,16,FontStyle.Bold); pageTitle.TextAlign=ContentAlignment.MiddleLeft; bar.Controls.Add(pageTitle,1,0);
-   pageBody.Dock=DockStyle.Fill; pageHost.Controls.Add(pageBody); pageHost.Controls.Add(bar);
+  // CenterParent only works for ShowDialog; a window shown with Show is placed in the middle of this one by hand,
+  // kept on the screen this window is on.
+  void CenterOver(Form window) {
+   var area=Screen.FromControl(this).WorkingArea; var b=Bounds;
+   int x=b.Left+(b.Width-window.Width)/2, y=b.Top+(b.Height-window.Height)/2;
+   x=Math.Max(area.Left,Math.Min(x,area.Right-window.Width)); y=Math.Max(area.Top,Math.Min(y,area.Bottom-window.Height));
+   window.StartPosition=FormStartPosition.Manual; window.Location=new Point(x,y);
   }
-  void ShowPage(Form page,string title) {
-   if(!Visible || WindowState==FormWindowState.Minimized) Reveal();
-   if(currentPage!=null && currentPage!=page) currentPage.Hide();
-   page.TopLevel=false; page.FormBorderStyle=FormBorderStyle.None; page.Dock=DockStyle.Fill;
-   if(page.Parent!=pageBody) pageBody.Controls.Add(page);
-   currentPage=page; pageTitle.Text=title; page.Show(); page.BringToFront();
-   pageHost.Visible=true; pageHost.BringToFront(); dashboardHost.Visible=false; ApplyTheme(false); pageBack.Focus();
-  }
-  void ClosePage() {
-   if(currentPage==null) return;
-   // The console stops reading the engine output when it is left.
-   var page=currentPage; currentPage=null;
-   if(page==diagnosticsWindow) { page.Dispose(); diagnosticsWindow=null; } else page.Hide();
-   dashboardHost.Visible=true; dashboardHost.BringToFront(); pageHost.Visible=false;
-  }
-  protected override bool ProcessCmdKey(ref Message msg,Keys keyData) { if(keyData==Keys.Escape && currentPage!=null) { ClosePage(); return true; } return base.ProcessCmdKey(ref msg,keyData); }
+  readonly Panel dashboardHost=new Panel();
   void ThemeChanged(object sender,UserPreferenceChangedEventArgs e) { if(IsHandleCreated && !IsDisposed) { try { BeginInvoke((MethodInvoker)delegate { if(!IsDisposed) ApplyTheme(true); }); } catch(InvalidOperationException) {} } }
   bool WindowsDark() { try { using(var key=Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")) return key!=null && Convert.ToInt32(key.GetValue("AppsUseLightTheme",1))==0; } catch { return false; } }
   internal void SetThemePreference(string value,bool persist) {
