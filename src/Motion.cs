@@ -63,6 +63,38 @@ namespace GoodbyeTray {
    else loops.Remove(control);
   }
   internal static void Add(Tween tween) { if(!tweens.Contains(tween)) tweens.Add(tween); Ensure(); }
+  // A window that eases in when it first shows (like Windows 11's own windows), instead of appearing in one frame.
+  // The window starts fully transparent and is opaque again, and no longer layered, once the fade ends.
+  internal static void FadeIn(Form form,int milliseconds=170) {
+   if(!Enabled || SystemInformation.HighContrast) return;
+   form.Opacity=0;
+   form.Shown+=delegate { Fade(form,milliseconds); };
+  }
+  // Menus ease in the same way each time they open. Hooked once per menu, however often its renderer is replaced.
+  static readonly List<ToolStripDropDown> fadingMenus=new List<ToolStripDropDown>();
+  internal static void FadeMenu(ToolStripDropDown menu) {
+   if(menu==null || fadingMenus.Contains(menu)) return; fadingMenus.Add(menu);
+   menu.Disposed+=delegate { fadingMenus.Remove(menu); };
+   menu.Opening+=delegate { if(Enabled && !SystemInformation.HighContrast) menu.Opacity=0.01; };
+   menu.Opened+=delegate {
+    if(menu.Opacity>=1) return;
+    int start=Now; var clock=new Timer { Interval=15 };
+    clock.Tick+=delegate { if(menu.IsDisposed || !menu.Visible) { clock.Dispose(); if(!menu.IsDisposed) menu.Opacity=1; return; } float t=Math.Min(1,(Now-start)/120f); menu.Opacity=t>=1?1:0.01+0.99*EaseOut(t); if(t>=1) clock.Dispose(); };
+    clock.Start();
+   };
+  }
+  internal static void Fade(Form form,int milliseconds=170) {
+   if(!Enabled) { if(form.Opacity<1) form.Opacity=1; return; }
+   int start=Now; var clock=new Timer { Interval=15 };
+   form.Opacity=Math.Min(form.Opacity,0.01);
+   clock.Tick+=delegate {
+    if(form.IsDisposed) { clock.Dispose(); return; }
+    float t=Math.Min(1,(Now-start)/(float)milliseconds);
+    if(t>=1) { clock.Dispose(); form.Opacity=1; return; }
+    form.Opacity=0.01+0.99*EaseOut(t);
+   };
+   clock.Start();
+  }
   static void Ensure() {
    if(timer==null) { timer=new Timer { Interval=15 }; timer.Tick+=delegate { Frame(); }; }
    if(!timer.Enabled) timer.Start();
@@ -120,7 +152,8 @@ namespace GoodbyeTray {
    Color shown=Motion.Mix(Host(),ink,t);
    if(dot>0) using(var brush=new SolidBrush(shown)) g.FillEllipse(brush,x+1,(Height-dot)/2+lift,dot,dot);
    var bounds=new Rectangle(x+(dot>0?dot+7:0),lift,Math.Max(1,Width-x-(dot>0?dot+7:0)),Height);
-   TextRenderer.DrawText(g,Text,Font,bounds,shown,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+   var align=TextAlign; var vertical=align==ContentAlignment.TopLeft || align==ContentAlignment.TopCenter || align==ContentAlignment.TopRight?TextFormatFlags.Top:align==ContentAlignment.BottomLeft || align==ContentAlignment.BottomCenter || align==ContentAlignment.BottomRight?TextFormatFlags.Bottom:TextFormatFlags.VerticalCenter;
+   TextRenderer.DrawText(g,Text,Font,bounds,shown,TextFormatFlags.Left|vertical|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
   }
  }
  // Standard square checkboxes, colored by the app rather than Windows' accent.
@@ -174,14 +207,19 @@ namespace GoodbyeTray {
   Mark mark=Mark.None;
   readonly Tween appear;
   internal static readonly Color Green=Color.FromArgb(31,153,92),Amber=Color.FromArgb(214,148,30),Grey=Color.FromArgb(128,140,160);
-  public StatusLabel() { SetStyle(ControlStyles.OptimizedDoubleBuffer|ControlStyles.AllPaintingInWmPaint|ControlStyles.SupportsTransparentBackColor,true); appear=new Tween(this,1); Padding=new Padding(54,0,0,0); }
+  // The color the mark had before the last change; the new one blends in from it while a ring spreads out and fades.
+  Color previous=Grey;
+  readonly Tween blend,ripple;
+  public StatusLabel() { SetStyle(ControlStyles.OptimizedDoubleBuffer|ControlStyles.AllPaintingInWmPaint|ControlStyles.SupportsTransparentBackColor,true); appear=new Tween(this,1); blend=new Tween(this,1); ripple=new Tween(this,1); Padding=new Padding(54,0,0,0); }
+  static Color ColorOf(Mark m) { return m==Mark.Running?Green:m==Mark.Paused?Amber:m==Mark.Busy?AppPalette.Accent:Grey; }
   internal Mark State {
    get { return mark; }
    set {
     if(value==mark) return;
-    bool first=mark==Mark.None; mark=value;
-    // A new state pops in: the mark grows from small with a light overshoot.
-    if(!first) { appear.Jump(0.35f); appear.To(1,420); }
+    bool first=mark==Mark.None;
+    previous=first?ColorOf(value):Motion.Mix(previous,ColorOf(mark),blend.Value); mark=value;
+    // A new state pops in: the mark grows from small with a light overshoot, its color crossfades and a ring spreads.
+    if(!first) { appear.Jump(0.35f); appear.To(1,420); blend.Jump(0); blend.To(1,380); if(value!=Mark.Busy) { ripple.Jump(0); ripple.To(1,700); } }
     Motion.Loop(this,mark==Mark.Running || mark==Mark.Busy); Invalidate();
    }
   }
@@ -197,8 +235,11 @@ namespace GoodbyeTray {
    // Overshoot: 0.35 → about 1.12 → 1, so the mark settles instead of stopping dead.
    float scale=pop>=1?1:(float)(pop+Math.Sin(Math.PI*pop)*0.25);
    bool still=!Motion.Enabled;
-   Color color=mark==Mark.Running?Green:mark==Mark.Paused?Amber:mark==Mark.Busy?AppPalette.Accent:Grey;
+   Color color=Motion.Mix(previous,ColorOf(mark),blend.Value);
    if(SystemInformation.HighContrast) color=ForeColor;
+   // The ring that spreads from the mark after a change and fades as it grows.
+   float wave=ripple.Value;
+   if(wave<1 && !SystemInformation.HighContrast) { float r=20+wave*3; using(var ring=new Pen(Color.FromArgb((int)(120*(1-wave)),color),2f)) g.DrawEllipse(ring,cx-r,cy-r,r*2,r*2); }
    if(mark==Mark.Busy) {
     float angle=still?0:(Motion.Now%900)/900f*360;
     float sweep=still?270:200+(float)Math.Sin(Motion.Now/300.0)*60;

@@ -38,7 +38,7 @@ namespace GoodbyeTray {
    list.SelectedIndexChanged+=delegate { ShowSelected(); };
    if(paths.Count>0) list.SelectedIndex=0;
    else { list.Visible=false; layout.ColumnStyles[0].Width=0; text.Font=Font; text.Text=L.T("Lisans dosyaları bulunamadı.\n\nUygulamayı kurucuyla kurduğunda burada görünür. Lisansları GitHub'daki THIRD_PARTY_NOTICES.md dosyasında da okuyabilirsin."); }
-   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,background,foreground); };
+   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,background,foreground); }; Motion.FadeIn(this);
   }
   void ShowSelected() {
    int i=list.SelectedIndex; if(i<0) return;

@@ -320,7 +320,8 @@ namespace GoodbyeTray {
     bool remove=args.Length>=1 && args[0]=="--uninstall";
     if(Array.IndexOf(args,"--silent")>=0) return Silent(remove,args);
     if(remove && args.Length==1 && InsideInstallDir(Application.ExecutablePath)) { RelaunchFromTemp(); return 0; }
-    Application.Run(new SetupForm(remove));
+    // Picking another language on the first page rebuilds the window in that language.
+    while(true) { using(var form=new SetupForm(remove)) { Application.Run(form); if(!form.LanguageChanged) break; } }
     if(Array.IndexOf(args,"--temporary")>=0) DeleteSelfLater();
     return 0;
    } catch(Exception ex) { string message=Stage+"\n"+ex.Message+L.T("\nGünlük: ")+AppInfo.LogPath; AppInfo.Log(message+"\n"+ex); if(Array.IndexOf(args,"--quiet")<0) AppMessage.Show(message,"GoodbyeDPI Kurulum",MessageBoxButtons.OK,MessageBoxIcon.Error); return 1; }
@@ -389,6 +390,9 @@ namespace GoodbyeTray {
   Color line;
   // A folder picked for a first install; null keeps Program Files.
   string chosenLocation;
+  // A first install offers the language before anything else; the choice stays offered for the rest of this setup.
+  static bool languageOffered;
+  internal bool LanguageChanged;
   void ShowWorking() { start.Visible=false; if(working.Visible) return; welcome.Visible=false; working.Visible=true; }
   internal void ShowProgress(int value,string message) {
    if(completed || !busy || value<progressBar.Value) return;
@@ -424,6 +428,24 @@ namespace GoodbyeTray {
    var logo=new Panel { Bounds=new Rectangle(30,26,52,52),BackColor=background }; logo.Paint+=delegate(object sender,PaintEventArgs e) { e.Graphics.DrawImageUnscaled(Program.Logo(52),0,0); }; Controls.Add(logo);
    Controls.Add(new Label { Text="GoodbyeDPI Tray",Font=new Font(Fonts.Ui,19,FontStyle.Bold),Bounds=new Rectangle(94,24,width-124,38),ForeColor=text });
    Controls.Add(new Label { Text=L.T("Sürüm ")+AppInfo.Version+L.T("  ·  Geliştirici: Furkan"),Bounds=new Rectangle(96,62,width-126,22),ForeColor=muted,Font=new Font(Fonts.Ui,9.5f) });
+   // Language: on a first install (no language saved yet) a pill in the header, like the main window's, with the flag
+   // and name; a choice is saved at once and the window opens again in that language.
+   if(!remove && (languageOffered || L.Stored()==null)) {
+    languageOffered=true;
+    int current=Math.Max(0,Array.IndexOf(L.Codes,L.Current));
+    var language=new SoftButton { Text=L.Names[current],Glyph="flag",GlyphImage=L.Flag(L.Codes[current]),BackColor=background,Fill=surface,Ink=text,Edge=line,Circle=true,AccessibleName=L.T("Dil") };
+    language.Width=TextRenderer.MeasureText(language.Text,Font).Width+60; language.Height=36; language.Location=new Point(width-30-language.Width,32); Controls.Add(language); language.BringToFront();
+    var menu=new ContextMenuStrip { ShowImageMargin=true,ShowCheckMargin=false };
+    for(int i=0;i<L.Codes.Length;i++) {
+     string code=L.Codes[i];
+     var item=new ToolStripMenuItem(L.Names[i],L.Flag(code)) { Checked=i==current };
+     item.Click+=delegate { if(code==L.Current) return; try { L.Save(code); } catch(Exception ex) { AppInfo.Log("Dil: "+ex.Message); L.Current=code; } LanguageChanged=true; Close(); };
+     menu.Items.Add(item);
+    }
+    MenuRenderer.Prepare(menu,surface,text,line,170);
+    language.Click+=delegate { if(!busy && !completed) menu.Show(language,new Point(language.Width-Math.Max(menu.Width,menu.MinimumSize.Width),language.Height+4)); }; // right-aligned under the pill, inside the window
+    Disposed+=delegate { menu.Dispose(); };
+   }
    var pages=new Rectangle(0,104,width,bottom-112);
    welcome.Bounds=pages; working.Bounds=pages; welcome.BackColor=working.BackColor=background; Controls.Add(welcome); Controls.Add(working); working.Visible=false;
    // Welcome page.

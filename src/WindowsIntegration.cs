@@ -199,6 +199,7 @@ namespace GoodbyeTray {
   [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd,int attribute,ref int value,int size);
   protected override void Initialize(ToolStrip toolStrip) {
    base.Initialize(toolStrip);
+   Motion.FadeMenu(toolStrip as ToolStripDropDown);
    if(!Rounded) return;
    toolStrip.SizeChanged+=delegate { Shape(toolStrip); };
    // Windows 11 rounds the menu window itself, with a smooth edge and its own border; older Windows clips a region.
@@ -272,9 +273,16 @@ namespace GoodbyeTray {
   }
   internal static Color Blend(Color a,Color b,float share) { return Color.FromArgb((int)(a.R*share+b.R*(1-share)),(int)(a.G*share+b.G*(1-share)),(int)(a.B*share+b.B*(1-share))); }
   // The tray menu and its submenus in the same look, with tighter rows (32 px) since it lists more commands.
+  // A width of 0 fits the menu to its longest item, so a short menu has no empty band on the right.
   internal static void PrepareTree(ToolStripDropDownMenu menu,Color surface,Color ink,Color border,int width) {
    // Sizes are written at 100 %; the menu's own screen scale grows them with the text.
-   float f=menu.DeviceDpi/96f; Func<int,int> s=delegate(int px) { return (int)Math.Round(px*f); }; width=s(width);
+   float f=menu.DeviceDpi/96f; Func<int,int> s=delegate(int px) { return (int)Math.Round(px*f); };
+   if(width<=0) {
+    int widest=0; var font=Fonts.Get(Fonts.Ui.Name,10f);
+    foreach(ToolStripItem item in menu.Items) if(item is ToolStripMenuItem) widest=Math.Max(widest,TextRenderer.MeasureText(item.Text,font).Width+(((ToolStripMenuItem)item).HasDropDownItems?s(20):0));
+    // Row text starts 16 px in; 28 px on the right keep room for a check mark, 8 px is the menu's own padding.
+    width=Math.Max(s(150),widest+s(16+28+8));
+   } else width=s(width);
    menu.ShowCheckMargin=false; menu.ShowImageMargin=false; menu.Padding=new Padding(4); menu.DropShadowEnabled=true;
    menu.BackColor=surface; menu.ForeColor=ink; menu.Font=Fonts.Get(Fonts.Ui.Name,10f); menu.MinimumSize=new Size(width,0);
    menu.Renderer=new MenuRenderer(surface,ink,border) { Rounded=true,Modern=true };
@@ -285,7 +293,7 @@ namespace GoodbyeTray {
     if(!String.IsNullOrEmpty(item.AccessibleDescription)) height=Math.Max(s(60),s(8+22)+TextRenderer.MeasureText(item.AccessibleDescription,Fonts.Get(Fonts.Ui.Name,8.5f),new Size(Math.Max(40,width-s(8+16+20)),Int32.MaxValue),TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix).Height+s(8));
     item.Size=new Size(width-s(8),height);
     var parent=item as ToolStripMenuItem;
-    if(parent!=null && parent.HasDropDownItems) { var sub=parent.DropDown as ToolStripDropDownMenu; if(sub!=null) PrepareTree(sub,surface,ink,border,(int)Math.Round(width/f)); }
+    if(parent!=null && parent.HasDropDownItems) { var sub=parent.DropDown as ToolStripDropDownMenu; if(sub!=null) PrepareTree(sub,surface,ink,border,0); }
    }
   }
   // Sets up a main-window menu for the Modern look: one padding, one font, roomy rows, no check or image column.

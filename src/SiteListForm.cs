@@ -50,7 +50,7 @@ namespace GoodbyeTray {
    foreach(string host in SiteList.Hosts) defaults.Controls.Add(Chip(host,false));
    ShowCustom();
    FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(working) e.Cancel=true; };
-   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); };
+   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); }; Motion.FadeIn(this);
   }
   Label Heading(string text) { return new Label { Text=text,Dock=DockStyle.Fill,Font=new Font(Font.FontFamily,10,FontStyle.Bold),TextAlign=ContentAlignment.BottomLeft }; }
   void Style(SoftButton button,bool primary) { button.BackColor=background; button.Fill=primary?accent:surface; button.Ink=primary?(contrast?SystemColors.HighlightText:AppPalette.AccentInk):ink; button.Edge=primary?accent:edge; }

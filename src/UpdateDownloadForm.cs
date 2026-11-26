@@ -86,7 +86,7 @@ namespace GoodbyeTray {
    cancel.Text=L.T("İptal"); retry.Text=L.T("Tekrar dene"); retry.Visible=false;
    cancel.Click+=delegate { Close(); }; retry.Click+=delegate { BeginDownload(); }; CancelButton=cancel;
    FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(active) { e.Cancel=true; closeRequested=true; cancel.Enabled=false; cancellation.Cancel(); } };
-   Shown+=delegate { BeginDownload(); }; HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); };
+   Shown+=delegate { BeginDownload(); }; HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); }; Motion.FadeIn(this);
   }
   // A verified installer that has not been opened yet: "Tekrar dene" opens it again instead of downloading it again.
   string downloaded;

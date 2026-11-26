@@ -116,7 +116,7 @@ namespace GoodbyeTray {
     footer.Controls.Add(link);
    }
    ClientSize=new Size(width,top+72);
-   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,background,ink); };
+   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,background,ink); }; Motion.FadeIn(this);
    switch(icon) { case MessageBoxIcon.Error: System.Media.SystemSounds.Hand.Play(); break; case MessageBoxIcon.Warning: System.Media.SystemSounds.Exclamation.Play(); break; }
   }
   // The mark: a tinted disc with a drawn symbol, the same language as the access test's status dots.

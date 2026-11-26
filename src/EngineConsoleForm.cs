@@ -40,7 +40,7 @@ namespace GoodbyeTray {
    terminal.Dock=DockStyle.Fill; terminal.Font=new Font("Consolas",10); terminal.TabIndex=10; terminal.FocusFrame=false; terminal.AccessibleName=L.T("GoodbyeDPI motorunun gerçek konsol çıktısı"); card.Controls.Add(terminal);
    timer.Interval=500; timer.Tick+=delegate { ReadFrame(); };
    Shown+=delegate { ReadFrame(); timer.Start(); };
-   ApplyPalette(dark);
+   ApplyPalette(dark); Motion.FadeIn(this);
   }
   internal void ApplyPalette(bool dark) {
    bool contrast=SystemInformation.HighContrast;

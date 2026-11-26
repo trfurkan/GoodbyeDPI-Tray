@@ -113,7 +113,7 @@ namespace GoodbyeTray {
    copy.Click+=delegate { try { Clipboard.SetText(ProblemReport.Body(what.Text,details.Text)); state.Text=L.T("Panoya kopyalandı."); } catch(Exception ex) { AppInfo.Log(ex.ToString()); } };
    open.Click+=delegate { Open(); };
    Shown+=delegate { what.Focus(); Collect(); };
-   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); };
+   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ForeColor); }; Motion.FadeIn(this);
   }
   internal string Details { get { return details.Text; } }
   async void Collect() {

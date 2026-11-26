@@ -41,7 +41,7 @@ namespace GoodbyeTray {
    secondary.Click+=delegate { if(testing) CancelTest(); else Close(); };
    AcceptButton=primary; CancelButton=secondary;
    FormClosing+=delegate(object sender,FormClosingEventArgs e) { if(testing && e.CloseReason==CloseReason.UserClosing) { e.Cancel=true; CancelTest(); } };
-   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ink); };
+   HandleCreated+=delegate { WindowsIntegration.ThemeCaption(this,dark,BackColor,ink); }; Motion.FadeIn(this);
   }
   void CancelTest() { if(cancelling) return; cancelling=true; secondary.Enabled=false; phase.Text=L.T("Testi bitirip eski ayarlarına dönüyoruz. Biraz sürebilir."); if(CancelRequested!=null) CancelRequested(); }
   void UpdateBar() { bar.Value=Math.Max(0,Math.Min(candidates.Length,completed)); }

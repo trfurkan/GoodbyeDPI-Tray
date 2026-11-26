@@ -60,8 +60,8 @@ namespace GoodbyeTray {
    if(bounds.Width<2 || bounds.Height<2) return;
    Color paint=Motion.Mix(Fill,Ink,Enabled?tint.Value/100f:0);
    float inset=sink.Value*1.5f;
-   using(var path=RoundF(new RectangleF(bounds.X+inset,bounds.Y+inset,bounds.Width-inset*2,bounds.Height-inset*2),Circle?Math.Min(bounds.Width,bounds.Height)-inset*2:Corner>0?Math.Min(Corner*2,Math.Min(bounds.Width,bounds.Height)):Math.Min(16,Math.Min(bounds.Width,bounds.Height)))) using(var fill=new SolidBrush(paint)) using(var pen=new Pen(Edge)) {
-    e.Graphics.FillPath(fill,path); e.Graphics.DrawPath(pen,path);
+   using(var path=RoundF(new RectangleF(bounds.X+inset,bounds.Y+inset,bounds.Width-inset*2,bounds.Height-inset*2),Circle?Math.Min(bounds.Width,bounds.Height)-inset*2:Corner>0?Math.Min(Corner*2,Math.Min(bounds.Width,bounds.Height)):Math.Min(16,Math.Min(bounds.Width,bounds.Height)))) using(var fill=new SolidBrush(paint)) using(var pen=new Pen(Edge==Fill?paint:Edge)) {
+    e.Graphics.FillPath(fill,path); e.Graphics.DrawPath(pen,path); // a borderless button keeps its edge in its own fill
    }
    Color ink=Enabled?Ink:Color.FromArgb((Ink.R+Fill.R)/2,(Ink.G+Fill.G)/2,(Ink.B+Fill.B)/2);
    var textBounds=ClientRectangle;
@@ -74,7 +74,12 @@ namespace GoodbyeTray {
       e.Graphics.Restore(saved); saved=e.Graphics.Save();
       { var icon=Fonts.Get(IconFamily,12f,GraphicsUnit.Point); TextRenderer.DrawText(e.Graphics,Glyph.Substring(3),icon,new Rectangle(x-1,y-1,20,20),ink,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding|TextFormatFlags.NoPrefix); }
      }
-     else if(spinning) { float a=Motion.Enabled?(Motion.Now%900)/900f*360:0; using(var track=new Pen(Color.FromArgb(60,ink),2f)) e.Graphics.DrawEllipse(track,1,1,16,16); using(var arc=new Pen(ink,2.2f) { StartCap=LineCap.Round,EndCap=LineCap.Round }) e.Graphics.DrawArc(arc,1,1,16,16,a,110); }
+     else if(spinning) {
+      // A faint ring with an accent arc that turns and breathes (grows and shrinks) while the work runs.
+      float a=Motion.Enabled?(Motion.Now%900)/900f*360:0, sweep=Motion.Enabled?70+60*(float)Math.Sin(Motion.Now/320.0):110;
+      Color arcInk=SystemInformation.HighContrast?ink:AppPalette.Accent;
+      using(var track=new Pen(Color.FromArgb(50,ink),2f)) e.Graphics.DrawEllipse(track,1,1,16,16); using(var arc=new Pen(arcInk,2.4f) { StartCap=LineCap.Round,EndCap=LineCap.Round }) e.Graphics.DrawArc(arc,1,1,16,16,a,sweep);
+     }
      else if(Glyph=="restart") {
       // Leans a quarter turn on hover and spins a full turn when clicked.
       float angle=HoverAmount*90+Motion.EaseInOut(turn.Value)*360;
@@ -112,7 +117,7 @@ namespace GoodbyeTray {
     using(var arrow=new Pen(Color.FromArgb(200,ink),1.7f) { StartCap=LineCap.Round,EndCap=LineCap.Round,LineJoin=LineJoin.Round }) e.Graphics.DrawLines(arrow,new[]{new PointF(cx-4.5f,cy-2),new PointF(cx,cy+2.5f),new PointF(cx+4.5f,cy-2)});
    }
    else if(!IconOnly || String.IsNullOrEmpty(Glyph)) TextRenderer.DrawText(e.Graphics,Text,Font,textBounds,ink,(String.IsNullOrEmpty(Glyph)?TextFormatFlags.HorizontalCenter:TextFormatFlags.Left)|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
-   if(flash!=null && flash.Value>0.01f) using(var path=RoundF(new RectangleF(1.5f,1.5f,Width-4,Height-4),Math.Min(16,Math.Min(Width-4,Height-4)))) using(var glow=new Pen(Color.FromArgb((int)(230*flash.Value),StatusLabel.Green),2.4f)) e.Graphics.DrawPath(glow,path);
+   if(flash!=null && flash.Value>0.01f) using(var path=RoundF(new RectangleF(1.5f,1.5f,Width-4,Height-4),Circle?Math.Min(Width-4,Height-4):Math.Min(16,Math.Min(Width-4,Height-4)))) using(var glow=new Pen(Color.FromArgb((int)(230*flash.Value),StatusLabel.Green),2.4f)) e.Graphics.DrawPath(glow,path);
    if(Focused && ShowFocusCues) ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(8,8,Width-16,Height-16),Ink,Fill);
   }
   internal static GraphicsPath RoundF(RectangleF r,float diameter) {
@@ -265,7 +270,9 @@ namespace GoodbyeTray {
   readonly EventWaitHandle reveal;
   readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();
   readonly StatusLabel status=new StatusLabel();
-  readonly Label detail=new Label(), notice=new Label(), pending=new Label();
+  readonly Label pending=new Label();
+  // Lines whose text changes as the app works: each new text fades in instead of being swapped in one frame.
+  readonly HintLabel detail=new HintLabel(), notice=new HintLabel();
   readonly HintLabel hint=new HintLabel(), dnsHelp=new HintLabel();
   readonly ProfilePicker profiles=new ProfilePicker();
   readonly ProfilePicker motors=new ProfilePicker();
@@ -419,11 +426,11 @@ namespace GoodbyeTray {
    Resize+=delegate { maximizeButton.Restore=WindowState==FormWindowState.Maximized; };
    for(int i=0;i<ThemeModes.Length;i++) { string choice=ThemeModes[i]; var item=new ToolStripMenuItem(ThemeLabels[i]) { Tag=choice,Image=ThemeSwatch(choice),AutoSize=false,Size=new Size(300,choice=="system"?72:40),Padding=new Padding(8,6,12,6) };
     if(choice=="system") { item.AccessibleDescription=L.T("Temayı (Karanlık/Aydınlık) sistem tercihlerine göre otomatik ayarlar."); item.ImageAlign=ContentAlignment.TopCenter; } item.Click+=delegate { try { SetThemePreference(choice,true); notice.Text=L.T("Tema kaydedildi."); } catch(Exception ex) { ReportError(ex); } }; if(choice=="system") themeMenu.Items.Add(new ToolStripSeparator()); themeMenu.Items.Add(item); }
-   themeButton.Size=new Size(112,26); themeButton.Margin=new Padding(0,7,10,7); themeButton.Circle=true; themeButton.AccessibleName=L.T("Görünüm teması"); themeButton.Glyph="swatch"; themeButton.Font=new Font(Fonts.Ui,8.75f);
+   themeButton.Size=new Size(112,26); themeButton.Margin=new Padding(0,7,10,7); themeButton.Circle=true; themeButton.AccessibleName=L.T("Görünüm teması"); themeButton.Glyph="swatch"; themeButton.Font=new Font(Fonts.Ui,9);
    themeButton.Click+=delegate { foreach(ToolStripItem entry in themeMenu.Items) { var item=entry as ToolStripMenuItem; if(item!=null) item.Checked=Convert.ToString(item.Tag)==themePreference; } MenuRenderer.Prepare(themeMenu,surface,foreground,border,250); if(!themeMenu.Visible) themeMenu.Show(themeButton,new Point(themeButton.Width-250,themeButton.Height+6)); };
    // Language picker left of the theme menu: the globe, the language's name and a menu of the languages with their flags.
    int current=Array.IndexOf(L.Codes,L.Current);
-   languageButton.Size=new Size(98,26); languageButton.Margin=new Padding(0,7,6,7); languageButton.Circle=true; languageButton.AccessibleName=L.T("Dil")+": "+L.Names[current]; languageButton.Glyph="flag"; languageButton.GlyphImage=L.Flag(L.Current); languageButton.Font=new Font(Fonts.Ui,8.75f); languageButton.Text=L.Names[current]+"  ▾"; tips.SetToolTip(languageButton,L.T("Dil")+": "+L.Names[current]);
+   languageButton.Size=new Size(98,26); languageButton.Margin=new Padding(0,7,6,7); languageButton.Circle=true; languageButton.AccessibleName=L.T("Dil")+": "+L.Names[current]; languageButton.Glyph="flag"; languageButton.GlyphImage=L.Flag(L.Current); languageButton.Font=new Font(Fonts.Ui,9); languageButton.Text=L.Names[current]+"  ▾"; tips.SetToolTip(languageButton,L.T("Dil")+": "+L.Names[current]);
    for(int i=0;i<L.Codes.Length;i++) { string code=L.Codes[i]; var item=new ToolStripMenuItem(L.Names[i]) { Tag=code,Image=L.Flag(code),AutoSize=false,Size=new Size(200,40),Padding=new Padding(8,6,12,6) }; item.Click+=delegate { ChangeLanguage(code); }; languageMenu.Items.Add(item); }
    languageButton.Click+=delegate { foreach(ToolStripItem entry in languageMenu.Items) { var item=(ToolStripMenuItem)entry; item.Checked=Convert.ToString(item.Tag)==L.Current; } MenuRenderer.Prepare(languageMenu,surface,foreground,border,190); if(!languageMenu.Visible) languageMenu.Show(languageButton,new Point(0,languageButton.Height+6)); };
    FitPill(languageButton); header.Controls.Add(themeButton); header.Controls.Add(languageButton);
@@ -440,25 +447,26 @@ namespace GoodbyeTray {
    toggle.Size=new Size(326,50); toggle.Margin=Padding.Empty; toggle.Font=new Font(Fonts.Semibold,11.5f);
    toggle.PrimaryClick+=delegate { Execute(running?"stop":"start",0); }; toggle.BreakClick+=delegate { ShowPauseMenu(); };
    toggle.HoverChanged+=delegate(int part) { tips.SetToolTip(toggle,part==0?toggle.BreakText:part==1?toggle.Text:null); };
-   actions.Controls.Add(toggle);
-   heroLayout.Controls.Add(actions,1,0); heroLayout.SetRowSpan(actions,2);
+   // Anchored only to the right, the table cell centers the buttons on the card's height (no empty band under them).
+   actions.Dispose(); toggle.Anchor=AnchorStyles.Right;
+   heroLayout.Controls.Add(toggle,1,0); heroLayout.SetRowSpan(toggle,2);
    // The notice row has no height; results show in the status line's tooltip and errors in a message box.
    notice.Dock=DockStyle.Fill; layout.Controls.Add(notice,0,2);
    BuildChoices(layout); BuildSettings(layout);
    BuildAccess(layout); ConfirmTrayOff=AskTrayOff;
    // Two labeled buttons under the cards: the engine console and the problem report.
    // Restart stays in the tray menu and the jump list.
-   var actionRow=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=new Padding(0,0,0,ActionRowHeight-46),BackColor=Color.Transparent }; this.actionRow=actionRow;
+   var actionRow=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=new Padding(0,0,0,ActionRowHeight-40),BackColor=Color.Transparent }; this.actionRow=actionRow;
    for(int i=0;i<2;i++) actionRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,50));
    actionRow.RowStyles.Add(new RowStyle(SizeType.Percent,100));
    consoleButton.Text=L.T("Konsol"); consoleButton.Glyph="console"; tips.SetToolTip(consoleButton,L.T("Motor konsolu"));
    reportButton.Text=L.T("Sorun bildir"); reportButton.Glyph="bug";
    int slot=0;
-   foreach(var button in new[]{consoleButton,reportButton}) { button.Dock=DockStyle.Fill; button.Corner=8; button.Margin=new Padding(slot==0?0:4,0,slot==1?0:4,0); button.Font=new Font(Fonts.Ui,10); button.AccessibleName=button.Text; actionRow.Controls.Add(button,slot++,0); }
+   foreach(var button in new[]{consoleButton,reportButton}) { button.Dock=DockStyle.Fill; button.Corner=10; button.Margin=new Padding(slot==0?0:4,0,slot==1?0:4,0); button.Font=new Font(Fonts.Ui,10); button.AccessibleName=button.Text; actionRow.Controls.Add(button,slot++,0); }
    consoleButton.Click+=delegate { ShowDiagnostics(); }; reportButton.Click+=delegate { ShowReport(); };
    layout.Controls.Add(actionRow,0,6);
    // Footer: developer link on the left; the version with its update state and the About link on the right.
-   footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=FooterHeight; footerPanel.Padding=new Padding(0,2,0,0); footerPanel.Font=new Font(Fonts.Ui,8.75f);
+   footerPanel.Dock=DockStyle.Bottom; footerPanel.Height=FooterHeight; footerPanel.Padding=new Padding(0,2,0,0); footerPanel.Font=new Font(Fonts.Ui,9);
    // A hairline above the footer sets it apart from the buttons, with room on both sides of it.
    footerPanel.Paint+=delegate(object sender,PaintEventArgs e) { using(var pen=new Pen(border)) e.Graphics.DrawLine(pen,4,0,footerPanel.Width-5,0); }; footerPanel.ColumnCount=3; footerPanel.RowCount=1; footerPanel.Margin=Padding.Empty;
    footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -480,7 +488,7 @@ namespace GoodbyeTray {
     menu.Items.Add(new ToolStripSeparator());
     menu.Items.Add(L.T("Arayüzden çık"),null,delegate { DispatchCommand("exit"); });
     bool showTray=true; try { showTray=WindowsIntegration.TrayStartupEnabled(); } catch(Exception ex) { AppInfo.Log(ex.ToString()); }
-    tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=showTray }; tray.DoubleClick+=delegate { Reveal(); }; menu.Opening+=delegate { if(!busy) RefreshState(); }; tray.BalloonTipClicked+=delegate { NotificationClicked(); };
+    tray=new NotifyIcon { Icon=Program.AppIcon,Text="GoodbyeDPI",ContextMenuStrip=menu,Visible=showTray }; tray.MouseClick+=delegate(object sender,MouseEventArgs e) { if(e.Button==MouseButtons.Left) Reveal(); }; /* one click opens it, also from the hidden icons */ menu.Opening+=delegate { if(!busy) RefreshState(); }; tray.BalloonTipClicked+=delegate { NotificationClicked(); };
     trayHelp.Text=TrayHelp(showTray);
    }
    if(withTray) Shown+=async delegate { await Task.Delay(4000); if(!IsDisposed && !accessExpanded) PrepareAccessFull(); };
@@ -518,7 +526,7 @@ namespace GoodbyeTray {
   const string ControlSite="google.com";
   readonly AccessChip[] accessChips=new AccessChip[QuickSites.Length];
   readonly SoftButton accessRun=new SoftButton(), quickRun=new SoftButton();
-  readonly Label accessSummary=new Label();
+  readonly HintLabel accessSummary=new HintLabel();
   // The summary line stays short ("3/3 açıldı · 13:54"); the profile, DNS and any advice sit in its tooltip.
   string quickSummary="",quickTip="",accessContextKey;
   int accessGeneration;
@@ -553,14 +561,14 @@ namespace GoodbyeTray {
    var chips=new FlowLayoutPanel { AutoSize=true,WrapContents=false,Anchor=AnchorStyles.Left,Margin=Padding.Empty,BackColor=Color.Transparent };
    for(int i=0;i<QuickSites.Length;i++) { accessChips[i]=new AccessChip(QuickSites[i],QuickColors[i]) { Font=new Font(Fonts.Ui,9.5f) }; accessChips[i].Size=accessChips[i].GetPreferredSize(Size.Empty); accessChips[i].Margin=new Padding(0,0,6,0); accessChips[i].Cursor=Cursors.Hand; accessChips[i].Click+=delegate { RunAccessCheck(); }; tips.SetToolTip(accessChips[i],L.T("Henüz denenmedi")); chips.Controls.Add(accessChips[i]); }
    content.Controls.Add(chips,1,0); accessChipRow=chips;
-   accessSummary.AutoSize=false; accessSummary.AutoEllipsis=true; accessSummary.Anchor=AnchorStyles.Left|AnchorStyles.Right; accessSummary.Height=20; accessSummary.TextAlign=ContentAlignment.MiddleLeft; accessSummary.Tag="muted"; accessSummary.Font=new Font(Fonts.Ui,9); accessSummary.Margin=new Padding(8,0,8,0); accessSummary.Text=L.T("Sitelerin bu profille açılıp açılmadığını dene."); content.Controls.Add(accessSummary,2,0);
+   accessSummary.AutoSize=false; accessSummary.AutoEllipsis=true; accessSummary.Anchor=AnchorStyles.Left|AnchorStyles.Right; accessSummary.Height=22; accessSummary.TextAlign=ContentAlignment.MiddleLeft; accessSummary.Tag="muted"; accessSummary.Font=new Font(Fonts.Ui,9.5f); accessSummary.Margin=new Padding(8,0,8,0); accessSummary.Text=L.T("Sitelerin bu profille açılıp açılmadığını dene."); content.Controls.Add(accessSummary,2,0);
    var buttons=new FlowLayoutPanel { AutoSize=true,FlowDirection=FlowDirection.RightToLeft,WrapContents=false,Anchor=AnchorStyles.Right,Margin=Padding.Empty,BackColor=Color.Transparent };
-   accessRun.Glyph="list"; accessRun.Text=L.T("Ayrıntılı test"); accessRun.Size=new Size(140,36); accessRun.Corner=8; accessRun.Margin=Padding.Empty; accessRun.Click+=delegate { ToggleAccess(); }; tips.SetToolTip(accessRun,AccessProbe.Domains.Length+L.T(" site, tek tek sonuç ve süre")); buttons.Controls.Add(accessRun);
+   accessRun.Glyph="list"; accessRun.Text=L.T("Ayrıntılı test"); accessRun.Size=new Size(140,40); accessRun.Corner=10; accessRun.Margin=Padding.Empty; accessRun.Click+=delegate { ToggleAccess(); }; tips.SetToolTip(accessRun,AccessProbe.Domains.Length+L.T(" site, tek tek sonuç ve süre")); buttons.Controls.Add(accessRun);
    // A small refresh button runs the quick check of the three sites again; it spins while the check runs.
-   quickRun.Glyph="restart"; quickRun.IconOnly=true; quickRun.Text=L.T("Test et"); quickRun.AccessibleName=quickRun.Text; quickRun.Size=new Size(36,36); quickRun.Corner=8; quickRun.Margin=new Padding(0,0,6,0); quickRun.Click+=delegate { RunAccessCheck(); }; tips.SetToolTip(quickRun,L.T("Test et")); buttons.Controls.Add(quickRun);
+   quickRun.Glyph="restart"; quickRun.IconOnly=true; quickRun.Text=L.T("Test et"); quickRun.AccessibleName=quickRun.Text; quickRun.Size=new Size(40,40); quickRun.Circle=true; quickRun.Margin=new Padding(0,0,6,0); quickRun.Click+=delegate { RunAccessCheck(); }; tips.SetToolTip(quickRun,L.T("Test et")); buttons.Controls.Add(quickRun);
    content.Controls.Add(buttons,3,0);
    accessHost.Dock=DockStyle.Fill; accessHost.Visible=false; accessHost.Margin=new Padding(0,6,0,0); content.Controls.Add(accessHost,0,1); content.SetColumnSpan(accessHost,4);
-   accessCollapse.Glyph="up"; accessCollapse.IconOnly=true; accessCollapse.Text=L.T("Küçült"); accessCollapse.AccessibleName=accessCollapse.Text; accessCollapse.Size=new Size(40,36); accessCollapse.Corner=8; accessCollapse.Margin=new Padding(8,0,0,0); accessCollapse.Visible=false; accessCollapse.Click+=delegate { ToggleAccess(); }; tips.SetToolTip(accessCollapse,accessCollapse.Text); buttons.Controls.Add(accessCollapse); buttons.Controls.SetChildIndex(accessCollapse,0);
+   accessCollapse.Glyph="up"; accessCollapse.IconOnly=true; accessCollapse.Text=L.T("Küçült"); accessCollapse.AccessibleName=accessCollapse.Text; accessCollapse.Size=new Size(40,40); accessCollapse.Corner=10; accessCollapse.Margin=new Padding(8,0,0,0); accessCollapse.Visible=false; accessCollapse.Click+=delegate { ToggleAccess(); }; tips.SetToolTip(accessCollapse,accessCollapse.Text); buttons.Controls.Add(accessCollapse); buttons.Controls.SetChildIndex(accessCollapse,0);
   }
   // Expanded, the card holds the full access test (every site, retry buttons and details) in place of the chips;
   // the settings card steps aside to make room and comes back when the card is folded again.
@@ -622,7 +630,8 @@ namespace GoodbyeTray {
   async void RunAccessCheck() {
    if(accessTesting || IsDisposed || busy || transition) return;
    CheckAccessContext(); var context=CaptureAccessContext(); int revision=accessGeneration;
-   accessTesting=true; quickRun.Enabled=false; quickRun.Spinning=true; quickSummary=L.T("Hızlı test")+" · "+L.T("Siteler deneniyor…"); quickTip=""; ShowAccessSummary();
+   // The button stays in full color while it spins (a second click is ignored above); a grey disabled button read as broken.
+   accessTesting=true; quickRun.Spinning=true; bool completed=false; quickSummary=L.T("Hızlı test")+" · "+L.T("Siteler deneniyor…"); quickTip=""; ShowAccessSummary();
    foreach(var chip in accessChips) { chip.State=AccessChip.Phase.Testing; tips.SetToolTip(chip,L.T("Test ediliyor…")); }
    int reached=0;
    try {
@@ -646,9 +655,9 @@ namespace GoodbyeTray {
     CheckAccessContext(); if(revision!=accessGeneration) return;
     string time=DateTime.Now.ToString("HH:mm"), advice=!online && reached==0?L.T(" İnternet bağlantını kontrol et."):!running?L.T(" GoodbyeDPI kapalıyken denendi."):"";
     quickSummary=L.T("Hızlı test")+" · "+reached+"/"+QuickSites.Length+" "+L.T("açıldı")+" · "+time+(advice.Length>0?" · "+L.T("ayrıntı için üzerine gel"):"");
-    quickTip=L.T("Hızlı test")+" · "+time+" · "+reached+"/"+QuickSites.Length+L.T(" site açıldı.")+advice+"\n"+context.Caption; accessTested=true; ShowAccessSummary();
+    quickTip=L.T("Hızlı test")+" · "+time+" · "+reached+"/"+QuickSites.Length+L.T(" site açıldı.")+advice+"\n"+context.Caption; accessTested=true; ShowAccessSummary(); completed=true;
    } catch(Exception ex) { AppInfo.Log("Hızlı erişim testi: "+ex); if(revision==accessGeneration) { quickSummary=L.T("Hızlı test")+" · "+L.T("Test tamamlanamadı."); ShowAccessSummary(); foreach(var chip in accessChips) if(chip.State==AccessChip.Phase.Testing) chip.State=AccessChip.Phase.Idle; } }
-   finally { accessTesting=false; if(!IsDisposed) { quickRun.Enabled=true; quickRun.Spinning=false; } }
+   finally { accessTesting=false; if(!IsDisposed) { quickRun.Spinning=false; if(completed) quickRun.Flash(); } }
   }
   // After a change that restarts the engine, check again once it had a moment to come up.
   async void RecheckAccessSoon() { if(commands==null) return; await Task.Delay(2500); if(!IsDisposed && running && !busy) RunAccessCheck(); }
@@ -679,7 +688,7 @@ namespace GoodbyeTray {
    motors.Dock=DockStyle.Top; motors.AccessibleName=L.T("DPI motoru"); motors.Visible=Program.ZapretEnabled; motors.Items.AddRange(Program.ZapretEnabled?new[]{"GoodbyeDPI","Zapret 2"}:new[]{"GoodbyeDPI"});
    motors.SelectedIndexChanged+=delegate { profiles.SelectedIndex=-1; profiles.Items.Clear(); foreach(int id in Program.MotorProfiles(motors.SelectedIndex==1?Program.ZapretStart:0)) profiles.Items.Add(Program.Names[id].Replace("Zapret 2 · ","")); profiles.SelectedIndex=0; UpdateSelection(); };
    selection.Controls.Add(motors,0,0); motors.SelectedIndex=0;
-   profiles.Dock=DockStyle.Top; profiles.Height=42; motors.Height=42; profiles.Corner=8; motors.Corner=8;
+   profiles.Dock=DockStyle.Top; profiles.Height=40; motors.Height=40; profiles.Corner=10; motors.Corner=10;
    profiles.Describe=delegate(int position) { var ids=Program.MotorProfiles(motors.SelectedIndex==1?Program.ZapretStart:0); return position>=0 && position<ids.Length?Program.Describe(ids[position]):null; };
    profiles.SelectedIndexChanged+=delegate { UpdateSelection(); }; selection.Controls.Add(profiles,1,0);
    // A profile picked from the menu is applied at once, like the DNS server; picking an engine applies its first profile.
@@ -687,16 +696,16 @@ namespace GoodbyeTray {
    // The last entry of the profile menu lets the app find a profile that works on this line.
    findProfile.Text=L.T("Uygun profil bul"); findProfile.Click+=delegate { FindProfile(); };
    profiles.ExtraText=findProfile.Text; profiles.ExtraHint=L.T("Profilleri senin hattında sırayla dener."); profiles.ExtraEnabled=delegate { return findProfile.Enabled; }; profiles.Extra=delegate { if(findProfile.Enabled) FindProfile(); }; left.Controls.Add(selection,0,1);
-   hint.Dock=DockStyle.Fill; hint.Tag="muted"; hint.AutoEllipsis=true; left.Controls.Add(hint,0,2);
+   hint.Dock=DockStyle.Fill; hint.Font=new Font(Fonts.Ui,9.5f); hint.Tag="muted"; hint.AutoEllipsis=true; left.Controls.Add(hint,0,2);
    pending.Dock=DockStyle.Fill; pending.Tag="muted"; pending.AutoEllipsis=true; left.Controls.Add(pending,0,3); pending.TextChanged+=delegate { FitDashboard(); };
    choices.Controls.Add(left,0,0);
    var right=new BufferedLayout { Dock=DockStyle.Fill,ColumnCount=1,RowCount=3,Margin=new Padding(12,0,0,0),BackColor=Color.Transparent };
    foreach(int h in new[]{30,48,22}) right.RowStyles.Add(new RowStyle(SizeType.Absolute,h));
    right.Controls.Add(ChoiceTitle("\uE774",L.T("DNS sunucusu")),0,0);
-   dnsServer.Dock=DockStyle.Top; dnsServer.Height=42; dnsServer.Corner=8; dnsServer.Margin=new Padding(0,2,0,2); dnsServer.AccessibleName=L.T("DNS sunucusu");
+   dnsServer.Dock=DockStyle.Top; dnsServer.Height=40; dnsServer.Corner=10; dnsServer.Margin=new Padding(0,2,0,2); dnsServer.AccessibleName=L.T("DNS sunucusu");
    foreach(int id in DnsChoice.Order) dnsServer.Items.Add(L.T(DnsChoice.Names[id]));
    dnsServer.SelectedIndex=DnsChoice.Position; right.Controls.Add(dnsServer,0,1);
-   dnsHelp.Dock=DockStyle.Fill; dnsHelp.AutoEllipsis=true; dnsServer.SelectedIndexChanged+=delegate { UpdateSelection(); }; dnsHelp.Tag="muted"; right.Controls.Add(dnsHelp,0,2);
+   dnsHelp.Dock=DockStyle.Fill; dnsHelp.Font=new Font(Fonts.Ui,9.5f); dnsHelp.AutoEllipsis=true; dnsServer.SelectedIndexChanged+=delegate { UpdateSelection(); }; dnsHelp.Tag="muted"; right.Controls.Add(dnsHelp,0,2);
    dnsServer.SelectedIndexChanged+=delegate { if(!refreshing && dnsServer.SelectedIndex>=0) Execute("dns",DnsChoice.Order[dnsServer.SelectedIndex]); };
    choices.Controls.Add(right,1,0);
   }
@@ -734,7 +743,7 @@ namespace GoodbyeTray {
     var side=new FlowLayoutPanel { AutoSize=true,WrapContents=false,Margin=Padding.Empty,BackColor=Color.Transparent,Anchor=AnchorStyles.Right };
     side.Controls.Add(info); if(i==3) side.Controls.Add(sitesLink);
     row.Controls.Add(side,1,0);
-    var help=helpLabels[i]; help.Font=new Font(Fonts.Ui,9); help.Tag="muted"; help.Dock=DockStyle.Fill; help.Margin=new Padding(Math.Max(16,(int)Math.Round(box.Font.Height*0.95))+10,0,0,0);
+    var help=helpLabels[i]; help.Font=new Font(Fonts.Ui,9.5f); help.Tag="muted"; help.Dock=DockStyle.Fill; help.Margin=new Padding(Math.Max(16,(int)Math.Round(box.Font.Height*0.95))+10,0,0,0);
     row.Controls.Add(help,0,1); row.SetColumnSpan(help,2);
     tips.SetToolTip(box,help.Text); grid.Controls.Add(row,0,i);
    }
@@ -791,8 +800,9 @@ namespace GoodbyeTray {
    tray.Visible=show;
    if(!show && !Visible) Reveal();
   }
+  bool revealing;
   void HideToTray() {
-   if(!TrayShown) return;
+   if(!TrayShown || revealing) return;
    Hide(); ShowInTaskbar=false;
   }
   // A manual check (from About) runs even when automatic checks are turned off.
@@ -844,9 +854,16 @@ namespace GoodbyeTray {
   void Reveal() {
    // Coming back from the tray, the window is drawn while cloaked and appears complete.
    // Turning the taskbar button on recreates the window, so it happens first, while hidden, and the new window is cloaked.
-   bool hidden=!Visible; if(hidden) { ShowInTaskbar=true; Cloak(true); }
-   Show(); ShowInTaskbar=true; WindowState=FormWindowState.Normal;
-   if(hidden) { PaintNow(); Cloak(false); }
+   // A window started in the tray (--tray) is minimized and hidden. It is restored to normal first: turning the taskbar
+   // button on recreates the window, and a minimized new window would send itself back to the tray from the Resize
+   // handler, again and again, until the stack ran out.
+   bool hidden=!Visible; revealing=true;
+   try {
+    if(hidden) { if(WindowState==FormWindowState.Minimized) WindowState=FormWindowState.Normal; if(!ShowInTaskbar) ShowInTaskbar=true; Cloak(true); }
+    Show(); if(!ShowInTaskbar) ShowInTaskbar=true; WindowState=FormWindowState.Normal;
+    // Coming back from the tray, the drawn window eases in rather than popping up.
+    if(hidden) { if(Motion.Enabled) Opacity=0.01; PaintNow(); Cloak(false); Motion.Fade(this); }
+   } finally { revealing=false; }
    Activate();
   }
   internal void DispatchCommand(string command) {
@@ -1026,7 +1043,7 @@ namespace GoodbyeTray {
    removeApp.LinkClicked+=delegate { dialog.Close(); Uninstall(); }; dialog.Controls.Add(removeApp);
    // Opening About in the running app checks right away if nothing is known yet.
    if(commands!=null && updateState==UpdateState.Unknown) dialog.Shown+=delegate { CheckForUpdateAsync(true); };
-   dialog.HandleCreated+=delegate { WindowsIntegration.ThemeCaption(dialog,dark,background,foreground); }; return dialog;
+   dialog.HandleCreated+=delegate { WindowsIntegration.ThemeCaption(dialog,dark,background,foreground); }; Motion.FadeIn(dialog); return dialog;
   }
   // The small pills in the title bar take the width of their label, the icon and the padding around them.
   static void FitPill(SoftButton pill) { pill.Width=TextRenderer.MeasureText(pill.Text,pill.Font).Width+(pill.IconOnly?0:(int)Math.Round(48*pill.DeviceDpi/96f)); }
@@ -1035,7 +1052,7 @@ namespace GoodbyeTray {
   int S(int pixels) { return (int)Math.Round(pixels*ui); }
   internal void ApplyScale(float factor) { if(factor<=0 || Math.Abs(factor-ui)<0.01f) return; float step=factor/ui; ui=factor; Scale(new SizeF(step,step)); }
   // The console and report buttons are 46 px; the rest of their row is the gap before the footer.
-  const int ActionRowHeight=62, SettingsHeight=248, ChoicesHeight=168, FooterHeight=34, HeroHeight=132;
+  const int ActionRowHeight=52, SettingsHeight=248, ChoicesHeight=168, FooterHeight=34, HeroHeight=132;
   // The height the full layout needs, title bar included: the window opens at this size when the screen allows.
   // The footer counts at its fixed height: its current height follows the space left, so it cannot size the window.
   int NaturalHeight() { return titleBar.Height+dashboard.Padding.Vertical+S(FooterHeight+HeroHeight+ChoicesHeight+SettingsHeight+72+ActionRowHeight); }
@@ -1055,7 +1072,8 @@ namespace GoodbyeTray {
   // A safety net: a window that comes to the front while still cloaked is drawn and shown at once.
   protected override void OnActivated(EventArgs e) { base.OnActivated(e); if(cloaked) { PaintNow(); Cloak(false); } }
   void PaintNow() { if(IsHandleCreated) RedrawWindow(Handle,IntPtr.Zero,IntPtr.Zero,0x0185); } // RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_UPDATENOW
-  protected override void OnShown(EventArgs e) { base.OnShown(e); PaintNow(); Cloak(false); }
+  // The first view eases in once the window is fully drawn (a tray start, minimized, skips it).
+  protected override void OnShown(EventArgs e) { base.OnShown(e); bool fade=Motion.Enabled && WindowState!=FormWindowState.Minimized; if(fade) Opacity=0.01; PaintNow(); Cloak(false); if(fade) Motion.Fade(this); }
   void FitDashboard() {
    if(dashboard.RowStyles.Count<8 || startupContent==null) return;
    // The full layout needs about 750 px. Below that (small laptop screens) the settings drop their explanations
@@ -1157,7 +1175,7 @@ namespace GoodbyeTray {
    BackColor=background; PaintControls(this); ShowVersion(); PaintActionGroup(); WindowsIntegration.ThemeCaption(this,dark,background,foreground);
    if(diagnosticsWindow!=null && !diagnosticsWindow.IsDisposed) { ((EngineConsoleForm)diagnosticsWindow).ApplyPalette(dark); }
    PaintAccessChips(); if(accessFull!=null && !accessFull.IsDisposed) accessFull.ApplyPalette(dark);
-   if(tray!=null) MenuRenderer.PrepareTree(tray.ContextMenuStrip,surface,foreground,border,240);
+   if(tray!=null) MenuRenderer.PrepareTree(tray.ContextMenuStrip,surface,foreground,border,0);
    if(pauseMenu.Visible) pauseMenu.Close();
    Invalidate(true);
   }
@@ -1172,7 +1190,12 @@ namespace GoodbyeTray {
     var panel=control as SoftPanel; var button=control as SoftButton;
     control.ForeColor=Convert.ToString(control.Tag)=="muted"?secondary:Convert.ToString(control.Tag)=="accent" && !SystemInformation.HighContrast?(dark?AppPalette.Mint:AppPalette.Accent):foreground;
     if(panel!=null) { panel.Fill=surface; panel.Edge=border; panel.BackColor=background; }
-    else if(button!=null) PaintButton(button,false);
+    else if(button!=null) {
+     PaintButton(button,false);
+     // The quick test button is tinted with the accent at rest, so it reads as the card's action, not a grey square.
+     // At rest: a borderless soft accent disc with the arrow in the accent, like a chip; hover deepens it.
+     if(button==quickRun && !SystemInformation.HighContrast) { Color tone=dark?AppPalette.Mint:AppPalette.Accent; button.Fill=Motion.Mix(button.BackColor,tone,dark?0.22f:0.14f); button.Edge=button.Fill; button.Ink=tone; button.ForeColor=tone; button.Invalidate(); }
+    }
     else if(control is ThemeCheckBox) { var box=(ThemeCheckBox)control; box.Accent=AppPalette.Accent; box.Tick=AppPalette.AccentInk; box.Edge=border; box.Muted=secondary; box.BackColor=HostColor(box); box.Invalidate(); }
     else if(control is NoticeView) { var terms=(NoticeView)control; terms.BackColor=surface; terms.ForeColor=foreground; terms.ThumbColor=secondary; terms.EdgeColor=border; terms.Invalidate(); }
     else if(control is LinkLabel) { var link=(LinkLabel)control; link.LinkColor=link.ActiveLinkColor=link.VisitedLinkColor=SystemInformation.HighContrast?SystemColors.HotTrack:dark?AppPalette.Mint:AppPalette.Accent; link.BackColor=Color.Transparent; }
